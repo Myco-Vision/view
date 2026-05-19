@@ -5,23 +5,40 @@
         <h2>Login to <span class="brand">MycoVision</span></h2>
       </div>
       <div class="card-body">
+        <!-- Error banner -->
+        <div v-if="error" class="error-banner">{{ error }}</div>
+
         <div class="field">
           <input
-            v-model="form.username"
-            type="text"
-            placeholder="Username"
+            v-model="form.email"
+            type="email"
+            placeholder="Email address"
             class="input-field"
+            :disabled="loading"
           />
         </div>
         <div class="field">
-          <input
-            v-model="form.password"
-            type="password"
-            placeholder="Password"
-            class="input-field"
-          />
+          <div class="input-wrap">
+            <input
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="Password"
+              class="input-field"
+              :disabled="loading"
+              @keyup.enter="handleLogin"
+            />
+            <button class="eye-btn" type="button" @click="showPassword = !showPassword">
+              <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
         </div>
-        <button class="btn-primary" @click="handleLogin">Login</button>
+
+        <button class="btn-primary" :disabled="loading" @click="handleLogin">
+          <span v-if="loading" class="spinner" />
+          {{ loading ? 'Logging in…' : 'Login' }}
+        </button>
+
         <p class="footer-text">
           No account yet?
           <NuxtLink to="/register" class="link">Register</NuxtLink>
@@ -31,13 +48,49 @@
   </div>
 </template>
 
-<script setup>
-const form = reactive({ username: '', password: '' })
+<script setup lang="ts">
+const config = useRuntimeConfig()
 
-function handleLogin() {
-  // handle login logic
+const form        = reactive({ email: '', password: '' })
+const loading     = ref(false)
+const error       = ref('')
+const showPassword = ref(false)
+
+async function handleLogin() {
+  error.value = ''
+
+  if (!form.email || !form.password) {
+    error.value = 'Please fill in all fields.'
+    return
+  }
+
+  loading.value = true
+  try {
+    const data = await $fetch<{ user: any; token: string }>(`${config.public.apiBase}/login`, {
+      method: 'POST',
+      body: { email: form.email, password: form.password },
+    })
+
+    // Persist auth data
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('user', JSON.stringify(data.user))
+    localStorage.setItem('role', data.user.role)
+
+    // Redirect based on role
+    if (data.user.role === 'admin') {
+      await navigateTo('/admin/dashboard')
+    } else {
+      await navigateTo('/users/scan')
+    }
+  } catch (err: any) {
+    const msg = err?.data?.message || err?.data?.errors?.email?.[0]
+    error.value = msg || 'Invalid email or password.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
@@ -90,6 +143,39 @@ function handleLogin() {
   width: 100%;
 }
 
+.error-banner {
+  background: #fef2f2;
+  border: 1.5px solid #fca5a5;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  padding: 0.65rem 0.9rem;
+}
+
+.input-wrap {
+  position: relative;
+}
+
+.input-wrap .input-field {
+  padding-right: 2.5rem;
+}
+
+.eye-btn {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.eye-btn:hover { color: #5a9e6f; }
+
 .input-field {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -136,6 +222,21 @@ function handleLogin() {
 
 .btn-primary:active {
   transform: scale(0.99);
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+  margin-right: 0.4rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .footer-text {

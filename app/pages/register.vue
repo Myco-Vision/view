@@ -18,30 +18,42 @@
 
       <!-- Step 1 -->
       <div v-if="step === 1" class="card-body">
+        <div v-if="error" class="error-banner">{{ error }}</div>
+        
         <div class="field-row">
           <div class="field">
             <label class="field-label">First Name</label>
-            <input v-model="form.firstName" type="text" placeholder="Maria" class="input-field" />
+            <input v-model="form.firstName" type="text" placeholder="Maria" class="input-field" :disabled="loading" />
           </div>
           <div class="field">
-            <label class="field-label">Username</label>
-            <input v-model="form.username" type="text" placeholder="mariasalem" class="input-field" />
+            <label class="field-label">Last Name</label>
+            <input v-model="form.lastName" type="text" placeholder="Salem" class="input-field" :disabled="loading" />
           </div>
         </div>
         <div class="field-row">
           <div class="field">
-            <label class="field-label">Last Name</label>
-            <input v-model="form.lastName" type="text" placeholder="Salem" class="input-field" />
+            <label class="field-label">Username</label>
+            <input v-model="form.username" type="text" placeholder="mariasalem" class="input-field" :disabled="loading" />
           </div>
           <div class="field">
-            <label class="field-label">Password</label>
-            <input v-model="form.password" type="password" placeholder="••••••••" class="input-field" />
+            <label class="field-label">Email</label>
+            <input v-model="form.email" type="email" placeholder="maria@example.com" class="input-field" :disabled="loading" />
           </div>
         </div>
         <div class="field-row">
           <div class="field">
             <label class="field-label">Contact no.</label>
-            <input v-model="form.contact" type="text" placeholder="+63 955 123 5566" class="input-field" />
+            <input v-model="form.contact" type="text" placeholder="+63 955 123 5566" class="input-field" :disabled="loading" />
+          </div>
+        </div>
+        <div class="field full">
+          <label class="field-label">Complete Address</label>
+          <input v-model="form.address" type="text" placeholder="123 Rizal Street, Barangay San Roque..." class="input-field" :disabled="loading" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label">Password</label>
+            <input v-model="form.password" type="password" placeholder="••••••••" class="input-field" :disabled="loading" />
           </div>
           <div class="field">
             <label class="field-label">Confirm Password</label>
@@ -51,17 +63,14 @@
                 :type="showConfirm ? 'text' : 'password'"
                 placeholder="••••••••"
                 class="input-field"
+                :disabled="loading"
               />
-              <button class="eye-btn" @click="showConfirm = !showConfirm">
+              <button class="eye-btn" @click="showConfirm = !showConfirm" type="button">
                 <svg v-if="!showConfirm" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
               </button>
             </div>
           </div>
-        </div>
-        <div class="field full">
-          <label class="field-label">Complete Address</label>
-          <input v-model="form.address" type="text" placeholder="123 Rizal Street, Barangay San Roque..." class="input-field" />
         </div>
         <div class="btn-row">
           <button class="btn-primary" @click="goNext">Next →</button>
@@ -74,12 +83,17 @@
         <div class="review-grid">
           <div class="review-item"><span class="review-label">Full Name</span><span>{{ form.firstName }} {{ form.lastName }}</span></div>
           <div class="review-item"><span class="review-label">Username</span><span>{{ form.username }}</span></div>
+          <div class="review-item"><span class="review-label">Email</span><span>{{ form.email }}</span></div>
           <div class="review-item"><span class="review-label">Contact</span><span>{{ form.contact }}</span></div>
-          <div class="review-item"><span class="review-label">Address</span><span>{{ form.address }}</span></div>
+          <div class="review-item" style="grid-column: 1 / -1;"><span class="review-label">Address</span><span>{{ form.address }}</span></div>
         </div>
+        <div v-if="error" class="error-banner" style="margin-top: 10px;">{{ error }}</div>
         <div class="btn-row two">
-          <button class="btn-outline" @click="step = 1">← Back</button>
-          <button class="btn-primary" @click="handleRegister">Register</button>
+          <button class="btn-outline" @click="step = 1" :disabled="loading">← Back</button>
+          <button class="btn-primary" @click="handleRegister" :disabled="loading">
+            <span v-if="loading" class="spinner" />
+            {{ loading ? 'Registering…' : 'Register' }}
+          </button>
         </div>
       </div>
 
@@ -91,14 +105,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+const config = useRuntimeConfig()
 const step = ref(1)
 const showConfirm = ref(false)
+const loading = ref(false)
+const error = ref('')
 
 const form = reactive({
   firstName: '',
   lastName: '',
   username: '',
+  email: '',
   password: '',
   confirmPassword: '',
   contact: '',
@@ -106,11 +124,57 @@ const form = reactive({
 })
 
 function goNext() {
+  error.value = ''
+  if (!form.firstName || !form.lastName || !form.username || !form.email || !form.password || !form.confirmPassword) {
+    error.value = 'Please fill out all required fields.'
+    return
+  }
+  if (form.password !== form.confirmPassword) {
+    error.value = 'Passwords do not match.'
+    return
+  }
   step.value = 2
 }
 
-function handleRegister() {
-  // handle register logic
+async function handleRegister() {
+  error.value = ''
+  loading.value = true
+
+  try {
+    const data = await $fetch<{ user: any; token: string }>(`${config.public.apiBase}/register`, {
+      method: 'POST',
+      body: {
+        first_name: form.firstName,
+        last_name: form.lastName,
+        username: form.username,
+        email: form.email,
+        contact_number: form.contact,
+        address: form.address,
+        password: form.password,
+        password_confirmation: form.confirmPassword,
+      },
+    })
+
+    // Persist auth data
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('user', JSON.stringify(data.user))
+    localStorage.setItem('role', data.user.role)
+
+    await navigateTo('/users/scan')
+  } catch (err: any) {
+    let msg = err?.data?.message || 'Registration failed.'
+    // If validation errors are returned, show the first one
+    if (err?.data?.errors) {
+      const firstErrorKey = Object.keys(err.data.errors)[0]
+      if (firstErrorKey) {
+        msg = err.data.errors[firstErrorKey][0]
+      }
+    }
+    error.value = msg
+    step.value = 1 // Go back to step 1 to let them fix the error
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -228,6 +292,16 @@ function handleRegister() {
   gap: 0.35rem;
 }
 
+.error-banner {
+  background: #fef2f2;
+  border: 1.5px solid #fca5a5;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  padding: 0.65rem 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
 .field.full {
   grid-column: 1 / -1;
 }
@@ -320,6 +394,21 @@ function handleRegister() {
 
 .btn-primary:active {
   transform: scale(0.99);
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+  margin-right: 0.4rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .btn-outline {

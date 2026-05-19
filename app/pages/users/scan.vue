@@ -11,6 +11,20 @@
       <div class="panel panel--left">
         <h2 class="panel-title">Scan Mushroom</h2>
 
+        <!-- Camera Overlay Modal -->
+        <div v-if="isCameraOpen" class="camera-modal">
+          <div class="camera-container">
+            <video ref="videoRef" autoplay playsinline class="camera-video"></video>
+            <div class="camera-controls">
+              <button class="camera-btn cancel" @click="closeCamera">Cancel</button>
+              <button class="camera-btn snap" @click="takeSnapshot">
+                <span class="snap-inner"></span>
+              </button>
+              <div style="width: 60px;"></div> <!-- Spacer -->
+            </div>
+          </div>
+        </div>
+
         <!-- Capture box -->
         <button class="capture-zone" @click="openCamera">
           <span class="zone-icon">
@@ -61,14 +75,14 @@
         </div>
 
         <!-- Upload button -->
-        <button class="upload-btn" @click="analyzeImage" :disabled="isAnalyzing">
+        <button class="upload-btn" @click="analyzeImage" :disabled="isAnalyzing || !selectedFile">
           <span v-if="isAnalyzing" class="spinner" />
           {{ isAnalyzing ? 'Analyzing…' : 'Upload picture' }}
         </button>
       </div>
 
-      <!-- ── RIGHT: Result Panel (always shown) ───────── -->
-      <div class="panel panel--right">
+      <!-- ── RIGHT: Result Panel ───────── -->
+      <div v-if="result" class="panel panel--right">
 
         <!-- Info card -->
         <div class="info-card">
@@ -78,13 +92,17 @@
           </div>
           <div class="info-row">
             <span class="info-label">Classification:</span>
-            <span class="info-value edible">
+            <span class="info-value" :class="result.classification === 'Edible' ? 'edible' : 'poisonous'">
               {{ result.classification }}
-              <svg class="edible-check" xmlns="http://www.w3.org/2000/svg"
+              <svg v-if="result.classification === 'Edible'" class="edible-check" xmlns="http://www.w3.org/2000/svg"
                    viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="12" r="12" fill="#22c55e"/>
                 <path d="M7 12.5l3.5 3.5 6.5-7" stroke="#fff"
                       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+              <svg v-else class="edible-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="12" fill="#ef4444"/>
+                <path d="M15 9l-6 6M9 9l6 6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </span>
           </div>
@@ -122,6 +140,15 @@
         </div>
 
       </div>
+
+      <!-- Empty state when no result -->
+      <div v-else class="panel panel--right empty-result-panel">
+        <div class="empty-state-content">
+          <div class="empty-icon-large">🍄</div>
+          <h3 class="empty-result-title">Ready to Analyze</h3>
+          <p class="empty-result-desc">Upload a mushroom picture on the left to see the AI classification and confidence results here.</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -129,28 +156,98 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'user' })
 
-const firstName = 'Maria'
+const firstName = ref('User')
+
+onMounted(() => {
+  const storedUser = localStorage.getItem('user')
+  if (storedUser) {
+    const user = JSON.parse(storedUser)
+    firstName.value = user.first_name || user.name?.split(' ')[0] || user.username || 'User'
+  }
+})
 
 // ── Upload state ─────────────────────────────────────
 const fileInput   = ref<HTMLInputElement | null>(null)
 const previewUrl  = ref<string | null>(null)
 const isDragging  = ref(false)
 const isAnalyzing = ref(false)
+const selectedFile = ref<File | null>(null)
+const result = ref<any>(null)
 
-function openCamera() {
-  if (fileInput.value) {
-    fileInput.value.setAttribute('capture', 'environment')
-    fileInput.value.click()
+// ── Camera state ──────────────────────────────────────
+const isCameraOpen = ref(false)
+const videoRef = ref<HTMLVideoElement | null>(null)
+let mediaStream: MediaStream | null = null
+
+const config = useRuntimeConfig()
+
+async function openCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' } // Prefer back camera on mobile
+    })
+    mediaStream = stream
+    isCameraOpen.value = true
+    // Wait for DOM to render the video element
+    nextTick(() => {
+      if (videoRef.value) {
+        videoRef.value.srcObject = stream
+      }
+    })
+  } catch (error) {
+    console.error('Error accessing camera:', error)
+    alert('Could not access camera. Please ensure permissions are granted.')
   }
 }
+
+function closeCamera() {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(track => track.stop())
+    mediaStream = null
+  }
+  isCameraOpen.value = false
+}
+
+function takeSnapshot() {
+  if (!videoRef.value) return
+  
+  const video = videoRef.value
+  const canvas = document.createElement('canvas')
+  canvas.width = video.videoWidth
+  canvas.height = video.videoHeight
+  
+  const ctx = canvas.getContext('2d')
+  if (ctx) {
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], 'snapshot.jpg', { type: 'image/jpeg' })
+        selectedFile.value = file
+        loadPreview(file)
+      }
+    }, 'image/jpeg', 0.9)
+  }
+  closeCamera()
+}
+
+onUnmounted(() => {
+  closeCamera() // Cleanup
+})
+
 function handleFileChange(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
-  if (file) loadPreview(file)
+  if (file) {
+    selectedFile.value = file
+    loadPreview(file)
+  }
 }
 function handleDrop(e: DragEvent) {
   isDragging.value = false
   const file = e.dataTransfer?.files?.[0]
-  if (file) loadPreview(file)
+  if (file) {
+    selectedFile.value = file
+    loadPreview(file)
+  }
 }
 function loadPreview(file: File) {
   const reader = new FileReader()
@@ -159,23 +256,43 @@ function loadPreview(file: File) {
 }
 function clearImage() {
   previewUrl.value = null
+  selectedFile.value = null
+  result.value = null
   if (fileInput.value) fileInput.value.value = ''
 }
 async function analyzeImage() {
-  isAnalyzing.value = true
-  await new Promise(r => setTimeout(r, 1800))
-  isAnalyzing.value = false
-}
+  if (!selectedFile.value) return
 
-// ── Static result data (for presentation) ────────────
-const result = {
-  name: 'Volvariella volvacea',
-  classification: 'Edible',
-  confidence: 94,
-  descriptionRest:
-    ', commonly known as the paddy straw mushroom, is a highly nutritious and popular edible mushroom cultivated extensively in tropical and subtropical regions of Asia. Renowned for its quick cultivation (4–5 days to harvest) and savory flavor, it is packed with protein, amino acids, and antioxidants, and is often harvested in its immature, "egg-like" button stage.',
-  reference:
-    'https://www.sciencedirect.com/science/article/pii/S240584402415787#:~:text=Abstract,phenylalanine%2C%20threonine%2C%20and%20histidine.',
+  isAnalyzing.value = true
+  result.value = null
+
+  try {
+    const token = localStorage.getItem('token')
+    const formData = new FormData()
+    formData.append('image', selectedFile.value)
+    
+    // Send to backend
+    const data = await $fetch<any>(`${config.public.apiBase}/scans`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    })
+
+    // Map result from backend to UI state
+    const rawClass = data.result_classification || 'unknown';
+    result.value = {
+      name: data.result_name || 'Unknown',
+      classification: rawClass.charAt(0).toUpperCase() + rawClass.slice(1),
+      confidence: data.confidence_level || 0,
+      descriptionRest: ' is the identified species based on your scan. More details will be populated here when the species database is fully linked.',
+      reference: 'https://en.wikipedia.org/wiki/' + encodeURIComponent(data.result_name || 'Mushroom')
+    }
+  } catch (error) {
+    console.error('Scan upload failed:', error)
+    alert('Failed to analyze the image. Please try again.')
+  } finally {
+    isAnalyzing.value = false
+  }
 }
 </script>
 
@@ -229,6 +346,83 @@ const result = {
   color: var(--color-text);
   text-align: center;
   margin-bottom: 2px;
+}
+
+/* ── Camera Modal ──────────────────────────────────── */
+.camera-modal {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-video {
+  flex: 1;
+  width: 100%;
+  object-fit: cover;
+  background: #111;
+}
+
+.camera-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  backdrop-filter: blur(5px);
+}
+
+.camera-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.camera-btn.cancel {
+  width: 60px;
+  text-align: left;
+}
+
+.camera-btn.snap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  transition: transform 0.15s;
+}
+
+.camera-btn.snap:active {
+  transform: scale(0.92);
+}
+
+.snap-inner {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: 50%;
 }
 
 /* ── Zones (capture / upload) ──────────────────────── */
@@ -340,6 +534,55 @@ const result = {
 .upload-btn:hover:not(:disabled) { background: #5c7a52; }
 .upload-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
+.save-loc-btn {
+  margin-top: auto;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--color-sidebar-border);
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.save-loc-btn:hover { background: var(--color-hover-bg); }
+
+/* ── Empty State Panel ─────────────────────────────── */
+.empty-result-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+}
+
+.empty-state-content {
+  text-align: center;
+  max-width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-icon-large {
+  font-size: 56px;
+  filter: grayscale(0.8) opacity(0.5);
+}
+
+.empty-result-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.empty-result-desc {
+  font-size: 13.5px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
 .spinner {
   width: 15px; height: 15px;
   border: 2px solid rgba(255,255,255,0.35);
@@ -379,15 +622,16 @@ const result = {
   color: var(--color-text);
 }
 
-.info-value.bold { font-weight: 700; }
-
-.info-value.edible {
-  color: #166534;
+.info-value.edible, .info-value.poisonous {
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
 }
+.info-value.edible { color: #166534; background: #dcfce7; }
+.info-value.poisonous { color: #991b1b; background: #fee2e2; }
 
 .edible-check {
   width: 16px;

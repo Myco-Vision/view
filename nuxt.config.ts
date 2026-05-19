@@ -8,4 +8,11 @@ export default defineNuxtConfig({
 
   // Point Nuxt to the app/ directory
   srcDir: 'app/',
+
+  // Runtime config — accessible via useRuntimeConfig()
+  runtimeConfig: {
+    public: {
+      apiBase: 'http://127.0.0.1:8000/api',
+    },
+  },
 })

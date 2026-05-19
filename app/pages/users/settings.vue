@@ -11,13 +11,16 @@
         <div class="settings-card">
           <div class="profile-row">
             <div class="avatar-wrap">
-              <div class="avatar">MS</div>
+              <div class="avatar">
+                <img v-if="userProfile.photo" :src="userProfile.photo" alt="Avatar" class="avatar-img" />
+                <span v-else>{{ userProfile.initials }}</span>
+              </div>
               <button class="avatar-edit-btn" title="Change photo">✏️</button>
             </div>
             <div class="profile-info">
-              <p class="profile-name">Maria Salem</p>
-              <p class="profile-email">maria@email.com</p>
-              <p class="profile-joined">Member since Apr 2026</p>
+              <p class="profile-name">{{ userProfile.name }}</p>
+              <p class="profile-email">{{ userProfile.email }}</p>
+              <p class="profile-joined">Member since {{ userProfile.joined }}</p>
             </div>
             <button class="edit-profile-btn">Edit Profile</button>
           </div>
@@ -181,6 +184,42 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'user' })
 
+const config = useRuntimeConfig()
+
+const userProfile = reactive({
+  name: 'User',
+  email: '',
+  initials: 'U',
+  joined: '...',
+  photo: ''
+})
+
+onMounted(() => {
+  const storedUser = localStorage.getItem('user')
+  if (storedUser) {
+    const user = JSON.parse(storedUser)
+    userProfile.name = user.name || user.username || 'User'
+    userProfile.email = user.email || 'No email'
+    
+    // Initials
+    userProfile.initials = userProfile.name
+      .split(' ')
+      .map((n: string) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+
+    // Joined date
+    if (user.created_at) {
+      userProfile.joined = new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    }
+
+    if (user.profile_photo) {
+      userProfile.photo = `${config.public.apiBase.replace('/api', '')}/storage/${user.profile_photo}`
+    }
+  }
+})
+
 const prefs = reactive({
   autoSave:       true,
   showConfidence: true,
@@ -278,6 +317,13 @@ function exportData()  { alert('Exporting data…') }
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .avatar-edit-btn {

@@ -166,7 +166,17 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'user' })
 
-const firstName = 'Maria'
+const config = useRuntimeConfig()
+const firstName = ref('User')
+
+onMounted(() => {
+  const storedUser = localStorage.getItem('user')
+  if (storedUser) {
+    const user = JSON.parse(storedUser)
+    firstName.value = user.first_name || user.name?.split(' ')[0] || user.username || 'User'
+  }
+  fetchCollection()
+})
 
 // ── Filters & sort ────────────────────────────────────
 const filters = [
@@ -178,73 +188,55 @@ const activeFilter = ref('all')
 const search = ref('')
 const sortBy = ref('date')
 
-// ── Static collection data ────────────────────────────
-const collection = [
-  {
-    id: 1,
-    name: 'Volvariella volvacea',
-    classification: 'Edible',
-    confidence: 94,
-    location: 'Quezon City, PH',
-    date: 'Apr 27, 2026',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Volvariella_volvacea_01.jpg/400px-Volvariella_volvacea_01.jpg',
-  },
-  {
-    id: 2,
-    name: 'Amanita muscaria',
-    classification: 'Poisonous',
-    confidence: 89,
-    location: 'Baguio City, PH',
-    date: 'Apr 25, 2026',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Fly_agaric_at_Bramshaw_Wood.jpg/400px-Fly_agaric_at_Bramshaw_Wood.jpg',
-  },
-  {
-    id: 3,
-    name: 'Pleurotus ostreatus',
-    classification: 'Edible',
-    confidence: 91,
-    location: 'Laguna, PH',
-    date: 'Apr 24, 2026',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Oyster_mushroom_%28Pleurotus_ostreatus%29.jpg/400px-Oyster_mushroom_%28Pleurotus_ostreatus%29.jpg',
-  },
-  {
-    id: 4,
-    name: 'Lentinula edodes',
-    classification: 'Edible',
-    confidence: 97,
-    location: 'Benguet, PH',
-    date: 'Apr 22, 2026',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Shiitakemushroom.jpg/400px-Shiitakemushroom.jpg',
-  },
-  {
-    id: 5,
-    name: 'Galerina marginata',
-    classification: 'Poisonous',
-    confidence: 81,
-    location: 'Mt. Makiling, PH',
-    date: 'Apr 20, 2026',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Galerina_marginata_8946.jpg/400px-Galerina_marginata_8946.jpg',
-  },
-  {
-    id: 6,
-    name: 'Agaricus bisporus',
-    classification: 'Edible',
-    confidence: 98,
-    location: 'Cavite, PH',
-    date: 'Apr 18, 2026',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Agaricus_bisporus_%28common_mushroom%29.jpg/400px-Agaricus_bisporus_%28common_mushroom%29.jpg',
-  },
-]
+// ── Dynamic collection data ────────────────────────────
+interface Mushroom {
+  id: number;
+  name: string;
+  classification: string;
+  confidence: number;
+  location: string;
+  date: string;
+  image: string;
+}
+
+const collection = ref<Mushroom[]>([])
+
+async function fetchCollection() {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    const data = await $fetch<any[]>(`${config.public.apiBase}/scans`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    
+    collection.value = data.map(scan => {
+      const rawClass = scan.result_classification || 'unknown';
+      return {
+        id: scan.id,
+        name: scan.result_name || 'Unknown Species',
+        classification: rawClass.charAt(0).toUpperCase() + rawClass.slice(1),
+        confidence: scan.confidence_level || 0,
+        location: scan.latitude && scan.longitude ? `${scan.latitude}, ${scan.longitude}` : 'Unknown Location',
+        date: new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        image: scan.image_path ? `${config.public.apiBase.replace('/api', '')}/storage/${scan.image_path}` : 'https://placehold.co/400x400/e8f0e8/a3a3a3?text=No+Image'
+      }
+    })
+  } catch (error) {
+    console.error('Failed to fetch collection:', error)
+  }
+}
 
 // ── Computed ──────────────────────────────────────────
-const edibleCount    = computed(() => collection.filter(m => m.classification === 'Edible').length)
-const poisonousCount = computed(() => collection.filter(m => m.classification === 'Poisonous').length)
-const avgConfidence  = computed(() =>
-  Math.round(collection.reduce((sum, m) => sum + m.confidence, 0) / collection.length)
-)
+const edibleCount    = computed(() => collection.value.filter(m => m.classification === 'Edible').length)
+const poisonousCount = computed(() => collection.value.filter(m => m.classification === 'Poisonous').length)
+const avgConfidence  = computed(() => {
+  if (!collection.value.length) return 0
+  return Math.round(collection.value.reduce((sum, m) => sum + m.confidence, 0) / collection.value.length)
+})
 
 const filtered = computed(() => {
-  let list = collection.filter(m => {
+  let list = collection.value.filter(m => {
     const matchFilter = activeFilter.value === 'all' || m.classification === activeFilter.value
     const matchSearch = m.name.toLowerCase().includes(search.value.toLowerCase())
     return matchFilter && matchSearch

@@ -19,7 +19,7 @@
 
       <!-- Navigation -->
       <nav class="sidebar__nav">
-        <NuxtLink to="/scan" class="nav-item" active-class="nav-item--active">
+        <NuxtLink to="/users/scan" class="nav-item" active-class="nav-item--active">
           <span class="nav-icon">
             <!-- scan / camera icon -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -33,7 +33,7 @@
           <span class="nav-label">Scan Mushroom</span>
         </NuxtLink>
 
-        <NuxtLink to="/history" class="nav-item" active-class="nav-item--active">
+        <NuxtLink to="/users/history" class="nav-item" active-class="nav-item--active">
           <span class="nav-icon">
             <!-- history / file icon -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -50,7 +50,7 @@
           <span class="nav-label">Scan History</span>
         </NuxtLink>
 
-        <NuxtLink to="/collection" class="nav-item" active-class="nav-item--active">
+        <NuxtLink to="/users/collection" class="nav-item" active-class="nav-item--active">
           <span class="nav-icon">
             <!-- collection / layers icon -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -63,7 +63,7 @@
           <span class="nav-label">Collection</span>
         </NuxtLink>
 
-        <NuxtLink to="/settings" class="nav-item" active-class="nav-item--active">
+        <NuxtLink to="/users/settings" class="nav-item" active-class="nav-item--active">
           <span class="nav-icon">
             <!-- settings / gear icon -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -129,10 +129,22 @@
 </template>
 
 <script setup lang="ts">
-const userName   = ref('Maria Salem')
-const userAvatar = ref('')   // set to a URL string to show a photo
+const config = useRuntimeConfig()
+
+const userName   = ref('')
+const userAvatar = ref('')
+
+onMounted(() => {
+  const storedUser = localStorage.getItem('user')
+  if (storedUser) {
+    const user = JSON.parse(storedUser)
+    userName.value = user.name || user.username || 'User'
+    userAvatar.value = user.profile_photo ? `${config.public.apiBase.replace('/api', '')}/storage/${user.profile_photo}` : ''
+  }
+})
 
 const userInitials = computed(() => {
+  if (!userName.value) return 'U'
   return userName.value
     .split(' ')
     .map(n => n[0])
@@ -142,9 +154,24 @@ const userInitials = computed(() => {
 })
 
 async function handleLogout() {
-  // TODO: call your AuthService logout here
-  localStorage.removeItem('token')
-  await navigateTo('/login')
+  try {
+    const token = localStorage.getItem('token')
+    if (token) {
+      await $fetch(`${config.public.apiBase}/logout`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    }
+  } catch (error) {
+    console.error('Logout error:', error)
+  } finally {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    localStorage.removeItem('role')
+    await navigateTo('/login')
+  }
 }
 </script>
 

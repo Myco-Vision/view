@@ -128,6 +128,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'user' })
 
+const config = useRuntimeConfig()
+
 // ── Filters ───────────────────────────────────────────
 const filters = [
   { label: 'All',       value: 'all' },
@@ -137,58 +139,47 @@ const filters = [
 const activeFilter = ref('all')
 const search = ref('')
 
-// ── Static scan data (replace with API call) ──────────
-const scans = [
-  {
-    id: 1,
-    name: 'Volvariella volvacea',
-    classification: 'Edible',
-    confidence: 94,
-    date: 'Apr 27, 2026 · 3:45 PM',
-    location: 'Quezon City, PH',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Volvariella_volvacea_01.jpg/320px-Volvariella_volvacea_01.jpg',
-  },
-  {
-    id: 2,
-    name: 'Amanita phalloides',
-    classification: 'Poisonous',
-    confidence: 88,
-    date: 'Apr 25, 2026 · 10:12 AM',
-    location: 'Baguio City, PH',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Amanita_phalloides_1.JPG/320px-Amanita_phalloides_1.JPG',
-  },
-  {
-    id: 3,
-    name: 'Lentinula edodes',
-    classification: 'Edible',
-    confidence: 97,
-    date: 'Apr 24, 2026 · 2:00 PM',
-    location: 'Benguet, PH',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Shiitakemushroom.jpg/320px-Shiitakemushroom.jpg',
-  },
-  {
-    id: 4,
-    name: 'Galerina marginata',
-    classification: 'Poisonous',
-    confidence: 81,
-    date: 'Apr 22, 2026 · 8:30 AM',
-    location: 'Mount Makiling, PH',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Galerina_marginata_8946.jpg/320px-Galerina_marginata_8946.jpg',
-  },
-  {
-    id: 5,
-    name: 'Pleurotus ostreatus',
-    classification: 'Edible',
-    confidence: 96,
-    date: 'Apr 20, 2026 · 4:15 PM',
-    location: 'Laguna, PH',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Oyster_mushroom_%28Pleurotus_ostreatus%29.jpg/320px-Oyster_mushroom_%28Pleurotus_ostreatus%29.jpg',
-  },
-]
+// ── Dynamic scan data ─────────────────────────────────
+interface MushroomScan {
+  id: number;
+  name: string;
+  classification: string;
+  confidence: number;
+  date: string;
+  location: string;
+  image: string;
+}
 
+const scans = ref<MushroomScan[]>([])
+
+onMounted(async () => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    const data = await $fetch<any[]>(`${config.public.apiBase}/scans`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    
+    scans.value = data.map(scan => {
+      const rawClass = scan.result_classification || 'unknown';
+      return {
+        id: scan.id,
+        name: scan.result_name || 'Unknown Species',
+        classification: rawClass.charAt(0).toUpperCase() + rawClass.slice(1),
+        confidence: scan.confidence_level || 0,
+        location: scan.latitude && scan.longitude ? `${scan.latitude}, ${scan.longitude}` : 'Unknown Location',
+        date: new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
+        image: scan.image_path ? `${config.public.apiBase.replace('/api', '')}/storage/${scan.image_path}` : 'https://placehold.co/320x320/e8f0e8/a3a3a3?text=No+Image'
+      }
+    })
+  } catch (error) {
+    console.error('Failed to fetch scans:', error)
+  }
+})
 // ── Computed filtered list ────────────────────────────
 const filtered = computed(() =>
-  scans.filter(s => {
+  scans.value.filter(s => {
     const matchesFilter = activeFilter.value === 'all' || s.classification === activeFilter.value
     const matchesSearch = s.name.toLowerCase().includes(search.value.toLowerCase())
     return matchesFilter && matchesSearch
