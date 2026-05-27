@@ -1,153 +1,147 @@
 <template>
-  <div class="settings-page">
-    <div class="page-header">
+  <div class="flex flex-col gap-[22px]">
+    <div class="flex items-center justify-between gap-3">
       <div>
-        <h1 class="page-title">System Settings</h1>
-        <p class="page-sub">Configure application behaviour and administrative preferences</p>
+        <h1 class="text-[22px] font-bold text-[#0f172a]">System Settings</h1>
+        <p class="text-[13.5px] text-[#64748b] mt-[3px]">Configure application behaviour and administrative preferences</p>
       </div>
-      <button class="save-all-btn" @click="saveAll">💾 Save Changes</button>
+      <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="saveAll">💾 Save Changes</button>
     </div>
 
-    <div class="settings-grid">
-
+    <div class="grid grid-cols-2 gap-4 items-start">
       <!-- LEFT COLUMN -->
-      <div class="settings-col">
-
+      <div class="flex flex-col gap-4">
         <!-- AI Model Settings -->
-        <div class="settings-card">
-          <div class="card-head">
-            <span class="card-icon" style="background:#d1fae5;color:#059669">🤖</span>
-            <p class="card-title">AI Model Settings</p>
+        <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
+          <div class="flex items-center gap-2.5">
+            <span class="w-[34px] h-[34px] rounded-lg text-[17px] flex items-center justify-center shrink-0 bg-[#d1fae5] text-[#059669]">🤖</span>
+            <p class="text-[14px] font-bold text-[#0f172a] flex-1">AI Model Settings</p>
           </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <p class="setting-label">Confidence Threshold</p>
-              <p class="setting-desc">Minimum score required for a classification result</p>
+          <div class="flex items-center justify-between gap-4 py-2.5 border-t border-[#f1f5f9]">
+            <div class="flex-1 min-w-0">
+              <p class="text-[13.5px] font-medium text-[#0f172a]">Confidence Threshold</p>
+              <p class="text-[12px] text-[#94a3b8] mt-0.5">Minimum score required for a classification result</p>
             </div>
-            <div class="slider-wrap">
-              <input type="range" v-model.number="model.threshold" min="50" max="99" class="slider"/>
-              <span class="slider-val">{{ model.threshold }}%</span>
+            <div class="flex items-center gap-2.5">
+              <input type="range" v-model.number="model.threshold" min="50" max="99" class="w-[120px] accent-[#10b981] cursor-pointer"/>
+              <span class="text-[13.5px] font-bold text-[#10b981] min-w-[36px] text-right">{{ model.threshold }}%</span>
             </div>
           </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <p class="setting-label">Model Version</p>
-              <p class="setting-desc">Active identification model</p>
+          <div class="flex items-center justify-between gap-4 py-2.5 border-t border-[#f1f5f9]">
+            <div class="flex-1 min-w-0">
+              <p class="text-[13.5px] font-medium text-[#0f172a]">Model Version</p>
+              <p class="text-[12px] text-[#94a3b8] mt-0.5">Active identification model</p>
             </div>
-            <select v-model="model.version" class="setting-select">
+            <select v-model="model.version" class="py-[7px] px-3 border border-[#e2e8f0] rounded-lg text-[13px] font-sans bg-white cursor-pointer outline-none">
               <option>MycoNet v2.1 (Stable)</option>
               <option>MycoNet v2.2 (Beta)</option>
             </select>
           </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <p class="setting-label">Multi-label Classification</p>
-              <p class="setting-desc">Allow identification of multiple species per scan</p>
+          <div class="flex items-center justify-between gap-4 py-2.5 border-t border-[#f1f5f9]">
+            <div class="flex-1 min-w-0">
+              <p class="text-[13.5px] font-medium text-[#0f172a]">Multi-label Classification</p>
+              <p class="text-[12px] text-[#94a3b8] mt-0.5">Allow identification of multiple species per scan</p>
             </div>
-            <button class="toggle" :class="{ 'toggle--on': model.multiLabel }" @click="model.multiLabel = !model.multiLabel"/>
+            <button class="relative w-[42px] h-6 rounded-full border-none cursor-pointer shrink-0 transition-colors duration-200" :class="model.multiLabel ? 'bg-[#10b981]' : 'bg-[#d1d5db]'" @click="model.multiLabel = !model.multiLabel">
+              <div class="absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-transform duration-200" :class="model.multiLabel ? 'translate-x-[18px]' : ''"></div>
+            </button>
           </div>
-          <div class="model-info-box">
-            <div class="info-row">
-              <span class="info-key">Last updated:</span>
-              <span class="info-val">May 1, 2026</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key">Training dataset:</span>
-              <span class="info-val">48,500 images</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key">Accuracy (val):</span>
-              <span class="info-val" style="color:#10b981;font-weight:700">94.2%</span>
-            </div>
+          <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5 flex flex-col gap-1.5">
+            <div class="flex justify-between items-center"><span class="text-[12.5px] text-[#64748b]">Last updated:</span><span class="text-[13px] font-medium text-[#0f172a]">May 1, 2026</span></div>
+            <div class="flex justify-between items-center"><span class="text-[12.5px] text-[#64748b]">Training dataset:</span><span class="text-[13px] font-medium text-[#0f172a]">48,500 images</span></div>
+            <div class="flex justify-between items-center"><span class="text-[12.5px] text-[#64748b]">Accuracy (val):</span><span class="text-[13px] font-bold text-[#10b981]">94.2%</span></div>
           </div>
         </div>
 
         <!-- Data Retention -->
-        <div class="settings-card">
-          <div class="card-head">
-            <span class="card-icon" style="background:#fef3c7;color:#d97706">💾</span>
-            <p class="card-title">Data Retention</p>
+        <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
+          <div class="flex items-center gap-2.5">
+            <span class="w-[34px] h-[34px] rounded-lg text-[17px] flex items-center justify-center shrink-0 bg-[#fef3c7] text-[#d97706]">💾</span>
+            <p class="text-[14px] font-bold text-[#0f172a] flex-1">Data Retention</p>
           </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <p class="setting-label">Auto-delete Scan History</p>
-              <p class="setting-desc">Automatically remove old scan records</p>
+          <div class="flex items-center justify-between gap-4 py-2.5 border-t border-[#f1f5f9]">
+            <div class="flex-1 min-w-0">
+              <p class="text-[13.5px] font-medium text-[#0f172a]">Auto-delete Scan History</p>
+              <p class="text-[12px] text-[#94a3b8] mt-0.5">Automatically remove old scan records</p>
             </div>
-            <button class="toggle" :class="{ 'toggle--on': retention.autoDelete }" @click="retention.autoDelete = !retention.autoDelete"/>
+            <button class="relative w-[42px] h-6 rounded-full border-none cursor-pointer shrink-0 transition-colors duration-200" :class="retention.autoDelete ? 'bg-[#10b981]' : 'bg-[#d1d5db]'" @click="retention.autoDelete = !retention.autoDelete">
+              <div class="absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-transform duration-200" :class="retention.autoDelete ? 'translate-x-[18px]' : ''"></div>
+            </button>
           </div>
-          <div v-if="retention.autoDelete" class="setting-row">
-            <div class="setting-info">
-              <p class="setting-label">Retention Period</p>
-              <p class="setting-desc">Days before scan records are deleted</p>
+          <div v-if="retention.autoDelete" class="flex items-center justify-between gap-4 py-2.5 border-t border-[#f1f5f9]">
+            <div class="flex-1 min-w-0">
+              <p class="text-[13.5px] font-medium text-[#0f172a]">Retention Period</p>
+              <p class="text-[12px] text-[#94a3b8] mt-0.5">Days before scan records are deleted</p>
             </div>
-            <div class="number-input-wrap">
-              <input type="number" v-model.number="retention.days" min="30" max="365" class="number-input"/>
-              <span class="number-unit">days</span>
+            <div class="flex items-center gap-1.5">
+              <input type="number" v-model.number="retention.days" min="30" max="365" class="w-[72px] py-[7px] px-2.5 border border-[#e2e8f0] rounded-lg text-[14px] font-sans text-center outline-none focus:border-[#10b981]"/>
+              <span class="text-[13px] text-[#64748b]">days</span>
             </div>
           </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <p class="setting-label">Backup Frequency</p>
-              <p class="setting-desc">Database backup schedule</p>
+          <div class="flex items-center justify-between gap-4 py-2.5 border-t border-[#f1f5f9]">
+            <div class="flex-1 min-w-0">
+              <p class="text-[13.5px] font-medium text-[#0f172a]">Backup Frequency</p>
+              <p class="text-[12px] text-[#94a3b8] mt-0.5">Database backup schedule</p>
             </div>
-            <select v-model="retention.backup" class="setting-select">
+            <select v-model="retention.backup" class="py-[7px] px-3 border border-[#e2e8f0] rounded-lg text-[13px] font-sans bg-white cursor-pointer outline-none">
               <option>Daily</option>
               <option>Weekly</option>
               <option>Monthly</option>
             </select>
           </div>
         </div>
-
       </div>
 
       <!-- RIGHT COLUMN -->
-      <div class="settings-col">
-
+      <div class="flex flex-col gap-4">
         <!-- Maintenance Mode -->
-        <div class="settings-card" :class="{ 'card--warning': maintenance.enabled }">
-          <div class="card-head">
-            <span class="card-icon" style="background:#fee2e2;color:#dc2626">🔧</span>
-            <p class="card-title">Maintenance Mode</p>
-            <span v-if="maintenance.enabled" class="warning-badge">ACTIVE</span>
+        <div class="border rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]" :class="maintenance.enabled ? 'bg-[#fff8f8] border-[#fca5a5]' : 'bg-white border-[#e2e8f0]'">
+          <div class="flex items-center gap-2.5">
+            <span class="w-[34px] h-[34px] rounded-lg text-[17px] flex items-center justify-center shrink-0 bg-[#fee2e2] text-[#dc2626]">🔧</span>
+            <p class="text-[14px] font-bold text-[#0f172a] flex-1">Maintenance Mode</p>
+            <span v-if="maintenance.enabled" class="text-[11px] font-bold text-[#dc2626] bg-[#fee2e2] py-[3px] px-2 rounded-[20px]">ACTIVE</span>
           </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <p class="setting-label">Enable Maintenance Mode</p>
-              <p class="setting-desc">Users will see a maintenance notice; scanning is disabled</p>
+          <div class="flex items-center justify-between gap-4 py-2.5 border-t border-[#f1f5f9]">
+            <div class="flex-1 min-w-0">
+              <p class="text-[13.5px] font-medium text-[#0f172a]">Enable Maintenance Mode</p>
+              <p class="text-[12px] text-[#94a3b8] mt-0.5">Users will see a maintenance notice; scanning is disabled</p>
             </div>
-            <button class="toggle" :class="{ 'toggle--on': maintenance.enabled, 'toggle--danger': maintenance.enabled }"
-                    @click="maintenance.enabled = !maintenance.enabled"/>
+            <button class="relative w-[42px] h-6 rounded-full border-none cursor-pointer shrink-0 transition-colors duration-200" :class="maintenance.enabled ? 'bg-[#ef4444]' : 'bg-[#d1d5db]'" @click="maintenance.enabled = !maintenance.enabled">
+              <div class="absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-transform duration-200" :class="maintenance.enabled ? 'translate-x-[18px]' : ''"></div>
+            </button>
           </div>
-          <div v-if="maintenance.enabled" class="setting-row">
-            <div class="setting-info">
-              <p class="setting-label">Maintenance Message</p>
-            </div>
-            <textarea v-model="maintenance.message" class="maint-textarea" rows="2"
-              placeholder="We're currently performing scheduled maintenance…"/>
+          <div v-if="maintenance.enabled" class="flex items-center justify-between gap-4 py-2.5 border-t border-[#f1f5f9]">
+            <div class="flex-1 min-w-0"><p class="text-[13.5px] font-medium text-[#0f172a]">Maintenance Message</p></div>
+            <textarea v-model="maintenance.message" class="w-full py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13px] font-sans resize-y outline-none shrink-0 focus:border-[#ef4444]" rows="2" placeholder="We're currently performing scheduled maintenance…"/>
           </div>
         </div>
 
         <!-- Admin Accounts -->
-        <div class="settings-card">
-          <div class="card-head">
-            <span class="card-icon" style="background:#f3e8ff;color:#7c3aed">👑</span>
-            <p class="card-title">Admin Accounts</p>
-            <button class="add-admin-btn" @click="showAddAdmin = true">+ Add Admin</button>
+        <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
+          <div class="flex items-center gap-2.5">
+            <span class="w-[34px] h-[34px] rounded-lg text-[17px] flex items-center justify-center shrink-0 bg-[#f3e8ff] text-[#7c3aed]">👑</span>
+            <p class="text-[14px] font-bold text-[#0f172a] flex-1">Admin Accounts</p>
+            <button class="py-1.5 px-3.5 rounded-[7px] bg-[#f1f5f9] border border-[#e2e8f0] text-[12.5px] font-semibold cursor-pointer font-sans text-[#0f172a] transition-colors duration-[0.18s] hover:bg-[#e2e8f0]" @click="showAddAdmin = true">+ Add Admin</button>
           </div>
-          <table class="admin-table">
+          <table class="w-full border-collapse">
             <thead>
-              <tr><th>Name</th><th>Email</th><th>Added</th><th></th></tr>
+              <tr>
+                <th class="text-left text-[11px] font-semibold text-[#94a3b8] uppercase py-1.5 px-2 border-b border-[#f1f5f9]">Name</th>
+                <th class="text-left text-[11px] font-semibold text-[#94a3b8] uppercase py-1.5 px-2 border-b border-[#f1f5f9]">Email</th>
+                <th class="text-left text-[11px] font-semibold text-[#94a3b8] uppercase py-1.5 px-2 border-b border-[#f1f5f9]">Added</th>
+                <th class="text-left text-[11px] font-semibold text-[#94a3b8] uppercase py-1.5 px-2 border-b border-[#f1f5f9]"></th>
+              </tr>
             </thead>
             <tbody>
               <tr v-for="a in admins" :key="a.id">
-                <td class="td-admin-name">
-                  <div class="mini-avatar" :style="{ background: a.color }">{{ a.initials }}</div>
+                <td class="flex items-center gap-2 font-medium py-[9px] px-2 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <div class="w-[26px] h-[26px] rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0" :style="{ background: a.color }">{{ a.initials }}</div>
                   {{ a.name }}
                 </td>
-                <td class="td-email">{{ a.email }}</td>
-                <td class="td-date">{{ a.added }}</td>
-                <td>
-                  <button class="remove-btn" @click="removeAdmin(a)" title="Remove admin">✕</button>
+                <td class="text-[#64748b] text-[12.5px] py-[9px] px-2 border-b border-[#f8fafc] align-middle group-last:border-none">{{ a.email }}</td>
+                <td class="text-[#94a3b8] text-[12px] whitespace-nowrap py-[9px] px-2 border-b border-[#f8fafc] align-middle group-last:border-none">{{ a.added }}</td>
+                <td class="py-[9px] px-2 border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <button class="w-6 h-6 rounded-md border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[11px] text-[#94a3b8] transition-all duration-[0.18s] hover:bg-[#fee2e2] hover:border-[#fca5a5] hover:text-[#ef4444]" @click="removeAdmin(a)" title="Remove admin">✕</button>
                 </td>
               </tr>
             </tbody>
@@ -155,67 +149,60 @@
         </div>
 
         <!-- App Info -->
-        <div class="settings-card">
-          <div class="card-head">
-            <span class="card-icon" style="background:#dbeafe;color:#1d4ed8">ℹ️</span>
-            <p class="card-title">App Information</p>
+        <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
+          <div class="flex items-center gap-2.5">
+            <span class="w-[34px] h-[34px] rounded-lg text-[17px] flex items-center justify-center shrink-0 bg-[#dbeafe] text-[#1d4ed8]">ℹ️</span>
+            <p class="text-[14px] font-bold text-[#0f172a] flex-1">App Information</p>
           </div>
-          <div class="info-list">
-            <div class="info-row2"><span class="info-key">App Name</span><span class="info-val2">MycoVision</span></div>
-            <div class="info-row2"><span class="info-key">Version</span><span class="info-val2">1.0.0-beta</span></div>
-            <div class="info-row2"><span class="info-key">Environment</span><span class="info-val2 env-chip">Development</span></div>
-            <div class="info-row2"><span class="info-key">Last Deploy</span><span class="info-val2">May 7, 2026</span></div>
-            <div class="info-row2"><span class="info-key">Backend API</span><span class="info-val2 status-ok">● Online</span></div>
+          <div class="flex flex-col">
+            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">App Name</span><span class="text-[13px] font-semibold text-[#0f172a]">MycoVision</span></div>
+            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">Version</span><span class="text-[13px] font-semibold text-[#0f172a]">1.0.0-beta</span></div>
+            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">Environment</span><span class="bg-[#fef3c7] text-[#92400e] py-[2px] px-2.5 rounded-[20px] text-[12px] font-semibold">Development</span></div>
+            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">Last Deploy</span><span class="text-[13px] font-semibold text-[#0f172a]">May 7, 2026</span></div>
+            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">Backend API</span><span class="text-[13px] font-semibold text-[#10b981]">● Online</span></div>
           </div>
         </div>
-
       </div>
     </div>
 
     <!-- Add Admin Modal -->
-    <div v-if="showAddAdmin" class="modal-overlay" @click.self="showAddAdmin = false">
-      <div class="modal">
-        <div class="modal-header">
-          <p class="modal-title">Add Administrator</p>
-          <button class="modal-close" @click="showAddAdmin = false">✕</button>
+    <div v-if="showAddAdmin" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] backdrop-blur-[2px]" @click.self="showAddAdmin = false">
+      <div class="bg-white rounded-2xl w-[440px] max-w-[90vw] shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
+        <div class="flex items-center justify-between py-[18px] px-[22px] border-b border-[#f1f5f9]">
+          <p class="text-[15px] font-bold text-[#0f172a]">Add Administrator</p>
+          <button class="bg-transparent border-none cursor-pointer text-[16px] text-[#94a3b8] hover:text-[#ef4444]" @click="showAddAdmin = false">✕</button>
         </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">Full Name *</label>
-            <input v-model="newAdmin.name" class="form-input" placeholder="e.g. John Doe"/>
+        <div class="p-[22px] flex flex-col gap-3.5">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#475569]">Full Name *</label>
+            <input v-model="newAdmin.name" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] outline-none focus:border-[#10b981]" placeholder="e.g. John Doe"/>
           </div>
-          <div class="form-group">
-            <label class="form-label">Email *</label>
-            <input v-model="newAdmin.email" class="form-input" type="email" placeholder="admin@email.com"/>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#475569]">Email *</label>
+            <input v-model="newAdmin.email" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] outline-none focus:border-[#10b981]" type="email" placeholder="admin@email.com"/>
           </div>
-          <div class="form-group">
-            <label class="form-label">Temporary Password *</label>
-            <input v-model="newAdmin.password" class="form-input" type="password" placeholder="••••••••"/>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#475569]">Temporary Password *</label>
+            <input v-model="newAdmin.password" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] outline-none focus:border-[#10b981]" type="password" placeholder="••••••••"/>
           </div>
-          <div class="modal-actions">
-            <button class="cancel-btn" @click="showAddAdmin = false">Cancel</button>
-            <button class="save-btn" @click="addAdmin">Add Admin</button>
+          <div class="flex justify-end gap-2.5 pt-1">
+            <button class="py-[9px] px-5 rounded-lg border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans cursor-pointer text-[#475569]" @click="showAddAdmin = false">Cancel</button>
+            <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer" @click="addAdmin">Add Admin</button>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
-
 const model = reactive({ threshold: 75, version: 'MycoNet v2.1 (Stable)', multiLabel: false })
 const retention = reactive({ autoDelete: true, days: 180, backup: 'Daily' })
 const maintenance = reactive({ enabled: false, message: '' })
 const showAddAdmin = ref(false)
 const newAdmin = reactive({ name: '', email: '', password: '' })
 
-const admins = ref([
-  { id: 1, name: 'Ana Reyes',    initials: 'AR', email: 'ana@email.com',  added: 'Feb 14, 2026', color: '#8b5cf6' },
-  { id: 2, name: 'Mark Bautista',initials: 'MB', email: 'mark@email.com', added: 'Jan 05, 2026', color: '#6366f1' },
-])
+const admins = ref<any[]>([])
 
 let nextAdminId = 3
 
@@ -234,88 +221,5 @@ function removeAdmin(a: any) {
 }
 
 function saveAll() { alert('Settings saved successfully!') }
+definePageMeta({ layout: 'admin' })
 </script>
-
-<style scoped>
-.settings-page { display: flex; flex-direction: column; gap: 22px; }
-.page-header   { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.page-title    { font-size: 22px; font-weight: 700; color: #0f172a; }
-.page-sub      { font-size: 13.5px; color: #64748b; margin-top: 3px; }
-.save-all-btn  { padding: 9px 20px; border-radius: 8px; background: linear-gradient(135deg,#10b981,#059669); color: #fff; border: none; font-size: 13.5px; font-weight: 600; font-family: inherit; cursor: pointer; transition: opacity .18s; }
-.save-all-btn:hover { opacity: .88; }
-
-.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
-.settings-col  { display: flex; flex-direction: column; gap: 16px; }
-.settings-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px; transition: border-color .18s; }
-.card--warning { border-color: #fca5a5; background: #fff8f8; }
-
-.card-head  { display: flex; align-items: center; gap: 10px; }
-.card-icon  { width: 34px; height: 34px; border-radius: 8px; font-size: 17px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.card-title { font-size: 14px; font-weight: 700; color: #0f172a; flex: 1; }
-.warning-badge { font-size: 11px; font-weight: 700; color: #dc2626; background: #fee2e2; padding: 3px 8px; border-radius: 20px; }
-
-.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid #f1f5f9; }
-.setting-info { flex: 1; min-width: 0; }
-.setting-label { font-size: 13.5px; font-weight: 500; color: #0f172a; }
-.setting-desc  { font-size: 12px; color: #94a3b8; margin-top: 2px; }
-
-.slider-wrap { display: flex; align-items: center; gap: 10px; }
-.slider      { width: 120px; accent-color: #10b981; cursor: pointer; }
-.slider-val  { font-size: 13.5px; font-weight: 700; color: #10b981; min-width: 36px; text-align: right; }
-.setting-select { padding: 7px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; cursor: pointer; outline: none; }
-.number-input-wrap { display: flex; align-items: center; gap: 6px; }
-.number-input { width: 72px; padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; text-align: center; outline: none; }
-.number-input:focus { border-color: #10b981; }
-.number-unit { font-size: 13px; color: #64748b; }
-
-.toggle { width: 42px; height: 24px; border-radius: 12px; background: #d1d5db; border: none; cursor: pointer; position: relative; flex-shrink: 0; transition: background .2s; }
-.toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
-.toggle--on { background: #10b981; }
-.toggle--on::after { transform: translateX(18px); }
-.toggle--danger { background: #ef4444; }
-
-.model-info-box { background: #f8fafc; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
-.info-row  { display: flex; justify-content: space-between; align-items: center; }
-.info-key  { font-size: 12.5px; color: #64748b; }
-.info-val  { font-size: 13px; color: #0f172a; font-weight: 500; }
-
-.maint-textarea { width: 100%; padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; outline: none; flex-shrink: 0; }
-.maint-textarea:focus { border-color: #ef4444; }
-
-.add-admin-btn { padding: 6px 14px; border-radius: 7px; background: #f1f5f9; border: 1px solid #e2e8f0; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; color: #0f172a; transition: background .18s; }
-.add-admin-btn:hover { background: #e2e8f0; }
-
-.admin-table { width: 100%; border-collapse: collapse; }
-.admin-table th { text-align: left; font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid #f1f5f9; }
-.admin-table td { padding: 9px 8px; font-size: 13px; color: #334155; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
-.admin-table tr:last-child td { border-bottom: none; }
-.td-admin-name { display: flex; align-items: center; gap: 8px; font-weight: 500; }
-.td-email { color: #64748b; font-size: 12.5px; }
-.td-date  { color: #94a3b8; font-size: 12px; white-space: nowrap; }
-.mini-avatar { width: 26px; height: 26px; border-radius: 50%; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.remove-btn  { width: 24px; height: 24px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; font-size: 11px; color: #94a3b8; transition: all .18s; }
-.remove-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
-
-.info-list { display: flex; flex-direction: column; gap: 0; }
-.info-row2 { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid #f8fafc; }
-.info-row2:last-child { border-bottom: none; }
-.info-val2   { font-size: 13px; font-weight: 600; color: #0f172a; }
-.env-chip    { background: #fef3c7; color: #92400e; padding: 2px 10px; border-radius: 20px; font-size: 12px; }
-.status-ok   { color: #10b981; }
-
-/* Modal */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px); }
-.modal  { background: #fff; border-radius: 16px; width: 440px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid #f1f5f9; }
-.modal-title  { font-size: 15px; font-weight: 700; color: #0f172a; }
-.modal-close  { background: transparent; border: none; cursor: pointer; font-size: 16px; color: #94a3b8; }
-.modal-close:hover { color: #ef4444; }
-.modal-body   { padding: 22px; display: flex; flex-direction: column; gap: 14px; }
-.form-group   { display: flex; flex-direction: column; gap: 6px; }
-.form-label   { font-size: 12.5px; font-weight: 600; color: #475569; }
-.form-input   { padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13.5px; font-family: inherit; color: #0f172a; outline: none; }
-.form-input:focus { border-color: #10b981; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
-.cancel-btn   { padding: 9px 20px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; font-size: 13.5px; font-weight: 500; font-family: inherit; cursor: pointer; color: #475569; }
-.save-btn     { padding: 9px 20px; border-radius: 8px; background: linear-gradient(135deg,#10b981,#059669); color: #fff; border: none; font-size: 13.5px; font-weight: 600; font-family: inherit; cursor: pointer; }
-</style>

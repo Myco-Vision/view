@@ -1,21 +1,21 @@
 <template>
-  <div class="users-page">
-    <div class="page-header">
+  <div class="flex flex-col gap-[22px]">
+    <div class="flex items-end justify-between gap-3 flex-wrap">
       <div>
-        <h1 class="page-title">User Management</h1>
-        <p class="page-sub">{{ users.length }} registered users</p>
+        <h1 class="text-[22px] font-bold text-[#0f172a]">User Management</h1>
+        <p class="text-[13.5px] text-[#64748b] mt-[3px]">{{ users.length }} registered users</p>
       </div>
-      <div class="header-actions">
-        <div class="search-wrap">
-          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="searchQuery" class="search-input" placeholder="Search users…" />
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <div class="relative">
+          <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input v-model="searchQuery" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-[220px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search users…" />
         </div>
-        <select v-model="roleFilter" class="filter-select">
+        <select v-model="roleFilter" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none cursor-pointer">
           <option value="">All Roles</option>
           <option value="user">User</option>
           <option value="admin">Admin</option>
         </select>
-        <select v-model="statusFilter" class="filter-select">
+        <select v-model="statusFilter" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none cursor-pointer">
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="disabled">Disabled</option>
@@ -23,86 +23,88 @@
       </div>
     </div>
 
-    <div class="table-card">
-      <table class="data-table">
+    <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
+      <table class="w-full border-collapse">
         <thead>
           <tr>
-            <th><input type="checkbox" @change="toggleAll" /></th>
-            <th>User</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Joined</th>
-            <th>Total Scans</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]"><input type="checkbox" @change="toggleAll" /></th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">User</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Email</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Role</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Joined</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Total Scans</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Status</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in filteredUsers" :key="user.id">
-            <td><input type="checkbox" /></td>
-            <td class="td-user">
-              <div class="user-avatar" :style="{ background: user.avatarColor }">{{ user.initials }}</div>
-              <div>
-                <p class="user-name">{{ user.name }}</p>
-                <p class="user-id">ID: #{{ user.id }}</p>
+          <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-[#f8fafc] group">
+            <td class="py-3 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none"><input type="checkbox" /></td>
+            <td class="py-3 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+              <div class="flex items-center gap-2.5">
+                <div class="w-[34px] h-[34px] rounded-full text-white text-[12px] font-bold flex items-center justify-center shrink-0" :style="{ background: user.avatarColor }">{{ user.initials }}</div>
+                <div>
+                  <p class="font-semibold text-[#0f172a] text-[13.5px]">{{ user.name }}</p>
+                  <p class="text-[11.5px] text-[#94a3b8]">ID: #{{ user.id }}</p>
+                </div>
               </div>
             </td>
-            <td class="td-email">{{ user.email }}</td>
-            <td>
-              <span class="role-chip" :class="`role-chip--${user.role}`">{{ user.role }}</span>
+            <td class="py-3 px-3.5 text-[13px] text-[#475569] border-b border-[#f8fafc] align-middle group-last:border-none">{{ user.email }}</td>
+            <td class="py-3 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+              <span class="py-[3px] px-[10px] rounded-[20px] text-[11.5px] font-semibold capitalize" :class="user.role === 'admin' ? 'bg-[#f3e8ff] text-[#6d28d9]' : 'bg-[#dbeafe] text-[#1d4ed8]'">{{ user.role }}</span>
             </td>
-            <td class="td-muted">{{ user.joined }}</td>
-            <td class="td-scans">{{ user.scans }}</td>
-            <td>
-              <span class="status-dot" :class="user.status === 'active' ? 'dot--active' : 'dot--disabled'">
+            <td class="py-3 px-3.5 text-[13px] text-[#94a3b8] border-b border-[#f8fafc] align-middle group-last:border-none">{{ user.joined }}</td>
+            <td class="py-3 px-3.5 text-[13px] font-semibold text-[#0f172a] border-b border-[#f8fafc] align-middle group-last:border-none">{{ user.scans }}</td>
+            <td class="py-3 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+              <span class="text-[12px] font-semibold py-1 px-[10px] rounded-[20px] capitalize" :class="user.status === 'active' ? 'bg-[#d1fae5] text-[#065f46]' : 'bg-[#fee2e2] text-[#991b1b]'">
                 {{ user.status }}
               </span>
             </td>
-            <td>
-              <div class="action-btns">
-                <button class="act-btn act-btn--view" title="View profile" @click="openUser(user)">👁</button>
-                <button class="act-btn" :title="user.status === 'active' ? 'Disable' : 'Enable'"
+            <td class="py-3 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+              <div class="flex gap-1.5">
+                <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" title="View profile" @click="openUser(user)">👁</button>
+                <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" :title="user.status === 'active' ? 'Disable' : 'Enable'"
                         @click="toggleStatus(user)">
                   {{ user.status === 'active' ? '🔒' : '🔓' }}
                 </button>
-                <button class="act-btn act-btn--del" title="Delete user" @click="deleteUser(user)">🗑</button>
+                <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#fee2e2] hover:border-[#fecaca]" title="Delete user" @click="deleteUser(user)">🗑</button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
 
-      <div class="table-footer">
-        <span class="table-count">Showing {{ filteredUsers.length }} of {{ users.length }} users</span>
-        <div class="pagination">
-          <button class="page-btn" :disabled="page === 1" @click="page--">‹</button>
-          <span class="page-info">Page {{ page }} of {{ totalPages }}</span>
-          <button class="page-btn" :disabled="page === totalPages" @click="page++">›</button>
+      <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
+        <span class="text-[12.5px] text-[#64748b]">Showing {{ filteredUsers.length }} of {{ users.length }} users</span>
+        <div class="flex items-center gap-2.5">
+          <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="page === 1" @click="page--">‹</button>
+          <span class="text-[12.5px] text-[#475569]">Page {{ page }} of {{ totalPages }}</span>
+          <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="page === totalPages" @click="page++">›</button>
         </div>
       </div>
     </div>
 
     <!-- User Detail Modal -->
-    <div v-if="selectedUser" class="modal-overlay" @click.self="selectedUser = null">
-      <div class="modal">
-        <div class="modal-header">
-          <p class="modal-title">User Profile</p>
-          <button class="modal-close" @click="selectedUser = null">✕</button>
+    <div v-if="selectedUser" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] backdrop-blur-[2px]" @click.self="selectedUser = null">
+      <div class="bg-white rounded-2xl w-[420px] max-w-[90vw] shadow-[0_20px_60px_rgba(0,0,0,0.2)] overflow-hidden">
+        <div class="flex items-center justify-between py-[18px] px-[22px] border-b border-[#f1f5f9]">
+          <p class="text-[15px] font-bold text-[#0f172a]">User Profile</p>
+          <button class="bg-transparent border-none cursor-pointer text-[16px] text-[#94a3b8] p-1 transition-colors duration-[0.18s] hover:text-[#ef4444]" @click="selectedUser = null">✕</button>
         </div>
-        <div class="modal-body">
-          <div class="profile-row">
-            <div class="profile-avatar" :style="{ background: selectedUser.avatarColor }">{{ selectedUser.initials }}</div>
+        <div class="p-[22px] flex flex-col gap-[18px]">
+          <div class="flex items-center gap-3.5">
+            <div class="w-[54px] h-[54px] rounded-xl text-white text-[20px] font-bold flex items-center justify-center" :style="{ background: selectedUser.avatarColor }">{{ selectedUser.initials }}</div>
             <div>
-              <p class="profile-name">{{ selectedUser.name }}</p>
-              <p class="profile-email">{{ selectedUser.email }}</p>
-              <span class="role-chip" :class="`role-chip--${selectedUser.role}`">{{ selectedUser.role }}</span>
+              <p class="text-[16px] font-bold text-[#0f172a]">{{ selectedUser.name }}</p>
+              <p class="text-[13px] text-[#64748b] my-[2px] mb-1.5">{{ selectedUser.email }}</p>
+              <span class="py-[3px] px-[10px] rounded-[20px] text-[11.5px] font-semibold capitalize" :class="selectedUser.role === 'admin' ? 'bg-[#f3e8ff] text-[#6d28d9]' : 'bg-[#dbeafe] text-[#1d4ed8]'">{{ selectedUser.role }}</span>
             </div>
           </div>
-          <div class="detail-grid">
-            <div class="detail-item"><p class="detail-label">User ID</p><p class="detail-val">#{{ selectedUser.id }}</p></div>
-            <div class="detail-item"><p class="detail-label">Joined</p><p class="detail-val">{{ selectedUser.joined }}</p></div>
-            <div class="detail-item"><p class="detail-label">Total Scans</p><p class="detail-val">{{ selectedUser.scans }}</p></div>
-            <div class="detail-item"><p class="detail-label">Status</p><p class="detail-val">{{ selectedUser.status }}</p></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">User ID</p><p class="text-[14px] font-semibold text-[#0f172a]">#{{ selectedUser.id }}</p></div>
+            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Joined</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedUser.joined }}</p></div>
+            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Total Scans</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedUser.scans }}</p></div>
+            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Status</p><p class="text-[14px] font-semibold text-[#0f172a] capitalize">{{ selectedUser.status }}</p></div>
           </div>
         </div>
       </div>
@@ -120,18 +122,7 @@ const page         = ref(1)
 const perPage      = 8
 const selectedUser = ref<any>(null)
 
-const users = ref([
-  { id: 1001, name: 'Maria Salem',    initials: 'MS', email: 'maria@email.com',    role: 'user',  joined: 'Apr 12, 2026', scans: 47,  status: 'active',   avatarColor: '#10b981' },
-  { id: 1002, name: 'Juan Dela Cruz', initials: 'JD', email: 'juan@email.com',     role: 'user',  joined: 'Mar 28, 2026', scans: 23,  status: 'active',   avatarColor: '#3b82f6' },
-  { id: 1003, name: 'Ana Reyes',      initials: 'AR', email: 'ana@email.com',      role: 'admin', joined: 'Feb 14, 2026', scans: 112, status: 'active',   avatarColor: '#8b5cf6' },
-  { id: 1004, name: 'Carlo Mendoza',  initials: 'CM', email: 'carlo@email.com',    role: 'user',  joined: 'Apr 01, 2026', scans: 8,   status: 'disabled', avatarColor: '#f59e0b' },
-  { id: 1005, name: 'Lisa Torres',    initials: 'LT', email: 'lisa@email.com',     role: 'user',  joined: 'Jan 20, 2026', scans: 65,  status: 'active',   avatarColor: '#ef4444' },
-  { id: 1006, name: 'Ben Santos',     initials: 'BS', email: 'ben@email.com',      role: 'user',  joined: 'Mar 05, 2026', scans: 31,  status: 'active',   avatarColor: '#06b6d4' },
-  { id: 1007, name: 'Grace Lim',      initials: 'GL', email: 'grace@email.com',    role: 'user',  joined: 'Apr 22, 2026', scans: 4,   status: 'active',   avatarColor: '#ec4899' },
-  { id: 1008, name: 'Ramon Flores',   initials: 'RF', email: 'ramon@email.com',    role: 'user',  joined: 'Feb 09, 2026', scans: 19,  status: 'disabled', avatarColor: '#f97316' },
-  { id: 1009, name: 'Joy Castillo',   initials: 'JC', email: 'joy@email.com',      role: 'user',  joined: 'Mar 17, 2026', scans: 55,  status: 'active',   avatarColor: '#14b8a6' },
-  { id: 1010, name: 'Mark Bautista',  initials: 'MB', email: 'mark@email.com',     role: 'admin', joined: 'Jan 05, 2026', scans: 200, status: 'active',   avatarColor: '#6366f1' },
-])
+const users = ref<any[]>([])
 
 const filteredUsers = computed(() => {
   return users.value.filter(u => {
@@ -158,70 +149,3 @@ function deleteUser(user: any) {
   }
 }
 </script>
-
-<style scoped>
-.users-page { display: flex; flex-direction: column; gap: 22px; }
-.page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.page-title  { font-size: 22px; font-weight: 700; color: #0f172a; }
-.page-sub    { font-size: 13.5px; color: #64748b; margin-top: 3px; }
-.header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-
-.search-wrap { position: relative; }
-.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94a3b8; }
-.search-input { padding: 8px 12px 8px 32px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13.5px; font-family: inherit; color: #0f172a; background: #fff; outline: none; width: 220px; transition: border-color .18s; }
-.search-input:focus { border-color: #10b981; }
-.filter-select { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13.5px; font-family: inherit; color: #0f172a; background: #fff; outline: none; cursor: pointer; }
-
-.table-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; }
-.data-table  { width: 100%; border-collapse: collapse; }
-.data-table th { text-align: left; font-size: 11.5px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; padding: 12px 14px; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
-.data-table td { padding: 12px 14px; font-size: 13px; color: #334155; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
-.data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover td { background: #f8fafc; }
-
-.td-user  { display: flex; align-items: center; gap: 10px; }
-.td-muted { color: #94a3b8; }
-.td-email { color: #475569; }
-.td-scans { font-weight: 600; color: #0f172a; }
-.user-avatar { width: 34px; height: 34px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.user-name   { font-weight: 600; color: #0f172a; font-size: 13.5px; }
-.user-id     { font-size: 11.5px; color: #94a3b8; }
-
-.role-chip { padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; text-transform: capitalize; }
-.role-chip--user  { background: #dbeafe; color: #1d4ed8; }
-.role-chip--admin { background: #f3e8ff; color: #6d28d9; }
-
-.status-dot { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; text-transform: capitalize; }
-.dot--active   { background: #d1fae5; color: #065f46; }
-.dot--disabled { background: #fee2e2; color: #991b1b; }
-
-.action-btns { display: flex; gap: 6px; }
-.act-btn { width: 30px; height: 30px; border-radius: 7px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: background .18s; }
-.act-btn:hover     { background: #f1f5f9; }
-.act-btn--del:hover { background: #fee2e2; border-color: #fecaca; }
-
-.table-footer { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid #f1f5f9; }
-.table-count  { font-size: 12.5px; color: #64748b; }
-.pagination   { display: flex; align-items: center; gap: 10px; }
-.page-btn     { width: 30px; height: 30px; border-radius: 7px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-size: 14px; color: #475569; transition: background .18s; }
-.page-btn:disabled { opacity: .4; cursor: not-allowed; }
-.page-btn:not(:disabled):hover { background: #f1f5f9; }
-.page-info    { font-size: 12.5px; color: #475569; }
-
-/* Modal */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px); }
-.modal { background: #fff; border-radius: 16px; width: 420px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,.2); overflow: hidden; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid #f1f5f9; }
-.modal-title  { font-size: 15px; font-weight: 700; color: #0f172a; }
-.modal-close  { background: transparent; border: none; cursor: pointer; font-size: 16px; color: #94a3b8; padding: 4px; transition: color .18s; }
-.modal-close:hover { color: #ef4444; }
-.modal-body   { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
-.profile-row  { display: flex; align-items: center; gap: 14px; }
-.profile-avatar { width: 54px; height: 54px; border-radius: 12px; color: #fff; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-.profile-name   { font-size: 16px; font-weight: 700; color: #0f172a; }
-.profile-email  { font-size: 13px; color: #64748b; margin: 2px 0 6px; }
-.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.detail-item { background: #f8fafc; border-radius: 10px; padding: 12px 14px; }
-.detail-label { font-size: 11.5px; color: #94a3b8; margin-bottom: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: .4px; }
-.detail-val   { font-size: 14px; font-weight: 600; color: #0f172a; }
-</style>

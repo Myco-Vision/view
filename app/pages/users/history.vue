@@ -1,35 +1,35 @@
 <template>
-  <div class="history-page">
+  <div class="flex flex-col gap-[18px]">
 
     <!-- Header row -->
-    <div class="page-header">
-      <h1 class="page-title">Scan History</h1>
-      <span class="record-count">{{ filtered.length }} records</span>
+    <div class="flex items-baseline gap-3">
+      <h1 class="text-[22px] font-bold text-[#0f172a]">Scan History</h1>
+      <span class="text-[13px] text-[#64748b] bg-[#f8fafc] py-0.5 px-2.5 rounded-[20px]">{{ filtered.length }} records</span>
     </div>
 
     <!-- Search + Filter row -->
-    <div class="controls-row">
+    <div class="flex items-center gap-3 flex-wrap">
       <!-- Search -->
-      <div class="search-box">
-        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+      <div class="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-[10px] py-2 px-3.5 flex-1 min-w-[200px]">
+        <svg class="w-4 h-4 text-[#94a3b8] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
         <input
           v-model="search"
           type="text"
-          class="search-input"
+          class="border-none outline-none font-sans text-[13.5px] text-[#0f172a] bg-transparent w-full placeholder:text-[#94a3b8]"
           placeholder="Search mushroom name…"
         />
       </div>
 
       <!-- Filter chips -->
-      <div class="filter-chips">
+      <div class="flex gap-2">
         <button
           v-for="f in filters"
           :key="f.value"
-          class="chip"
-          :class="{ 'chip--active': activeFilter === f.value }"
+          class="py-[7px] px-4 rounded-[20px] border border-[#e2e8f0] bg-white text-[13px] font-sans text-[#64748b] cursor-pointer transition-all duration-[0.18s] font-medium hover:bg-[#f8fafc] hover:text-[#0f172a]"
+          :class="{ 'bg-[#10b981] border-[#10b981] text-white hover:bg-[#10b981] hover:text-white': activeFilter === f.value }"
           @click="activeFilter = f.value"
         >
           {{ f.label }}
@@ -38,41 +38,41 @@
     </div>
 
     <!-- Scan list -->
-    <div v-if="filtered.length" class="scan-list">
+    <div v-if="filtered.length" class="flex flex-col gap-2.5">
       <div
         v-for="item in filtered"
         :key="item.id"
-        class="scan-card"
+        class="flex items-center gap-4 bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-4 transition-all duration-[0.18s] hover:shadow-[0_4px_16px_rgba(0,0,0,0.07)] hover:-translate-y-[1px]"
       >
         <!-- Thumbnail -->
-        <div class="card-thumb">
-          <img :src="item.image" :alt="item.name" />
+        <div class="w-[70px] h-[70px] rounded-[10px] overflow-hidden shrink-0 bg-[#f8fafc]">
+          <img :src="item.image" :alt="item.name" class="w-full h-full object-cover block" />
         </div>
 
         <!-- Main info -->
-        <div class="card-body">
-          <div class="card-top">
-            <p class="card-name">{{ item.name }}</p>
+        <div class="flex-1 flex flex-col gap-2 min-w-0">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <p class="text-[15px] font-semibold text-[#0f172a] italic">{{ item.name }}</p>
             <span
-              class="badge"
-              :class="item.classification === 'Edible' ? 'badge--edible' : 'badge--poisonous'"
+              class="text-[12px] font-semibold py-[3px] px-2.5 rounded-[20px]"
+              :class="item.classification === 'Edible' ? 'bg-[#dcfce7] text-[#166534]' : 'bg-[#fee2e2] text-[#991b1b]'"
             >
               {{ item.classification === 'Edible' ? '✅' : '☠️' }} {{ item.classification }}
             </span>
           </div>
 
-          <div class="card-meta">
-            <span class="meta-item">
+          <div class="flex items-center gap-4 flex-wrap">
+            <span class="flex items-center gap-1.5 text-[12.5px] text-[#64748b]">
               <!-- confidence -->
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              <svg class="w-[13px] h-[13px] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
               </svg>
               {{ item.confidence }}% confidence
             </span>
-            <span class="meta-item">
+            <span class="flex items-center gap-1.5 text-[12.5px] text-[#64748b]">
               <!-- calendar -->
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              <svg class="w-[13px] h-[13px] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                 <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
@@ -80,9 +80,9 @@
               </svg>
               {{ item.date }}
             </span>
-            <span class="meta-item">
+            <span class="flex items-center gap-1.5 text-[12.5px] text-[#64748b]">
               <!-- pin -->
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              <svg class="w-[13px] h-[13px] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
                 <circle cx="12" cy="10" r="3"/>
@@ -93,16 +93,16 @@
         </div>
 
         <!-- Actions -->
-        <div class="card-actions">
-          <button class="action-btn action-btn--view" title="View details">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        <div class="flex gap-2 shrink-0">
+          <button class="w-[34px] h-[34px] rounded-lg border border-[#e2e8f0] bg-white flex items-center justify-center cursor-pointer transition-colors duration-[0.18s] text-[#059669] hover:bg-[#dcfce7] hover:border-[#10b981]" title="View details">
+            <svg class="w-[15px] h-[15px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
           </button>
-          <button class="action-btn action-btn--delete" title="Delete">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          <button class="w-[34px] h-[34px] rounded-lg border border-[#e2e8f0] bg-white flex items-center justify-center cursor-pointer transition-colors duration-[0.18s] text-[#dc2626] hover:bg-[#fee2e2] hover:border-[#fca5a5]" title="Delete">
+            <svg class="w-[15px] h-[15px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"/>
               <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -115,11 +115,11 @@
     </div>
 
     <!-- Empty state -->
-    <div v-else class="empty-state">
-      <div class="empty-icon">🍄</div>
-      <p class="empty-title">No scans found</p>
-      <p class="empty-sub">Try a different search or scan your first mushroom!</p>
-      <NuxtLink to="/scan" class="empty-btn">Go to Scan</NuxtLink>
+    <div v-else class="flex-1 flex flex-col items-center justify-center gap-2.5 py-[60px] px-5 text-center bg-white border border-[#e2e8f0] rounded-[14px]">
+      <div class="text-[52px] leading-none">🍄</div>
+      <p class="text-[17px] font-semibold text-[#0f172a]">No scans found</p>
+      <p class="text-[13.5px] text-[#64748b]">Try a different search or scan your first mushroom!</p>
+      <NuxtLink to="/scan" class="mt-2 py-2.5 px-6 rounded-[10px] bg-[#10b981] text-white text-[14px] font-semibold no-underline transition-colors duration-[0.18s] hover:bg-[#059669]">Go to Scan</NuxtLink>
     </div>
 
   </div>
@@ -186,274 +186,3 @@ const filtered = computed(() =>
   })
 )
 </script>
-
-<style scoped>
-/* ── Page ──────────────────────────────────────────── */
-.history-page {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-/* ── Header ────────────────────────────────────────── */
-.page-header {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.page-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.record-count {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  background: var(--color-hover-bg);
-  padding: 2px 10px;
-  border-radius: 20px;
-}
-
-/* ── Controls row ──────────────────────────────────── */
-.controls-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #fff;
-  border: 1px solid var(--color-sidebar-border);
-  border-radius: 10px;
-  padding: 8px 14px;
-  flex: 1;
-  min-width: 200px;
-}
-
-.search-icon {
-  width: 16px;
-  height: 16px;
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-}
-
-.search-input {
-  border: none;
-  outline: none;
-  font-family: inherit;
-  font-size: 13.5px;
-  color: var(--color-text);
-  background: transparent;
-  width: 100%;
-}
-
-.search-input::placeholder { color: var(--color-text-muted); }
-
-.filter-chips {
-  display: flex;
-  gap: 8px;
-}
-
-.chip {
-  padding: 7px 16px;
-  border-radius: 20px;
-  border: 1px solid var(--color-sidebar-border);
-  background: #fff;
-  font-size: 13px;
-  font-family: inherit;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.18s;
-  font-weight: 500;
-}
-
-.chip:hover { background: var(--color-hover-bg); color: var(--color-text); }
-
-.chip--active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
-}
-
-/* ── Scan list ─────────────────────────────────────── */
-.scan-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* ── Scan card ─────────────────────────────────────── */
-.scan-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: #fff;
-  border: 1px solid var(--color-sidebar-border);
-  border-radius: 12px;
-  padding: 14px 16px;
-  transition: box-shadow 0.18s, transform 0.18s;
-}
-
-.scan-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
-  transform: translateY(-1px);
-}
-
-/* Thumbnail */
-.card-thumb {
-  width: 70px;
-  height: 70px;
-  border-radius: 10px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: var(--color-hover-bg);
-}
-
-.card-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* Body */
-.card-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-
-.card-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.card-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text);
-  font-style: italic;
-}
-
-.badge {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
-}
-
-.badge--edible {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.badge--poisonous {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-/* Meta */
-.card-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12.5px;
-  color: var(--color-text-muted);
-}
-
-.meta-item svg {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-}
-
-/* Actions */
-.card-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.action-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  border: 1px solid var(--color-sidebar-border);
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.18s, border-color 0.18s;
-}
-
-.action-btn svg {
-  width: 15px;
-  height: 15px;
-}
-
-.action-btn--view { color: var(--color-primary-dark); }
-.action-btn--view:hover { background: #dcfce7; border-color: var(--color-primary); }
-
-.action-btn--delete { color: #dc2626; }
-.action-btn--delete:hover { background: #fee2e2; border-color: #fca5a5; }
-
-/* ── Empty state ───────────────────────────────────── */
-.empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 60px 20px;
-  text-align: center;
-  background: #fff;
-  border: 1px solid var(--color-sidebar-border);
-  border-radius: 14px;
-}
-
-.empty-icon { font-size: 52px; line-height: 1; }
-
-.empty-title {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.empty-sub {
-  font-size: 13.5px;
-  color: var(--color-text-muted);
-}
-
-.empty-btn {
-  margin-top: 8px;
-  padding: 10px 24px;
-  border-radius: 10px;
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.18s;
-}
-
-.empty-btn:hover { background: var(--color-primary-dark); }
-</style>

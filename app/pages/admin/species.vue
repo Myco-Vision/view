@@ -1,105 +1,107 @@
 <template>
-  <div class="species-page">
-    <div class="page-header">
+  <div class="flex flex-col gap-[22px]">
+    <div class="flex items-end justify-between gap-3 flex-wrap">
       <div>
-        <h1 class="page-title">Species Database</h1>
-        <p class="page-sub">{{ species.length }} mushroom species on record</p>
+        <h1 class="text-[22px] font-bold text-[#0f172a]">Species Database</h1>
+        <p class="text-[13.5px] text-[#64748b] mt-[3px]">{{ species.length }} mushroom species on record</p>
       </div>
-      <div class="header-actions">
-        <div class="search-wrap">
-          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="searchQuery" class="search-input" placeholder="Search species…" />
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <div class="relative">
+          <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input v-model="searchQuery" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-[200px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search species…" />
         </div>
-        <select v-model="clsFilter" class="filter-select">
+        <select v-model="clsFilter" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
           <option value="">All Classifications</option>
           <option value="edible">Edible</option>
           <option value="poisonous">Poisonous</option>
           <option value="unknown">Unknown</option>
         </select>
-        <button class="add-btn" @click="openAdd">+ Add Species</button>
+        <button class="py-2 px-[18px] rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="openAdd">+ Add Species</button>
       </div>
     </div>
 
-    <div class="table-card">
-      <table class="data-table">
+    <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
+      <table class="w-full border-collapse">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Scientific Name</th>
-            <th>Common Name</th>
-            <th>Classification</th>
-            <th>Region</th>
-            <th>Added</th>
-            <th>Actions</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">#</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Scientific Name</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Common Name</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Classification</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Region</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Added</th>
+            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="sp in filteredSpecies" :key="sp.id">
-            <td class="td-id">{{ sp.id }}</td>
-            <td class="td-sci">{{ sp.scientific }}</td>
-            <td>{{ sp.common }}</td>
-            <td><span class="class-chip" :class="`class-chip--${sp.cls}`">{{ sp.cls }}</span></td>
-            <td class="td-region">{{ sp.region }}</td>
-            <td class="td-date">{{ sp.added }}</td>
-            <td>
-              <div class="action-btns">
-                <button class="act-btn" title="Edit" @click="openEdit(sp)">✏️</button>
-                <button class="act-btn act-btn--del" title="Delete" @click="deleteSpecies(sp)">🗑</button>
+          <tr v-for="sp in filteredSpecies" :key="sp.id" class="hover:bg-[#f8fafc] group">
+            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle font-mono text-[12px] text-[#94a3b8] group-last:border-none">{{ sp.id }}</td>
+            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle italic font-semibold text-[#0f172a] group-last:border-none">{{ sp.scientific }}</td>
+            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">{{ sp.common }}</td>
+            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+              <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="sp.cls === 'edible' ? 'bg-[#d1fae5] text-[#065f46]' : (sp.cls === 'poisonous' ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#fef3c7] text-[#92400e]')">{{ sp.cls }}</span>
+            </td>
+            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle text-[12.5px] text-[#64748b] group-last:border-none">{{ sp.region }}</td>
+            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle text-[12.5px] text-[#94a3b8] whitespace-nowrap group-last:border-none">{{ sp.added }}</td>
+            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+              <div class="flex gap-1.5">
+                <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" title="Edit" @click="openEdit(sp)">✏️</button>
+                <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#fee2e2] hover:border-[#fecaca]" title="Delete" @click="deleteSpecies(sp)">🗑</button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="table-footer">
-        <span class="table-count">{{ filteredSpecies.length }} of {{ species.length }} species</span>
-        <div class="pagination">
-          <button class="page-btn" :disabled="page <= 1" @click="page--">‹</button>
-          <span class="page-info">Page {{ page }} of {{ totalPages }}</span>
-          <button class="page-btn" :disabled="page >= totalPages" @click="page++">›</button>
+      <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
+        <span class="text-[12.5px] text-[#64748b]">{{ filteredSpecies.length }} of {{ species.length }} species</span>
+        <div class="flex items-center gap-2.5">
+          <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="page <= 1" @click="page--">‹</button>
+          <span class="text-[12.5px] text-[#475569]">Page {{ page }} of {{ totalPages }}</span>
+          <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="page >= totalPages" @click="page++">›</button>
         </div>
       </div>
     </div>
 
     <!-- Add / Edit Modal -->
-    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal">
-        <div class="modal-header">
-          <p class="modal-title">{{ editingId ? 'Edit Species' : 'Add New Species' }}</p>
-          <button class="modal-close" @click="closeModal">✕</button>
+    <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] backdrop-blur-[2px]" @click.self="closeModal">
+      <div class="bg-white rounded-2xl w-[560px] max-w-[95vw] shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
+        <div class="flex items-center justify-between py-[18px] px-[22px] border-b border-[#f1f5f9]">
+          <p class="text-[15px] font-bold text-[#0f172a]">{{ editingId ? 'Edit Species' : 'Add New Species' }}</p>
+          <button class="bg-transparent border-none cursor-pointer text-[16px] text-[#94a3b8] hover:text-[#ef4444]" @click="closeModal">✕</button>
         </div>
-        <div class="modal-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Scientific Name *</label>
-              <input v-model="form.scientific" class="form-input" placeholder="e.g. Volvariella volvacea" />
+        <div class="p-[22px] flex flex-col gap-4">
+          <div class="grid grid-cols-2 gap-3.5">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#475569]">Scientific Name *</label>
+              <input v-model="form.scientific" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Volvariella volvacea" />
             </div>
-            <div class="form-group">
-              <label class="form-label">Common Name *</label>
-              <input v-model="form.common" class="form-input" placeholder="e.g. Paddy Straw Mushroom" />
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#475569]">Common Name *</label>
+              <input v-model="form.common" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Paddy Straw Mushroom" />
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Classification *</label>
-              <select v-model="form.cls" class="form-select">
+          <div class="grid grid-cols-2 gap-3.5">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#475569]">Classification *</label>
+              <select v-model="form.cls" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]">
                 <option value="">Select…</option>
                 <option value="edible">Edible</option>
                 <option value="poisonous">Poisonous</option>
                 <option value="unknown">Unknown</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Region</label>
-              <input v-model="form.region" class="form-input" placeholder="e.g. Southeast Asia" />
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#475569]">Region</label>
+              <input v-model="form.region" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Southeast Asia" />
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Description</label>
-            <textarea v-model="form.description" class="form-textarea" rows="3" placeholder="Brief description…" />
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#475569]">Description</label>
+            <textarea v-model="form.description" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none resize-y transition-colors duration-[0.18s] focus:border-[#10b981]" rows="3" placeholder="Brief description…" />
           </div>
-          <div class="modal-actions">
-            <button class="cancel-btn" @click="closeModal">Cancel</button>
-            <button class="save-btn" @click="saveSpecies">{{ editingId ? 'Update' : 'Add Species' }}</button>
+          <div class="flex justify-end gap-2.5 pt-1">
+            <button class="py-[9px] px-5 rounded-lg border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans cursor-pointer text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f8fafc]" @click="closeModal">Cancel</button>
+            <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="saveSpecies">{{ editingId ? 'Update' : 'Add Species' }}</button>
           </div>
         </div>
       </div>
@@ -108,8 +110,6 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
-
 const searchQuery = ref('')
 const clsFilter   = ref('')
 const page        = ref(1)
@@ -121,18 +121,7 @@ const form = reactive({ scientific: '', common: '', cls: '', region: '', descrip
 
 interface Species { id: number; scientific: string; common: string; cls: string; region: string; added: string; description: string }
 
-const species = ref<Species[]>([
-  { id: 1,  scientific: 'Volvariella volvacea',   common: 'Paddy Straw Mushroom',    cls: 'edible',    region: 'Southeast Asia',      added: 'Jan 10, 2026', description: '' },
-  { id: 2,  scientific: 'Amanita phalloides',     common: 'Death Cap',               cls: 'poisonous', region: 'Europe, North America', added: 'Jan 12, 2026', description: '' },
-  { id: 3,  scientific: 'Pleurotus ostreatus',    common: 'Oyster Mushroom',          cls: 'edible',    region: 'Global',              added: 'Jan 15, 2026', description: '' },
-  { id: 4,  scientific: 'Lentinula edodes',       common: 'Shiitake',                cls: 'edible',    region: 'East Asia',           added: 'Jan 20, 2026', description: '' },
-  { id: 5,  scientific: 'Ganoderma lucidum',      common: 'Reishi / Lingzhi',        cls: 'edible',    region: 'Asia',                added: 'Feb 3, 2026',  description: '' },
-  { id: 6,  scientific: 'Cortinarius rubellus',   common: 'Deadly Webcap',           cls: 'poisonous', region: 'Northern Europe',     added: 'Feb 8, 2026',  description: '' },
-  { id: 7,  scientific: 'Auricularia auricula',   common: 'Wood Ear',                cls: 'edible',    region: 'Asia',                added: 'Feb 14, 2026', description: '' },
-  { id: 8,  scientific: 'Trametes versicolor',    common: 'Turkey Tail',             cls: 'edible',    region: 'Global',              added: 'Feb 22, 2026', description: '' },
-  { id: 9,  scientific: 'Amanita muscaria',       common: 'Fly Agaric',              cls: 'poisonous', region: 'Northern Hemisphere', added: 'Mar 1, 2026',  description: '' },
-  { id: 10, scientific: 'Morchella esculenta',    common: 'Morel',                   cls: 'edible',    region: 'North America, Europe', added: 'Mar 5, 2026', description: '' },
-])
+const species = ref<Species[]>([])
 
 let nextId = 11
 
@@ -178,67 +167,5 @@ function deleteSpecies(sp: Species) {
     species.value = species.value.filter(s => s.id !== sp.id)
   }
 }
+definePageMeta({ layout: 'admin' })
 </script>
-
-<style scoped>
-.species-page { display: flex; flex-direction: column; gap: 22px; }
-.page-header  { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.page-title   { font-size: 22px; font-weight: 700; color: #0f172a; }
-.page-sub     { font-size: 13.5px; color: #64748b; margin-top: 3px; }
-.header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.search-wrap  { position: relative; }
-.search-icon  { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94a3b8; }
-.search-input { padding: 8px 12px 8px 32px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13.5px; font-family: inherit; color: #0f172a; background: #fff; outline: none; width: 200px; }
-.search-input:focus { border-color: #10b981; }
-.filter-select { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13.5px; font-family: inherit; background: #fff; cursor: pointer; outline: none; }
-.add-btn { padding: 8px 18px; border-radius: 8px; background: linear-gradient(135deg,#10b981,#059669); color: #fff; border: none; font-size: 13.5px; font-weight: 600; font-family: inherit; cursor: pointer; transition: opacity .18s; }
-.add-btn:hover { opacity: .88; }
-
-.table-card  { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; }
-.data-table  { width: 100%; border-collapse: collapse; }
-.data-table th { text-align: left; font-size: 11.5px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; padding: 12px 14px; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
-.data-table td { padding: 11px 14px; font-size: 13px; color: #334155; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
-.data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover td { background: #f8fafc; }
-.td-id      { font-family: monospace; font-size: 12px; color: #94a3b8; }
-.td-sci     { font-style: italic; font-weight: 600; color: #0f172a; }
-.td-region  { font-size: 12.5px; color: #64748b; }
-.td-date    { font-size: 12.5px; color: #94a3b8; white-space: nowrap; }
-.class-chip  { padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; text-transform: capitalize; }
-.class-chip--edible    { background: #d1fae5; color: #065f46; }
-.class-chip--poisonous { background: #fee2e2; color: #991b1b; }
-.class-chip--unknown   { background: #fef3c7; color: #92400e; }
-.action-btns { display: flex; gap: 6px; }
-.act-btn     { width: 30px; height: 30px; border-radius: 7px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: background .18s; }
-.act-btn:hover     { background: #f1f5f9; }
-.act-btn--del:hover { background: #fee2e2; border-color: #fecaca; }
-
-.table-footer { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid #f1f5f9; }
-.table-count  { font-size: 12.5px; color: #64748b; }
-.pagination   { display: flex; align-items: center; gap: 10px; }
-.page-btn     { width: 30px; height: 30px; border-radius: 7px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-size: 14px; color: #475569; }
-.page-btn:disabled { opacity: .4; cursor: not-allowed; }
-.page-btn:not(:disabled):hover { background: #f1f5f9; }
-.page-info    { font-size: 12.5px; color: #475569; }
-
-/* Modal */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px); }
-.modal  { background: #fff; border-radius: 16px; width: 560px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid #f1f5f9; }
-.modal-title  { font-size: 15px; font-weight: 700; color: #0f172a; }
-.modal-close  { background: transparent; border: none; cursor: pointer; font-size: 16px; color: #94a3b8; }
-.modal-close:hover { color: #ef4444; }
-.modal-body   { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
-.form-row     { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.form-group   { display: flex; flex-direction: column; gap: 6px; }
-.form-label   { font-size: 12.5px; font-weight: 600; color: #475569; }
-.form-input,
-.form-select  { padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13.5px; font-family: inherit; color: #0f172a; background: #fff; outline: none; transition: border-color .18s; }
-.form-input:focus,
-.form-select:focus { border-color: #10b981; }
-.form-textarea { padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13.5px; font-family: inherit; color: #0f172a; resize: vertical; outline: none; }
-.form-textarea:focus { border-color: #10b981; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
-.cancel-btn   { padding: 9px 20px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; font-size: 13.5px; font-weight: 500; font-family: inherit; cursor: pointer; color: #475569; }
-.save-btn     { padding: 9px 20px; border-radius: 8px; background: linear-gradient(135deg,#10b981,#059669); color: #fff; border: none; font-size: 13.5px; font-weight: 600; font-family: inherit; cursor: pointer; }
-</style>

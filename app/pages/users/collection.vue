@@ -1,71 +1,71 @@
 <template>
-  <div class="collection-page">
+  <div class="flex flex-col gap-[18px]">
 
     <!-- Header -->
-    <div class="page-header">
+    <div class="flex items-start justify-between">
       <div>
-        <h1 class="page-title">Welcome, <strong>{{ firstName }}!</strong></h1>
-        <p class="page-sub">Your Mushroom Collection</p>
+        <h1 class="text-[22px] font-normal text-[#0f172a]">Welcome, <strong class="font-bold">{{ firstName }}!</strong></h1>
+        <p class="text-[13px] text-[#64748b] mt-0.5">Your Mushroom Collection</p>
       </div>
-      <span class="total-badge">{{ filtered.length }} mushrooms</span>
+      <span class="text-[13px] font-medium bg-[#f8fafc] text-[#64748b] py-1 px-3.5 rounded-[20px] mt-1">{{ filtered.length }} mushrooms</span>
     </div>
 
     <!-- Stats row -->
-    <div class="stats-row">
-      <div class="stat-card stat-card--total">
-        <span class="stat-icon">🍄</span>
+    <div class="grid grid-cols-4 gap-3">
+      <div class="flex items-center gap-3.5 py-3.5 px-[18px] rounded-xl bg-white border border-[#e2e8f0] border-l-[3px] border-l-[#a78bfa]">
+        <span class="text-[26px] leading-none">🍄</span>
         <div>
-          <p class="stat-num">{{ collection.length }}</p>
-          <p class="stat-label">Total Collected</p>
+          <p class="text-[22px] font-bold text-[#0f172a] leading-none">{{ collection.length }}</p>
+          <p class="text-[12px] text-[#64748b] mt-[3px]">Total Collected</p>
         </div>
       </div>
-      <div class="stat-card stat-card--edible">
-        <span class="stat-icon">✅</span>
+      <div class="flex items-center gap-3.5 py-3.5 px-[18px] rounded-xl bg-white border border-[#e2e8f0] border-l-[3px] border-l-[#22c55e]">
+        <span class="text-[26px] leading-none">✅</span>
         <div>
-          <p class="stat-num">{{ edibleCount }}</p>
-          <p class="stat-label">Edible</p>
+          <p class="text-[22px] font-bold text-[#0f172a] leading-none">{{ edibleCount }}</p>
+          <p class="text-[12px] text-[#64748b] mt-[3px]">Edible</p>
         </div>
       </div>
-      <div class="stat-card stat-card--poisonous">
-        <span class="stat-icon">☠️</span>
+      <div class="flex items-center gap-3.5 py-3.5 px-[18px] rounded-xl bg-white border border-[#e2e8f0] border-l-[3px] border-l-[#ef4444]">
+        <span class="text-[26px] leading-none">☠️</span>
         <div>
-          <p class="stat-num">{{ poisonousCount }}</p>
-          <p class="stat-label">Poisonous</p>
+          <p class="text-[22px] font-bold text-[#0f172a] leading-none">{{ poisonousCount }}</p>
+          <p class="text-[12px] text-[#64748b] mt-[3px]">Poisonous</p>
         </div>
       </div>
-      <div class="stat-card stat-card--accuracy">
-        <span class="stat-icon">🎯</span>
+      <div class="flex items-center gap-3.5 py-3.5 px-[18px] rounded-xl bg-white border border-[#e2e8f0] border-l-[3px] border-l-[#10b981]">
+        <span class="text-[26px] leading-none">🎯</span>
         <div>
-          <p class="stat-num">{{ avgConfidence }}%</p>
-          <p class="stat-label">Avg. Confidence</p>
+          <p class="text-[22px] font-bold text-[#0f172a] leading-none">{{ avgConfidence }}%</p>
+          <p class="text-[12px] text-[#64748b] mt-[3px]">Avg. Confidence</p>
         </div>
       </div>
     </div>
 
     <!-- Controls -->
-    <div class="controls-row">
+    <div class="flex items-center gap-2.5 flex-wrap">
       <!-- Search -->
-      <div class="search-box">
-        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+      <div class="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-[10px] py-2 px-3.5 flex-1 min-w-[180px]">
+        <svg class="w-[15px] h-[15px] text-[#94a3b8] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input v-model="search" type="text" placeholder="Search mushrooms…" class="search-input" />
+        <input v-model="search" type="text" placeholder="Search mushrooms…" class="border-none outline-none font-sans text-[13.5px] text-[#0f172a] bg-transparent w-full placeholder:text-[#94a3b8]" />
       </div>
 
       <!-- Filter chips -->
-      <div class="filter-chips">
+      <div class="flex gap-1.5">
         <button
           v-for="f in filters"
           :key="f.value"
-          class="chip"
-          :class="{ 'chip--active': activeFilter === f.value }"
+          class="py-[7px] px-3.5 rounded-[20px] border border-[#e2e8f0] bg-white text-[13px] font-sans text-[#64748b] cursor-pointer transition-all duration-[0.18s] font-medium whitespace-nowrap hover:bg-[#f8fafc] hover:text-[#0f172a]"
+          :class="{ 'bg-[#10b981] border-[#10b981] text-white hover:bg-[#10b981] hover:text-white': activeFilter === f.value }"
           @click="activeFilter = f.value"
         >{{ f.label }}</button>
       </div>
 
       <!-- Sort -->
-      <select v-model="sortBy" class="sort-select">
+      <select v-model="sortBy" class="py-2 px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white font-sans text-[13px] text-[#0f172a] cursor-pointer outline-none">
         <option value="date">Newest first</option>
         <option value="name">Name A–Z</option>
         <option value="confidence">Confidence ↓</option>
@@ -73,34 +73,34 @@
     </div>
 
     <!-- Grid -->
-    <div v-if="filtered.length" class="mushroom-grid">
+    <div v-if="filtered.length" class="grid grid-cols-3 gap-3.5">
       <div
         v-for="item in filtered"
         :key="item.id"
-        class="mushroom-card"
+        class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden transition-all duration-200 group hover:shadow-[0_6px_24px_rgba(0,0,0,0.09)] hover:-translate-y-[2px]"
       >
         <!-- Image area -->
-        <div class="card-img-wrap">
-          <img :src="item.image" :alt="item.name" class="card-img" />
+        <div class="relative h-[160px] overflow-hidden bg-[#e8f0e8]">
+          <img :src="item.image" :alt="item.name" class="w-full h-full object-cover block transition-transform duration-300 group-hover:scale-[1.04]" />
           <!-- classification ribbon -->
           <span
-            class="ribbon"
-            :class="item.classification === 'Edible' ? 'ribbon--edible' : 'ribbon--poisonous'"
+            class="absolute top-2.5 left-2.5 text-[11.5px] font-semibold py-[3px] px-2.5 rounded-[20px] backdrop-blur-[4px]"
+            :class="item.classification === 'Edible' ? 'bg-[#dcfce7eb] text-[#166534]' : 'bg-[#fee2e2eb] text-[#991b1b]'"
           >
             {{ item.classification === 'Edible' ? '✅ Edible' : '☠️ Poisonous' }}
           </span>
           <!-- hover overlay -->
-          <div class="card-overlay">
-            <button class="overlay-btn" title="View details">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          <div class="absolute inset-0 bg-black/45 flex items-center justify-center gap-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <button class="flex items-center gap-1.5 py-[7px] px-3.5 rounded-lg border-none text-[12.5px] font-semibold font-sans cursor-pointer bg-white text-[#0f172a] transition-colors duration-[0.18s] hover:bg-[#f0fdf4]" title="View details">
+              <svg class="w-[14px] h-[14px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                 <circle cx="12" cy="12" r="3"/>
               </svg>
               View
             </button>
-            <button class="overlay-btn overlay-btn--danger" title="Remove from collection">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+            <button class="flex items-center gap-1.5 py-[7px] px-3.5 rounded-lg border-none text-[12.5px] font-semibold font-sans cursor-pointer bg-[#fee2e2] text-[#991b1b] transition-colors duration-[0.18s] hover:bg-[#fecaca]" title="Remove from collection">
+              <svg class="w-[14px] h-[14px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -112,34 +112,34 @@
         </div>
 
         <!-- Card body -->
-        <div class="card-body">
-          <p class="card-name">{{ item.name }}</p>
+        <div class="p-3.5 pb-3 flex flex-col gap-2">
+          <p class="text-[13.5px] font-semibold text-[#0f172a] italic whitespace-nowrap overflow-hidden text-ellipsis">{{ item.name }}</p>
 
           <!-- Confidence bar -->
-          <div class="confidence-row">
-            <span class="confidence-label">Confidence</span>
-            <div class="confidence-bar-wrap">
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] text-[#64748b] min-w-[64px]">Confidence</span>
+            <div class="flex-1 h-1.5 bg-[#e8f0e8] rounded-[10px] overflow-hidden">
               <div
-                class="confidence-bar"
+                class="h-full rounded-[10px] transition-[width] duration-400 ease-in-out"
                 :style="{ width: item.confidence + '%' }"
-                :class="item.confidence >= 90 ? 'bar--high' : item.confidence >= 75 ? 'bar--mid' : 'bar--low'"
+                :class="item.confidence >= 90 ? 'bg-[#22c55e]' : item.confidence >= 75 ? 'bg-[#f59e0b]' : 'bg-[#ef4444]'"
               />
             </div>
-            <span class="confidence-pct">{{ item.confidence }}%</span>
+            <span class="text-[12px] font-semibold text-[#0f172a] min-w-[32px] text-right">{{ item.confidence }}%</span>
           </div>
 
           <!-- Meta -->
-          <div class="card-meta">
-            <span class="meta-item">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          <div class="flex flex-col gap-1">
+            <span class="flex items-center gap-1.5 text-[12px] text-[#64748b]">
+              <svg class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
                 <circle cx="12" cy="10" r="3"/>
               </svg>
               {{ item.location }}
             </span>
-            <span class="meta-item">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+            <span class="flex items-center gap-1.5 text-[12px] text-[#64748b]">
+              <svg class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                 <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
@@ -153,11 +153,11 @@
     </div>
 
     <!-- Empty state -->
-    <div v-else class="empty-state">
-      <div class="empty-icon">🍄</div>
-      <p class="empty-title">No mushrooms found</p>
-      <p class="empty-sub">Start scanning mushrooms and save them to your collection!</p>
-      <NuxtLink to="/scan" class="empty-btn">Scan a Mushroom</NuxtLink>
+    <div v-else class="flex flex-col items-center justify-center gap-2.5 py-[60px] px-5 text-center bg-white border border-[#e2e8f0] rounded-[14px]">
+      <div class="text-[52px] leading-none">🍄</div>
+      <p class="text-[17px] font-semibold text-[#0f172a]">No mushrooms found</p>
+      <p class="text-[13.5px] text-[#64748b]">Start scanning mushrooms and save them to your collection!</p>
+      <NuxtLink to="/scan" class="mt-2 py-2.5 px-6 rounded-[10px] bg-[#10b981] text-white text-[14px] font-semibold no-underline transition-colors duration-[0.18s] hover:bg-[#059669]">Scan a Mushroom</NuxtLink>
     </div>
 
   </div>
@@ -246,328 +246,3 @@ const filtered = computed(() => {
   return list
 })
 </script>
-
-<style scoped>
-/* ── Page ──────────────────────────────────────────── */
-.collection-page {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-/* ── Header ────────────────────────────────────────── */
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.page-title {
-  font-size: 22px;
-  font-weight: 400;
-  color: var(--color-text);
-}
-.page-title strong { font-weight: 700; }
-
-.page-sub {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
-
-.total-badge {
-  font-size: 13px;
-  font-weight: 500;
-  background: var(--color-hover-bg);
-  color: var(--color-text-muted);
-  padding: 4px 14px;
-  border-radius: 20px;
-  margin-top: 4px;
-}
-
-/* ── Stats row ─────────────────────────────────────── */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid var(--color-sidebar-border);
-}
-
-.stat-icon { font-size: 26px; line-height: 1; }
-
-.stat-num {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-top: 3px;
-}
-
-.stat-card--edible    { border-left: 3px solid #22c55e; }
-.stat-card--poisonous { border-left: 3px solid #ef4444; }
-.stat-card--accuracy  { border-left: 3px solid var(--color-primary); }
-.stat-card--total     { border-left: 3px solid #a78bfa; }
-
-/* ── Controls ──────────────────────────────────────── */
-.controls-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #fff;
-  border: 1px solid var(--color-sidebar-border);
-  border-radius: 10px;
-  padding: 8px 14px;
-  flex: 1;
-  min-width: 180px;
-}
-
-.search-icon { width: 15px; height: 15px; color: var(--color-text-muted); flex-shrink: 0; }
-
-.search-input {
-  border: none;
-  outline: none;
-  font-family: inherit;
-  font-size: 13.5px;
-  color: var(--color-text);
-  background: transparent;
-  width: 100%;
-}
-.search-input::placeholder { color: var(--color-text-muted); }
-
-.filter-chips { display: flex; gap: 6px; }
-
-.chip {
-  padding: 7px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--color-sidebar-border);
-  background: #fff;
-  font-size: 13px;
-  font-family: inherit;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.18s;
-  font-weight: 500;
-  white-space: nowrap;
-}
-.chip:hover { background: var(--color-hover-bg); color: var(--color-text); }
-.chip--active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
-
-.sort-select {
-  padding: 8px 14px;
-  border-radius: 10px;
-  border: 1px solid var(--color-sidebar-border);
-  background: #fff;
-  font-family: inherit;
-  font-size: 13px;
-  color: var(--color-text);
-  cursor: pointer;
-  outline: none;
-}
-
-/* ── Grid ──────────────────────────────────────────── */
-.mushroom-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-
-/* ── Card ──────────────────────────────────────────── */
-.mushroom-card {
-  background: #fff;
-  border: 1px solid var(--color-sidebar-border);
-  border-radius: 14px;
-  overflow: hidden;
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-.mushroom-card:hover {
-  box-shadow: 0 6px 24px rgba(0,0,0,0.09);
-  transform: translateY(-2px);
-}
-
-/* Image */
-.card-img-wrap {
-  position: relative;
-  height: 160px;
-  overflow: hidden;
-  background: #e8f0e8;
-}
-
-.card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.3s;
-}
-.mushroom-card:hover .card-img { transform: scale(1.04); }
-
-/* Ribbon */
-.ribbon {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
-  backdrop-filter: blur(4px);
-}
-.ribbon--edible    { background: rgba(220,252,231,0.92); color: #166534; }
-.ribbon--poisonous { background: rgba(254,226,226,0.92); color: #991b1b; }
-
-/* Hover overlay */
-.card-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.mushroom-card:hover .card-overlay { opacity: 1; }
-
-.overlay-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 7px 14px;
-  border-radius: 8px;
-  border: none;
-  font-size: 12.5px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  background: #fff;
-  color: var(--color-text);
-  transition: background 0.18s;
-}
-.overlay-btn svg { width: 14px; height: 14px; }
-.overlay-btn:hover { background: #f0fdf4; }
-.overlay-btn--danger { background: #fee2e2; color: #991b1b; }
-.overlay-btn--danger:hover { background: #fecaca; }
-
-/* Card body */
-.card-body {
-  padding: 14px 14px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.card-name {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--color-text);
-  font-style: italic;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Confidence bar */
-.confidence-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.confidence-label {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  min-width: 64px;
-}
-
-.confidence-bar-wrap {
-  flex: 1;
-  height: 6px;
-  background: #e8f0e8;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.confidence-bar {
-  height: 100%;
-  border-radius: 10px;
-  transition: width 0.4s ease;
-}
-.bar--high { background: #22c55e; }
-.bar--mid  { background: #f59e0b; }
-.bar--low  { background: #ef4444; }
-
-.confidence-pct {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text);
-  min-width: 32px;
-  text-align: right;
-}
-
-/* Meta */
-.card-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-.meta-item svg { width: 12px; height: 12px; flex-shrink: 0; }
-
-/* ── Empty state ───────────────────────────────────── */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 60px 20px;
-  text-align: center;
-  background: #fff;
-  border: 1px solid var(--color-sidebar-border);
-  border-radius: 14px;
-}
-.empty-icon   { font-size: 52px; line-height: 1; }
-.empty-title  { font-size: 17px; font-weight: 600; color: var(--color-text); }
-.empty-sub    { font-size: 13.5px; color: var(--color-text-muted); }
-.empty-btn {
-  margin-top: 8px;
-  padding: 10px 24px;
-  border-radius: 10px;
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.18s;
-}
-.empty-btn:hover { background: var(--color-primary-dark); }
-</style>

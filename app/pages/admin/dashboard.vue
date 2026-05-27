@@ -1,38 +1,38 @@
 <template>
-  <div class="dashboard">
-    <div class="page-header">
+  <div class="flex flex-col gap-[22px]">
+    <div class="flex items-end justify-between gap-3 flex-wrap">
       <div>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-sub">Welcome back, Admin. Here's what's happening today.</p>
+        <h1 class="text-[22px] font-bold text-[#0f172a]">Dashboard</h1>
+        <p class="text-[13.5px] text-[#64748b] mt-[3px]">Welcome back, Admin. Here's what's happening today.</p>
       </div>
-      <div class="header-actions">
-        <span class="date-badge">{{ todayDate }}</span>
-        <NuxtLink to="/admin/reports" class="btn-primary">View Reports →</NuxtLink>
+      <div class="flex items-center gap-2.5">
+        <span class="text-[12.5px] text-[#64748b] bg-white border border-[#e2e8f0] py-1.5 px-3 rounded-lg">{{ todayDate }}</span>
+        <NuxtLink to="/admin/reports" class="py-2 px-[18px] rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white text-[13.5px] font-semibold no-underline transition-opacity duration-[0.18s] hover:opacity-90">View Reports →</NuxtLink>
       </div>
     </div>
 
     <!-- KPI Cards -->
-    <div class="kpi-grid">
-      <div v-for="stat in stats" :key="stat.label" class="kpi-card">
-        <div class="kpi-icon" :style="{ background: stat.iconBg }">
+    <div class="grid grid-cols-4 gap-3.5">
+      <div v-for="stat in stats" :key="stat.label" class="bg-white border border-[#e2e8f0] rounded-[14px] p-[18px] px-5 flex items-center gap-3.5 relative transition-shadow duration-[0.18s] hover:shadow-[0_4px_20px_rgba(0,0,0,0.07)]">
+        <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :style="{ background: stat.iconBg }">
           <span v-html="stat.icon" />
         </div>
-        <div class="kpi-body">
-          <p class="kpi-value">{{ stat.value }}</p>
-          <p class="kpi-label">{{ stat.label }}</p>
+        <div>
+          <p class="text-[22px] font-bold text-[#0f172a] leading-[1.2]">{{ stat.value }}</p>
+          <p class="text-[12.5px] text-[#64748b] mt-0.5">{{ stat.label }}</p>
         </div>
-        <span class="kpi-badge badge--up">▲ {{ stat.change }}</span>
+        <span class="absolute top-3.5 right-3.5 text-[11px] font-semibold py-[3px] px-2 rounded-full bg-[#d1fae5] text-[#065f46]">▲ {{ stat.change }}</span>
       </div>
     </div>
 
     <!-- Charts Row -->
-    <div class="mid-row">
-      <div class="chart-card">
-        <div class="card-header">
-          <p class="card-title">Scan Volume — Last 7 Days</p>
-          <span class="card-tag">Live</span>
+    <div class="grid grid-cols-[1fr_280px] gap-3.5">
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 px-[22px]">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-[14px] font-semibold text-[#0f172a]">Scan Volume — Last 7 Days</p>
+          <span class="text-[11px] font-semibold bg-[#d1fae5] text-[#065f46] py-[3px] px-2 rounded-full">Live</span>
         </div>
-        <svg viewBox="0 0 420 120" class="sparkline" preserveAspectRatio="none">
+        <svg viewBox="0 0 420 120" class="w-full h-[120px]" preserveAspectRatio="none">
           <defs>
             <linearGradient id="scanGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/>
@@ -44,15 +44,15 @@
           <polyline :points="scanPoints" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           <circle v-for="(p,i) in scanDots" :key="i" :cx="p.x" :cy="p.y" r="4" fill="#10b981" stroke="#fff" stroke-width="2"/>
         </svg>
-        <div class="chart-labels">
-          <span v-for="d in chartDays" :key="d" class="chart-day">{{ d }}</span>
+        <div class="flex justify-between px-1 mt-1">
+          <span v-for="d in chartDays" :key="d" class="text-[11px] text-[#94a3b8]">{{ d }}</span>
         </div>
       </div>
 
-      <div class="chart-card chart-card--small">
-        <div class="card-header"><p class="card-title">Classification Split</p></div>
-        <div class="donut-wrap">
-          <svg viewBox="0 0 120 120" class="donut-svg">
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 px-[22px]">
+        <div class="flex items-center justify-between mb-4"><p class="text-[14px] font-semibold text-[#0f172a]">Classification Split</p></div>
+        <div class="flex flex-col items-center gap-4">
+          <svg viewBox="0 0 120 120" class="w-[120px] h-[120px]">
             <circle cx="60" cy="60" r="44" fill="none" stroke="#f1f5f9" stroke-width="18"/>
             <circle cx="60" cy="60" r="44" fill="none" stroke="#10b981" stroke-width="18"
                     :stroke-dasharray="`${edibleDash} ${circumference}`" stroke-dashoffset="0"
@@ -66,59 +66,67 @@
             <text x="60" y="56" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">186</text>
             <text x="60" y="70" text-anchor="middle" font-size="8" fill="#64748b">Species</text>
           </svg>
-          <div class="donut-legend">
-            <div class="legend-item"><span class="legend-dot" style="background:#10b981"></span>Edible (58%)</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Poisonous (28%)</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Unknown (14%)</div>
+          <div class="flex flex-col gap-2 w-full">
+            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#10b981]"></span>Edible (58%)</div>
+            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#ef4444]"></span>Poisonous (28%)</div>
+            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#f59e0b]"></span>Unknown (14%)</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Bottom Row -->
-    <div class="bottom-row">
-      <div class="activity-card">
-        <div class="card-header">
-          <p class="card-title">Recent Scans</p>
-          <NuxtLink to="/admin/scans" class="card-link">View all →</NuxtLink>
+    <div class="grid grid-cols-[1fr_280px] gap-3.5">
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 px-[22px]">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-[14px] font-semibold text-[#0f172a]">Recent Scans</p>
+          <NuxtLink to="/admin/scans" class="text-[13px] text-[#10b981] no-underline font-medium hover:underline">View all →</NuxtLink>
         </div>
-        <table class="activity-table">
+        <table class="w-full border-collapse mt-1">
           <thead>
-            <tr><th>User</th><th>Species</th><th>Classification</th><th>Confidence</th><th>Time</th></tr>
+            <tr>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-2 px-2.5 border-b border-[#f1f5f9]">User</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-2 px-2.5 border-b border-[#f1f5f9]">Species</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-2 px-2.5 border-b border-[#f1f5f9]">Classification</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-2 px-2.5 border-b border-[#f1f5f9]">Confidence</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-2 px-2.5 border-b border-[#f1f5f9]">Time</th>
+            </tr>
           </thead>
           <tbody>
-            <tr v-for="scan in recentScans" :key="scan.id">
-              <td class="td-user">
-                <div class="mini-avatar">{{ scan.userInitials }}</div>{{ scan.user }}
+            <tr v-for="scan in recentScans" :key="scan.id" class="hover:bg-[#f8fafc]">
+              <td class="py-2.5 px-2.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle flex items-center gap-2 whitespace-nowrap">
+                <div class="w-[26px] h-[26px] rounded-full bg-gradient-to-br from-[#10b981] to-[#059669] text-white text-[10px] font-bold flex items-center justify-center shrink-0">{{ scan.userInitials }}</div>{{ scan.user }}
               </td>
-              <td class="td-species">{{ scan.species }}</td>
-              <td><span class="class-chip" :class="`class-chip--${scan.cls}`">{{ scan.cls }}</span></td>
-              <td>
-                <div class="conf-bar-wrap">
-                  <div class="conf-bar" :style="{ width: scan.confidence + '%', background: confColor(scan.confidence) }"/>
-                  <span class="conf-label">{{ scan.confidence }}%</span>
+              <td class="py-2.5 px-2.5 text-[13px] text-[#1e293b] border-b border-[#f8fafc] align-middle italic">{{ scan.species }}</td>
+              <td class="py-2.5 px-2.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle">
+                <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="scan.cls === 'edible' ? 'bg-[#d1fae5] text-[#065f46]' : (scan.cls === 'poisonous' ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#fef3c7] text-[#92400e]')">{{ scan.cls }}</span>
+              </td>
+              <td class="py-2.5 px-2.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle">
+                <div class="flex items-center gap-[7px]">
+                  <div class="h-1.5 rounded-[10px] min-w-[4px]" :style="{ width: scan.confidence + '%', background: confColor(scan.confidence) }"></div>
+                  <span class="text-[12px] text-[#475569] whitespace-nowrap">{{ scan.confidence }}%</span>
                 </div>
               </td>
-              <td class="td-time">{{ scan.time }}</td>
+              <td class="py-2.5 px-2.5 text-[13px] text-[#94a3b8] border-b border-[#f8fafc] align-middle whitespace-nowrap">{{ scan.time }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="quick-actions-card">
-        <p class="card-title" style="margin-bottom:14px;">Quick Actions</p>
-        <div class="qa-list">
-          <NuxtLink to="/admin/species" class="qa-btn"><span class="qa-icon" style="background:#d1fae5;color:#059669">🌿</span><span>Add New Species</span></NuxtLink>
-          <NuxtLink to="/admin/users"   class="qa-btn"><span class="qa-icon" style="background:#dbeafe;color:#2563eb">👥</span><span>Manage Users</span></NuxtLink>
-          <NuxtLink to="/admin/reports" class="qa-btn"><span class="qa-icon" style="background:#fef3c7;color:#d97706">📊</span><span>Export Reports</span></NuxtLink>
-          <NuxtLink to="/admin/settings" class="qa-btn"><span class="qa-icon" style="background:#f3e8ff;color:#7c3aed">⚙️</span><span>System Settings</span></NuxtLink>
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5">
+        <p class="text-[14px] font-semibold text-[#0f172a] mb-3.5">Quick Actions</p>
+        <div class="flex flex-col gap-2">
+          <NuxtLink to="/admin/species" class="flex items-center gap-3 py-2.5 px-3 rounded-[10px] border border-[#f1f5f9] bg-[#f8fafc] no-underline text-[#0f172a] text-[13.5px] font-medium transition-colors duration-[0.18s] hover:bg-[#f1f5f9]"><span class="w-8 h-8 rounded-lg flex items-center justify-center text-[16px] shrink-0 bg-[#d1fae5] text-[#059669]">🌿</span><span>Add New Species</span></NuxtLink>
+          <NuxtLink to="/admin/users"   class="flex items-center gap-3 py-2.5 px-3 rounded-[10px] border border-[#f1f5f9] bg-[#f8fafc] no-underline text-[#0f172a] text-[13.5px] font-medium transition-colors duration-[0.18s] hover:bg-[#f1f5f9]"><span class="w-8 h-8 rounded-lg flex items-center justify-center text-[16px] shrink-0 bg-[#dbeafe] text-[#2563eb]">👥</span><span>Manage Users</span></NuxtLink>
+          <NuxtLink to="/admin/reports" class="flex items-center gap-3 py-2.5 px-3 rounded-[10px] border border-[#f1f5f9] bg-[#f8fafc] no-underline text-[#0f172a] text-[13.5px] font-medium transition-colors duration-[0.18s] hover:bg-[#f1f5f9]"><span class="w-8 h-8 rounded-lg flex items-center justify-center text-[16px] shrink-0 bg-[#fef3c7] text-[#d97706]">📊</span><span>Export Reports</span></NuxtLink>
+          <NuxtLink to="/admin/settings" class="flex items-center gap-3 py-2.5 px-3 rounded-[10px] border border-[#f1f5f9] bg-[#f8fafc] no-underline text-[#0f172a] text-[13.5px] font-medium transition-colors duration-[0.18s] hover:bg-[#f1f5f9]"><span class="w-8 h-8 rounded-lg flex items-center justify-center text-[16px] shrink-0 bg-[#f3e8ff] text-[#7c3aed]">⚙️</span><span>System Settings</span></NuxtLink>
         </div>
-        <p class="card-title" style="margin:18px 0 12px;">System Health</p>
-        <div class="health-list">
-          <div v-for="h in healthItems" :key="h.label" class="health-row">
-            <span class="health-label">{{ h.label }}</span>
-            <div class="health-bar-wrap"><div class="health-bar" :style="{ width: h.val + '%', background: h.color }"/></div>
-            <span class="health-pct">{{ h.val }}%</span>
+        <p class="text-[14px] font-semibold text-[#0f172a] mt-[18px] mb-3">System Health</p>
+        <div class="flex flex-col gap-2.5">
+          <div v-for="h in healthItems" :key="h.label" class="grid grid-cols-[90px_1fr_38px] items-center gap-2.5">
+            <span class="text-[12px] text-[#64748b]">{{ h.label }}</span>
+            <div class="h-1.5 bg-[#f1f5f9] rounded-[10px] overflow-hidden"><div class="h-full rounded-[10px]" :style="{ width: h.val + '%', background: h.color }"></div></div>
+            <span class="text-[12px] font-semibold text-[#334155] text-right">{{ h.val }}%</span>
           </div>
         </div>
       </div>
@@ -156,13 +164,7 @@ const edibleDash  = (58 / 100) * circumference
 const poisonDash  = (28 / 100) * circumference
 const unknownDash = (14 / 100) * circumference
 
-const recentScans = [
-  { id: 1, user: 'Maria S.',  userInitials: 'MS', species: 'Volvariella volvacea', cls: 'edible',    confidence: 94, time: '2 min ago' },
-  { id: 2, user: 'Juan D.',   userInitials: 'JD', species: 'Amanita phalloides',   cls: 'poisonous', confidence: 88, time: '7 min ago' },
-  { id: 3, user: 'Ana R.',    userInitials: 'AR', species: 'Pleurotus ostreatus',  cls: 'edible',    confidence: 97, time: '15 min ago' },
-  { id: 4, user: 'Carlo M.',  userInitials: 'CM', species: 'Unknown species',      cls: 'unknown',   confidence: 42, time: '21 min ago' },
-  { id: 5, user: 'Lisa T.',   userInitials: 'LT', species: 'Lentinula edodes',     cls: 'edible',    confidence: 91, time: '33 min ago' },
-]
+const recentScans: any[] = []
 function confColor(val: number) {
   return val >= 80 ? '#10b981' : val >= 60 ? '#f59e0b' : '#ef4444'
 }
@@ -174,71 +176,3 @@ const healthItems = [
   { label: 'Model Uptime', val: 99, color: '#10b981' },
 ]
 </script>
-
-<style scoped>
-.dashboard { display: flex; flex-direction: column; gap: 22px; }
-
-.page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.page-title  { font-size: 22px; font-weight: 700; color: #0f172a; }
-.page-sub    { font-size: 13.5px; color: #64748b; margin-top: 3px; }
-.header-actions { display: flex; align-items: center; gap: 10px; }
-.date-badge { font-size: 12.5px; color: #64748b; background: #fff; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; }
-.btn-primary { padding: 8px 18px; border-radius: 8px; background: linear-gradient(135deg,#10b981,#059669); color: #fff; font-size: 13.5px; font-weight: 600; text-decoration: none; transition: opacity .18s; }
-.btn-primary:hover { opacity: .88; }
-
-.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-.kpi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; position: relative; transition: box-shadow .18s; }
-.kpi-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.07); }
-.kpi-icon  { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.kpi-value { font-size: 22px; font-weight: 700; color: #0f172a; line-height: 1.2; }
-.kpi-label { font-size: 12.5px; color: #64748b; margin-top: 2px; }
-.kpi-badge { position: absolute; top: 14px; right: 14px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
-.badge--up { background: #d1fae5; color: #065f46; }
-
-.mid-row { display: grid; grid-template-columns: 1fr 280px; gap: 14px; }
-.chart-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px 22px; }
-.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.card-title  { font-size: 14px; font-weight: 600; color: #0f172a; }
-.card-tag    { font-size: 11px; font-weight: 600; background: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 20px; }
-.card-link   { font-size: 13px; color: #10b981; text-decoration: none; font-weight: 500; }
-.card-link:hover { text-decoration: underline; }
-.sparkline   { width: 100%; height: 120px; }
-.chart-labels { display: flex; justify-content: space-between; padding: 0 4px; }
-.chart-day  { font-size: 11px; color: #94a3b8; }
-.donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-.donut-svg  { width: 120px; height: 120px; }
-.donut-legend { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-.legend-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #475569; }
-.legend-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-
-.bottom-row { display: grid; grid-template-columns: 1fr 280px; gap: 14px; }
-.activity-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px 22px; }
-.activity-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-.activity-table th { text-align: left; font-size: 11.5px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; padding: 8px 10px; border-bottom: 1px solid #f1f5f9; }
-.activity-table td { padding: 10px; font-size: 13px; color: #334155; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
-.activity-table tr:last-child td { border-bottom: none; }
-.activity-table tr:hover td { background: #f8fafc; }
-.td-user    { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-.td-species { font-style: italic; color: #1e293b; }
-.td-time    { color: #94a3b8; white-space: nowrap; }
-.mini-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg,#10b981,#059669); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.class-chip { padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; text-transform: capitalize; }
-.class-chip--edible    { background: #d1fae5; color: #065f46; }
-.class-chip--poisonous { background: #fee2e2; color: #991b1b; }
-.class-chip--unknown   { background: #fef3c7; color: #92400e; }
-.conf-bar-wrap { display: flex; align-items: center; gap: 7px; }
-.conf-bar  { height: 6px; border-radius: 10px; min-width: 4px; }
-.conf-label { font-size: 12px; color: #475569; white-space: nowrap; }
-
-.quick-actions-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; }
-.qa-list { display: flex; flex-direction: column; gap: 8px; }
-.qa-btn { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid #f1f5f9; background: #f8fafc; text-decoration: none; color: #0f172a; font-size: 13.5px; font-weight: 500; transition: background .18s; }
-.qa-btn:hover { background: #f1f5f9; }
-.qa-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-.health-list { display: flex; flex-direction: column; gap: 10px; }
-.health-row  { display: grid; grid-template-columns: 90px 1fr 38px; align-items: center; gap: 10px; }
-.health-label    { font-size: 12px; color: #64748b; }
-.health-bar-wrap { height: 6px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
-.health-bar  { height: 100%; border-radius: 10px; }
-.health-pct  { font-size: 12px; font-weight: 600; color: #334155; text-align: right; }
-</style>
