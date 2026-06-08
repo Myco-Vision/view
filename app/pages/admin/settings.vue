@@ -8,7 +8,7 @@
       <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="saveAll">💾 Save Changes</button>
     </div>
 
-    <div class="grid grid-cols-2 gap-4 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
       <!-- LEFT COLUMN -->
       <div class="flex flex-col gap-4">
         <!-- AI Model Settings -->

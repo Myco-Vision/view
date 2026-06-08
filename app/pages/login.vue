@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-[#f5f5f3] flex items-center justify-center font-dm">
-    <div class="bg-white rounded-xl shadow-[0_4px_32px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.04)] w-full max-w-[400px] pt-10 px-8 pb-8">
+  <div class="min-h-screen bg-[#f5f5f3] flex items-center justify-center font-dm px-4 py-8">
+    <div class="bg-white rounded-xl shadow-[0_4px_32px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.04)] w-full max-w-[400px] pt-10 px-6 sm:px-8 pb-8">
       <div class="text-center mb-8">
         <h2 class="font-serif text-[1.35rem] font-normal text-[#2c2c2c] m-0 tracking-[-0.01em]">Login to <span class="text-[#5a9e6f] italic font-semibold">MycoVision</span></h2>
       </div>

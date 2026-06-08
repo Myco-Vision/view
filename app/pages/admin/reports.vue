@@ -16,7 +16,7 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-4 gap-3.5">
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
       <div v-for="s in summaryStats" :key="s.label" class="bg-white border border-[#e2e8f0] rounded-[14px] py-[18px] px-5 text-center transition-shadow duration-[0.18s] hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
         <p class="text-[26px] font-bold leading-tight" :style="{ color: s.color }">{{ s.val }}</p>
         <p class="text-[13px] font-semibold text-[#0f172a] mt-1">{{ s.label }}</p>
@@ -25,7 +25,7 @@
     </div>
 
     <!-- Charts Row 1 -->
-    <div class="flex gap-3.5 items-start">
+    <div class="flex gap-3.5 flex-wrap items-start">
       <!-- Line Chart: Scan Volume -->
       <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] flex-[2] min-w-0">
         <div class="flex items-center justify-between mb-4">
@@ -52,7 +52,7 @@
       </div>
 
       <!-- Bar Chart: Top Species -->
-      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] flex-1 min-w-0">
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] flex-1 min-w-[200px] min-w-0">
         <div class="flex items-center justify-between mb-4"><p class="text-[14px] font-semibold text-[#0f172a]">Top 5 Identified Species</p></div>
         <div class="flex flex-col gap-3">
           <div v-for="sp in topSpecies" :key="sp.name" class="flex items-center gap-2.5">
@@ -67,7 +67,7 @@
     </div>
 
     <!-- Charts Row 2 -->
-    <div class="flex gap-3.5 items-start">
+    <div class="flex gap-3.5 flex-wrap items-start">
       <!-- Donut: Classification -->
       <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] flex-1 min-w-0">
         <div class="flex items-center justify-between mb-4"><p class="text-[14px] font-semibold text-[#0f172a]">Classification Breakdown</p></div>

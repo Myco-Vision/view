@@ -5,7 +5,7 @@
     <h1 class="text-[22px] font-normal text-[#0f172a]">Welcome, <strong class="font-bold">{{ firstName }}!</strong></h1>
 
     <!-- Two-column card -->
-    <div class="grid grid-cols-2 bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden flex-1">
+    <div class="grid grid-cols-1 lg:grid-cols-2 bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden flex-1">
 
       <!-- ── LEFT: Input Panel ─────────────────────────── -->
       <div class="p-6 py-6 px-[22px] flex flex-col gap-3 overflow-hidden border-r border-[#e2e8f0]">
@@ -141,7 +141,7 @@
       </div>
 
       <!-- Empty state when no result -->
-      <div v-else class="flex items-center justify-center bg-[#f8fafc] h-full p-6 col-start-2">
+      <div v-else class="flex items-center justify-center bg-[#f8fafc] p-6 lg:col-start-2">
         <div class="text-center max-w-[260px] flex flex-col items-center gap-3">
           <div class="text-[56px] opacity-50 grayscale-[0.8]">🍄</div>
           <h3 class="text-[18px] font-semibold text-[#475569]">Ready to Analyze</h3>

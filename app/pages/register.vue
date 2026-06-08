@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-[#f5f5f3] flex items-center justify-center font-dm">
-    <div class="bg-white rounded-xl shadow-[0_4px_32px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.04)] w-full max-w-[520px] pt-9 px-8 pb-7">
+  <div class="min-h-screen bg-[#f5f5f3] flex items-center justify-center font-dm px-4 py-8">
+    <div class="bg-white rounded-xl shadow-[0_4px_32px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.04)] w-full max-w-[520px] pt-9 px-6 sm:px-8 pb-7">
       <!-- Header with progress bar -->
       <div class="mb-7">
         <h2 class="font-serif text-[1.35rem] font-normal text-[#2c2c2c] m-0 mb-[1.1rem] tracking-[-0.01em]">Register to <span class="text-[#5a9e6f] italic font-semibold">MycoVision</span></h2>
@@ -20,7 +20,7 @@
       <div v-if="step === 1" class="flex flex-col gap-3">
         <div v-if="error" class="bg-red-50 border-[1.5px] border-red-300 rounded-lg text-red-700 text-[0.85rem] py-[0.65rem] px-[0.9rem] mb-2">{{ error }}</div>
         
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="flex flex-col gap-1.5">
             <label class="text-[0.78rem] font-medium text-[#555] tracking-[0.01em]">First Name</label>
             <input v-model="form.firstName" type="text" placeholder="Maria" class="w-full py-[0.65rem] px-[0.85rem] border-[1.5px] border-[#e0e0dc] rounded-lg font-dm text-[0.875rem] text-[#2c2c2c] bg-[#fafaf8] outline-none transition-all duration-200 box-border placeholder:text-[#bbb] focus:border-[#5a9e6f] focus:shadow-[0_0_0_3px_rgba(90,158,111,0.12)] focus:bg-white" :disabled="loading" />
@@ -30,7 +30,7 @@
             <input v-model="form.lastName" type="text" placeholder="Salem" class="w-full py-[0.65rem] px-[0.85rem] border-[1.5px] border-[#e0e0dc] rounded-lg font-dm text-[0.875rem] text-[#2c2c2c] bg-[#fafaf8] outline-none transition-all duration-200 box-border placeholder:text-[#bbb] focus:border-[#5a9e6f] focus:shadow-[0_0_0_3px_rgba(90,158,111,0.12)] focus:bg-white" :disabled="loading" />
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="flex flex-col gap-1.5">
             <label class="text-[0.78rem] font-medium text-[#555] tracking-[0.01em]">Username</label>
             <input v-model="form.username" type="text" placeholder="mariasalem" class="w-full py-[0.65rem] px-[0.85rem] border-[1.5px] border-[#e0e0dc] rounded-lg font-dm text-[0.875rem] text-[#2c2c2c] bg-[#fafaf8] outline-none transition-all duration-200 box-border placeholder:text-[#bbb] focus:border-[#5a9e6f] focus:shadow-[0_0_0_3px_rgba(90,158,111,0.12)] focus:bg-white" :disabled="loading" />
@@ -40,7 +40,7 @@
             <input v-model="form.email" type="email" placeholder="maria@example.com" class="w-full py-[0.65rem] px-[0.85rem] border-[1.5px] border-[#e0e0dc] rounded-lg font-dm text-[0.875rem] text-[#2c2c2c] bg-[#fafaf8] outline-none transition-all duration-200 box-border placeholder:text-[#bbb] focus:border-[#5a9e6f] focus:shadow-[0_0_0_3px_rgba(90,158,111,0.12)] focus:bg-white" :disabled="loading" />
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="flex flex-col gap-1.5">
             <label class="text-[0.78rem] font-medium text-[#555] tracking-[0.01em]">Contact no.</label>
             <input v-model="form.contact" type="text" placeholder="+63 955 123 5566" class="w-full py-[0.65rem] px-[0.85rem] border-[1.5px] border-[#e0e0dc] rounded-lg font-dm text-[0.875rem] text-[#2c2c2c] bg-[#fafaf8] outline-none transition-all duration-200 box-border placeholder:text-[#bbb] focus:border-[#5a9e6f] focus:shadow-[0_0_0_3px_rgba(90,158,111,0.12)] focus:bg-white" :disabled="loading" />
@@ -50,7 +50,7 @@
           <label class="text-[0.78rem] font-medium text-[#555] tracking-[0.01em]">Complete Address</label>
           <input v-model="form.address" type="text" placeholder="123 Rizal Street, Barangay San Roque..." class="w-full py-[0.65rem] px-[0.85rem] border-[1.5px] border-[#e0e0dc] rounded-lg font-dm text-[0.875rem] text-[#2c2c2c] bg-[#fafaf8] outline-none transition-all duration-200 box-border placeholder:text-[#bbb] focus:border-[#5a9e6f] focus:shadow-[0_0_0_3px_rgba(90,158,111,0.12)] focus:bg-white" :disabled="loading" />
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="flex flex-col gap-1.5">
             <label class="text-[0.78rem] font-medium text-[#555] tracking-[0.01em]">Password</label>
             <input v-model="form.password" type="password" placeholder="••••••••" class="w-full py-[0.65rem] px-[0.85rem] border-[1.5px] border-[#e0e0dc] rounded-lg font-dm text-[0.875rem] text-[#2c2c2c] bg-[#fafaf8] outline-none transition-all duration-200 box-border placeholder:text-[#bbb] focus:border-[#5a9e6f] focus:shadow-[0_0_0_3px_rgba(90,158,111,0.12)] focus:bg-white" :disabled="loading" />
@@ -80,7 +80,7 @@
       <!-- Step 2 -->
       <div v-if="step === 2" class="flex flex-col gap-3">
         <p class="text-[0.85rem] text-[#888] m-0 mb-2">Almost there! Review and confirm your details.</p>
-        <div class="grid grid-cols-2 gap-3 bg-[#fafaf8] border-[1.5px] border-[#e8e8e4] rounded-lg py-4 px-[1.1rem]">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#fafaf8] border-[1.5px] border-[#e8e8e4] rounded-lg py-4 px-[1.1rem]">
           <div class="flex flex-col gap-1 text-[0.875rem] text-[#2c2c2c] break-words"><span class="text-[0.72rem] uppercase tracking-[0.05em] text-[#999] font-semibold">Full Name</span><span>{{ form.firstName }} {{ form.lastName }}</span></div>
           <div class="flex flex-col gap-1 text-[0.875rem] text-[#2c2c2c] break-words"><span class="text-[0.72rem] uppercase tracking-[0.05em] text-[#999] font-semibold">Username</span><span>{{ form.username }}</span></div>
           <div class="flex flex-col gap-1 text-[0.875rem] text-[#2c2c2c] break-words"><span class="text-[0.72rem] uppercase tracking-[0.05em] text-[#999] font-semibold">Email</span><span>{{ form.email }}</span></div>

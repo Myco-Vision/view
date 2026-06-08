@@ -5,14 +5,14 @@
         <h1 class="text-[22px] font-bold text-[#0f172a]">Dashboard</h1>
         <p class="text-[13.5px] text-[#64748b] mt-[3px]">Welcome back, Admin. Here's what's happening today.</p>
       </div>
-      <div class="flex items-center gap-2.5">
-        <span class="text-[12.5px] text-[#64748b] bg-white border border-[#e2e8f0] py-1.5 px-3 rounded-lg">{{ todayDate }}</span>
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <span class="text-[12.5px] text-[#64748b] bg-white border border-[#e2e8f0] py-1.5 px-3 rounded-lg hidden sm:inline">{{ todayDate }}</span>
         <NuxtLink to="/admin/reports" class="py-2 px-[18px] rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white text-[13.5px] font-semibold no-underline transition-opacity duration-[0.18s] hover:opacity-90">View Reports →</NuxtLink>
       </div>
     </div>
 
     <!-- KPI Cards -->
-    <div class="grid grid-cols-4 gap-3.5">
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
       <div v-for="stat in stats" :key="stat.label" class="bg-white border border-[#e2e8f0] rounded-[14px] p-[18px] px-5 flex items-center gap-3.5 relative transition-shadow duration-[0.18s] hover:shadow-[0_4px_20px_rgba(0,0,0,0.07)]">
         <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :style="{ background: stat.iconBg }">
           <span v-html="stat.icon" />
@@ -26,7 +26,7 @@
     </div>
 
     <!-- Charts Row -->
-    <div class="grid grid-cols-[1fr_280px] gap-3.5">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-3.5">
       <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 px-[22px]">
         <div class="flex items-center justify-between mb-4">
           <p class="text-[14px] font-semibold text-[#0f172a]">Scan Volume — Last 7 Days</p>
@@ -76,7 +76,7 @@
     </div>
 
     <!-- Bottom Row -->
-    <div class="grid grid-cols-[1fr_280px] gap-3.5">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-3.5">
       <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 px-[22px]">
         <div class="flex items-center justify-between mb-4">
           <p class="text-[14px] font-semibold text-[#0f172a]">Recent Scans</p>

@@ -8,7 +8,7 @@
       <div class="flex items-center gap-2.5 flex-wrap">
         <div class="relative">
           <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="searchQuery" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-[200px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search scans…" />
+          <input v-model="searchQuery" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-full sm:w-[200px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search scans…" />
         </div>
         <select v-model="clsFilter" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
           <option value="">All Classifications</option>
@@ -27,31 +27,32 @@
     </div>
 
     <!-- Stats Strip -->
-    <div class="flex gap-3.5">
-      <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 flex flex-col items-center gap-1">
+    <div class="flex gap-3.5 flex-wrap">
+      <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
         <span class="text-[22px] font-bold text-[#0f172a]">{{ scans.length }}</span>
         <span class="text-[12px] text-[#64748b]">Total Scans</span>
       </div>
-      <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 flex flex-col items-center gap-1">
+      <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
         <span class="text-[22px] font-bold text-[#10b981]">{{ edibleCount }}</span>
         <span class="text-[12px] text-[#64748b]">Edible</span>
       </div>
-      <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 flex flex-col items-center gap-1">
+      <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
         <span class="text-[22px] font-bold text-[#ef4444]">{{ poisonousCount }}</span>
         <span class="text-[12px] text-[#64748b]">Poisonous</span>
       </div>
-      <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 flex flex-col items-center gap-1">
+      <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
         <span class="text-[22px] font-bold text-[#f59e0b]">{{ unknownCount }}</span>
         <span class="text-[12px] text-[#64748b]">Unknown</span>
       </div>
-      <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 flex flex-col items-center gap-1">
+      <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
         <span class="text-[22px] font-bold text-[#0f172a]">{{ avgConfidence }}%</span>
         <span class="text-[12px] text-[#64748b]">Avg. Confidence</span>
       </div>
     </div>
 
     <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
-      <table class="w-full border-collapse">
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
         <thead>
           <tr>
             <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">#</th>
@@ -90,7 +91,8 @@
             </td>
           </tr>
         </tbody>
-      </table>
+        </table>
+      </div>
       <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
         <span class="text-[12.5px] text-[#64748b]">Showing {{ filteredScans.length }} of {{ scans.length }} scans</span>
         <div class="flex items-center gap-2.5">

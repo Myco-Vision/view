@@ -8,7 +8,7 @@
       <div class="flex items-center gap-2.5 flex-wrap">
         <div class="relative">
           <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="searchQuery" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-[220px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search users…" />
+          <input v-model="searchQuery" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-full sm:w-[220px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search users…" />
         </div>
         <select v-model="roleFilter" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none cursor-pointer">
           <option value="">All Roles</option>
@@ -24,6 +24,7 @@
     </div>
 
     <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
+      <div class="overflow-x-auto">
       <table class="w-full border-collapse">
         <thead>
           <tr>
@@ -73,6 +74,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
 
       <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
         <span class="text-[12.5px] text-[#64748b]">Showing {{ filteredUsers.length }} of {{ users.length }} users</span>

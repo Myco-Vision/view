@@ -21,6 +21,7 @@
     </div>
 
     <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
+      <div class="overflow-x-auto">
       <table class="w-full border-collapse">
         <thead>
           <tr>
@@ -52,6 +53,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
       <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
         <span class="text-[12.5px] text-[#64748b]">{{ filteredSpecies.length }} of {{ species.length }} species</span>
         <div class="flex items-center gap-2.5">

@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-[18px]">
     <h1 class="text-[22px] font-bold text-[#0f172a]">Settings</h1>
 
-    <div class="grid grid-cols-2 gap-3.5 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
 
       <!-- ── LEFT COLUMN ───────────────────────────── -->
       <div class="flex flex-col gap-3.5">
