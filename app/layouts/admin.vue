@@ -65,7 +65,7 @@
       <nav class="flex-1 flex flex-col gap-0.5 overflow-hidden">
         <p v-if="!sidebarCollapsed || mobileOpen" class="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.8px] px-2 mt-1 mb-0.5 whitespace-nowrap">Overview</p>
 
-        <NuxtLink to="/admin/dashboard" :title="(sidebarCollapsed && !mobileOpen) ? 'Dashboard' : ''" @click="mobileOpen = false"
+        <NuxtLink v-if="isAdminOrAbove" to="/admin/dashboard" :title="(sidebarCollapsed && !mobileOpen) ? 'Dashboard' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
           <span class="flex items-center justify-center shrink-0 w-5">
@@ -77,7 +77,7 @@
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Dashboard</span></transition>
         </NuxtLink>
 
-        <NuxtLink to="/admin/users" :title="(sidebarCollapsed && !mobileOpen) ? 'Users' : ''" @click="mobileOpen = false"
+        <NuxtLink v-if="isSuperAdmin" to="/admin/users" :title="(sidebarCollapsed && !mobileOpen) ? 'Users' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
           <span class="flex items-center justify-center shrink-0 w-5">
@@ -91,7 +91,7 @@
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Users</span></transition>
         </NuxtLink>
 
-        <NuxtLink to="/admin/scans" :title="(sidebarCollapsed && !mobileOpen) ? 'Scans Log' : ''" @click="mobileOpen = false"
+        <NuxtLink v-if="isAdminOrAbove" to="/admin/scans" :title="(sidebarCollapsed && !mobileOpen) ? 'Scans Log' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
           <span class="flex items-center justify-center shrink-0 w-5">
@@ -105,7 +105,7 @@
 
         <p v-if="!sidebarCollapsed || mobileOpen" class="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.8px] px-2 mt-3 mb-0.5 whitespace-nowrap">Management</p>
 
-        <NuxtLink to="/admin/species" :title="(sidebarCollapsed && !mobileOpen) ? 'Species DB' : ''" @click="mobileOpen = false"
+        <NuxtLink v-if="isSuperAdmin" to="/admin/species" :title="(sidebarCollapsed && !mobileOpen) ? 'Species DB' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
           <span class="flex items-center justify-center shrink-0 w-5">
@@ -118,7 +118,7 @@
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Species DB</span></transition>
         </NuxtLink>
 
-        <NuxtLink to="/admin/reports" :title="(sidebarCollapsed && !mobileOpen) ? 'Reports' : ''" @click="mobileOpen = false"
+        <NuxtLink v-if="isSuperAdmin" to="/admin/reports" :title="(sidebarCollapsed && !mobileOpen) ? 'Reports' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
           <span class="flex items-center justify-center shrink-0 w-5">
@@ -132,7 +132,7 @@
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Reports</span></transition>
         </NuxtLink>
 
-        <NuxtLink to="/admin/settings" :title="(sidebarCollapsed && !mobileOpen) ? 'Settings' : ''" @click="mobileOpen = false"
+        <NuxtLink v-if="isSuperAdmin" to="/admin/settings" :title="(sidebarCollapsed && !mobileOpen) ? 'Settings' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
           <span class="flex items-center justify-center shrink-0 w-5">
@@ -151,7 +151,7 @@
           <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-xs font-bold flex items-center justify-center shrink-0">{{ adminInitials }}</div>
           <div class="flex flex-col gap-px overflow-hidden">
             <span class="text-[13px] font-semibold text-slate-200 whitespace-nowrap overflow-hidden text-ellipsis">{{ adminName }}</span>
-            <span class="text-[11px] text-emerald-500 font-medium">Administrator</span>
+            <span class="text-[11px] text-emerald-500 font-medium">{{ roleLabel }}</span>
           </div>
         </div>
         <div v-else class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-xs font-bold flex items-center justify-center mx-auto">{{ adminInitials }}</div>
@@ -221,6 +221,7 @@ const config = useRuntimeConfig()
 const sidebarCollapsed = ref(false)
 const mobileOpen = ref(false)
 const adminName = ref('')
+const userRole = ref('')
 
 onMounted(() => {
   const storedUser = localStorage.getItem('user')
@@ -228,6 +229,19 @@ onMounted(() => {
     const user = JSON.parse(storedUser)
     adminName.value = user.name || user.username || 'Admin User'
   }
+  userRole.value = localStorage.getItem('role') || ''
+})
+
+const isSuperAdmin = computed(() => userRole.value === 'super_admin')
+const isAdminOrAbove = computed(() => ['admin', 'super_admin'].includes(userRole.value))
+
+const roleLabel = computed(() => {
+  const labels: Record<string, string> = {
+    super_admin: 'Super Admin',
+    admin: 'Administrator',
+    forager: 'Forager',
+  }
+  return labels[userRole.value] ?? 'User'
 })
 
 const adminInitials = computed(() => {

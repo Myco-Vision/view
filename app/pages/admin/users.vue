@@ -115,7 +115,11 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
+definePageMeta({ 
+  layout: 'admin',
+  middleware: 'role',
+  roles: ['admin', 'super_admin'],
+})
 
 const searchQuery  = ref('')
 const roleFilter   = ref('')

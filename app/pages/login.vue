@@ -77,7 +77,7 @@ async function handleLogin() {
     localStorage.setItem('role', data.user.role)
 
     // Redirect based on role
-    if (data.user.role === 'admin') {
+    if (data.user.role === 'admin' || data.user.role === 'super_admin') {
       await navigateTo('/admin/dashboard')
     } else {
       await navigateTo('/users/scan')

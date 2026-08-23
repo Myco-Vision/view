@@ -169,5 +169,9 @@ function deleteSpecies(sp: Species) {
     species.value = species.value.filter(s => s.id !== sp.id)
   }
 }
-definePageMeta({ layout: 'admin' })
+definePageMeta({ 
+  layout: 'admin',
+  middleware: 'role',
+  roles: ['admin', 'super_admin'],
+})
 </script>
