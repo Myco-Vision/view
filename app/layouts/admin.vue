@@ -143,18 +143,34 @@
           </span>
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Settings</span></transition>
         </NuxtLink>
+
+        <!-- Super Admin Only -->
+        <template v-if="userRole === 'super_admin'">
+          <p v-if="!sidebarCollapsed || mobileOpen" class="text-[10px] font-semibold text-amber-500 uppercase tracking-[0.8px] px-2 mt-3 mb-0.5 whitespace-nowrap">Super Admin</p>
+
+          <NuxtLink to="/admin/accounts" :title="(sidebarCollapsed && !mobileOpen) ? 'Account Management' : ''" @click="mobileOpen = false"
+            class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-amber-500/[0.08] hover:text-amber-300"
+            active-class="!bg-amber-500/15 !text-amber-500">
+            <span class="flex items-center justify-center shrink-0 w-5">
+              <svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </span>
+            <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Account Management</span></transition>
+          </NuxtLink>
+        </template>
       </nav>
 
       <!-- Footer -->
       <div class="flex flex-col gap-1.5 pt-3 border-t border-white/[0.08] overflow-hidden">
         <div v-if="!sidebarCollapsed || mobileOpen" class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg bg-white/[0.04]">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-xs font-bold flex items-center justify-center shrink-0">{{ adminInitials }}</div>
+          <div class="w-8 h-8 rounded-lg text-white text-xs font-bold flex items-center justify-center shrink-0" :class="userRole === 'super_admin' ? 'bg-gradient-to-br from-amber-500 to-amber-600' : 'bg-gradient-to-br from-emerald-500 to-emerald-600'">{{ adminInitials }}</div>
           <div class="flex flex-col gap-px overflow-hidden">
             <span class="text-[13px] font-semibold text-slate-200 whitespace-nowrap overflow-hidden text-ellipsis">{{ adminName }}</span>
-            <span class="text-[11px] text-emerald-500 font-medium">Administrator</span>
+            <span class="text-[11px] font-medium" :class="userRole === 'super_admin' ? 'text-amber-500' : 'text-emerald-500'">{{ userRole === 'super_admin' ? 'Super Admin' : 'Administrator' }}</span>
           </div>
         </div>
-        <div v-else class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-xs font-bold flex items-center justify-center mx-auto">{{ adminInitials }}</div>
+        <div v-else class="w-8 h-8 rounded-lg text-white text-xs font-bold flex items-center justify-center mx-auto" :class="userRole === 'super_admin' ? 'bg-gradient-to-br from-amber-500 to-amber-600' : 'bg-gradient-to-br from-emerald-500 to-emerald-600'">{{ adminInitials }}</div>
 
         <button
           @click="handleLogout"
@@ -221,12 +237,14 @@ const config = useRuntimeConfig()
 const sidebarCollapsed = ref(false)
 const mobileOpen = ref(false)
 const adminName = ref('')
+const userRole = ref('')
 
 onMounted(() => {
   const storedUser = localStorage.getItem('user')
   if (storedUser) {
     const user = JSON.parse(storedUser)
     adminName.value = user.name || user.username || 'Admin User'
+    userRole.value = user.role || localStorage.getItem('role') || 'admin'
   }
 })
 
@@ -249,6 +267,7 @@ const pageMap: Record<string, string> = {
   '/admin/species':   'Species Database',
   '/admin/reports':   'Reports & Analytics',
   '/admin/settings':  'System Settings',
+  '/admin/accounts':  'Account Management',
 }
 const currentPageTitle = computed(() => pageMap[route.path] ?? 'Dashboard')
 
