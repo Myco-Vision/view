@@ -66,7 +66,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="scan in filteredScans" :key="scan.id" class="hover:bg-[#f8fafc] group">
+          <tr v-for="scan in pagedScans" :key="scan.id" class="hover:bg-[#f8fafc] group">
             <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle font-mono text-[#94a3b8] text-[12px] group-last:border-none">{{ scan.id }}</td>
             <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
               <div class="flex items-center gap-2 whitespace-nowrap">
@@ -134,28 +134,104 @@ definePageMeta({
   roles: ['admin', 'super_admin'],
 })
 
+const config = useRuntimeConfig()
+
 const searchQuery = ref('')
 const clsFilter   = ref('')
 const dateFilter  = ref('')
 const page        = ref(1)
 const perPage     = 10
 const selectedScan = ref<any>(null)
+const isLoading   = ref(false)
+
+const AVATAR_COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9','#ec4899']
+function avatarColor(name: string) {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h)
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
+}
+function initials(name: string) {
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+}
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })
+}
+
+function mapScan(raw: any) {
+  const name = raw.user?.name ?? 'Unknown'
+  return {
+    id:          raw.id,
+    user:        name,
+    initials:    initials(name),
+    avatarColor: avatarColor(name),
+    species:     raw.result_name ?? '—',
+    cls:         raw.result_classification ?? 'unknown',
+    confidence:  Math.round(raw.confidence_level ?? 0),
+    location:    raw.latitude != null ? `${Number(raw.latitude).toFixed(4)}, ${Number(raw.longitude).toFixed(4)}` : '—',
+    date:        formatDate(raw.created_at),
+    _raw:        raw,
+  }
+}
 
 const scans = ref<any[]>([])
+
+async function fetchScans() {
+  isLoading.value = true
+  try {
+    const token = localStorage.getItem('token')
+    const res = await $fetch<any>(`${config.public.apiBase}/admin/scans`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    // Laravel paginate returns { data: [...] }
+    const rows = res.data ?? res
+    scans.value = rows.map(mapScan)
+  } catch (err) {
+    console.error('Failed to load scans', err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchScans)
 
 const edibleCount    = computed(() => scans.value.filter(s => s.cls === 'edible').length)
 const poisonousCount = computed(() => scans.value.filter(s => s.cls === 'poisonous').length)
 const unknownCount   = computed(() => scans.value.filter(s => s.cls === 'unknown').length)
-const avgConfidence  = computed(() => Math.round(scans.value.reduce((a, s) => a + s.confidence, 0) / scans.value.length))
+const avgConfidence  = computed(() => {
+  if (!scans.value.length) return 0
+  return Math.round(scans.value.reduce((a, s) => a + s.confidence, 0) / scans.value.length)
+})
 
 const filteredScans = computed(() => scans.value.filter(s => {
-  const q = searchQuery.value.toLowerCase()
+  const q      = searchQuery.value.toLowerCase()
   const matchQ = !q || s.user.toLowerCase().includes(q) || s.species.toLowerCase().includes(q)
   const matchC = !clsFilter.value || s.cls === clsFilter.value
-  return matchQ && matchC
+
+  let matchD = true
+  if (dateFilter.value) {
+    const scanDate = new Date(s._raw.created_at)
+    const now      = new Date()
+    if (dateFilter.value === 'today') {
+      matchD = scanDate.toDateString() === now.toDateString()
+    } else if (dateFilter.value === 'week') {
+      const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7)
+      matchD = scanDate >= weekAgo
+    } else if (dateFilter.value === 'month') {
+      matchD = scanDate.getMonth() === now.getMonth() && scanDate.getFullYear() === now.getFullYear()
+    }
+  }
+
+  return matchQ && matchC && matchD
 }))
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredScans.value.length / perPage)))
+const pagedScans = computed(() => {
+  const start = (page.value - 1) * perPage
+  return filteredScans.value.slice(start, start + perPage)
+})
+
+// Reset to page 1 whenever filters change
+watch([searchQuery, clsFilter, dateFilter], () => { page.value = 1 })
 
 function confColor(v: number) { return v >= 80 ? '#10b981' : v >= 60 ? '#f59e0b' : '#ef4444' }
 function openScan(scan: any)  { selectedScan.value = scan }
