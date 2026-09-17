@@ -243,10 +243,18 @@ function fetchUserLocation(): Promise<void> {
           if (res.ok) {
             const geoData = await res.json()
             const addr = geoData.address || {}
-            const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || ''
-            const state = addr.state || addr.region || ''
+
+            // In OpenStreetMap (Philippines), barangay is mapped to quarter, suburb, neighbourhood, village, city_district, or hamlet
+            let barangay = addr.quarter || addr.suburb || addr.neighbourhood || addr.village || addr.city_district || addr.hamlet || ''
+            if (barangay && !/^brgy|^barangay/i.test(barangay)) {
+              barangay = `Brgy. ${barangay}`
+            }
+
+            const city = addr.city || addr.town || addr.municipality || addr.county || ''
+            const state = addr.state || addr.region || addr.province || ''
             const country = addr.country || ''
-            locationName.value = [city, state, country].filter(Boolean).join(', ') || geoData.display_name || null
+
+            locationName.value = [barangay, city, state, country].filter(Boolean).join(', ') || geoData.display_name || null
           }
         } catch (e) {
           console.warn('Reverse geocoding failed:', e)
