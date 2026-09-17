@@ -124,18 +124,36 @@
           <a :href="result.reference" target="_blank" class="text-[11px] text-[#64748b] break-all no-underline leading-normal hover:underline">{{ result.reference }}</a>
         </div>
 
-        <!-- Map -->
+        <!-- Map (dynamic based on user's real GPS location) -->
         <div class="flex-1 flex flex-col gap-2 min-h-0">
-          <p class="text-[13px] font-medium text-[#0f172a]">Pin mushroom location</p>
+          <div class="flex items-center justify-between">
+            <p class="text-[13px] font-medium text-[#0f172a]">Pin mushroom location</p>
+            <span v-if="geoError" class="text-[11px] text-[#ef4444]">{{ geoError }}</span>
+            <span v-else-if="isLocating" class="text-[11px] text-[#64748b] flex items-center gap-1">
+              <span class="w-[10px] h-[10px] border-[1.5px] border-[#64748b]/30 border-t-[#64748b] rounded-full animate-spin" />
+              Getting location…
+            </span>
+            <span v-else-if="userLat !== null" class="text-[11px] text-[#64748b]">
+              📍 {{ userLat.toFixed(5) }}, {{ userLng!.toFixed(5) }}
+            </span>
+          </div>
           <div class="flex-1 rounded-[10px] overflow-hidden border border-[#e2e8f0] min-h-0">
             <iframe
               title="Mushroom location"
-              src="https://www.openstreetmap.org/export/embed.html?bbox=120.9,14.4,121.3,14.8&layer=mapnik&marker=14.599512,121.0"
+              :src="mapEmbedUrl"
               class="w-full h-full block border-0"
               loading="lazy"
             />
           </div>
-          <button class="self-center bg-transparent border-none font-sans text-[13.5px] font-semibold text-[#0f172a] cursor-pointer underline py-0.5 transition-colors duration-[0.18s] hover:text-[#059669]">Save location</button>
+          <button
+            class="self-center flex items-center gap-1.5 bg-transparent border-none font-sans text-[13.5px] font-semibold cursor-pointer underline py-0.5 transition-colors duration-[0.18s] disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="locationSaved ? 'text-[#059669]' : 'text-[#0f172a] hover:text-[#059669]'"
+            :disabled="isSavingLocation || userLat === null"
+            @click="saveLocation"
+          >
+            <span v-if="isSavingLocation" class="w-[12px] h-[12px] border-[1.5px] border-[#0f172a]/30 border-t-[#0f172a] rounded-full animate-spin" />
+            {{ locationSaved ? '✓ Location saved' : 'Save location' }}
+          </button>
         </div>
 
       </div>
@@ -178,7 +196,97 @@ const isCameraOpen = ref(false)
 const videoRef = ref<HTMLVideoElement | null>(null)
 let mediaStream: MediaStream | null = null
 
+// ── Geolocation state ─────────────────────────────────
+const userLat = ref<number | null>(null)
+const userLng = ref<number | null>(null)
+const isLocating = ref(false)
+const geoError = ref<string | null>(null)
+const lastScanId = ref<number | null>(null)
+const isSavingLocation = ref(false)
+const locationSaved = ref(false)
+
 const config = useRuntimeConfig()
+
+// ── Geolocation helpers ───────────────────────────────
+function fetchUserLocation(): Promise<void> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      geoError.value = 'Geolocation not supported'
+      resolve()
+      return
+    }
+
+    isLocating.value = true
+    geoError.value = null
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        userLat.value = position.coords.latitude
+        userLng.value = position.coords.longitude
+        isLocating.value = false
+        resolve()
+      },
+      (err) => {
+        isLocating.value = false
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            geoError.value = 'Location permission denied'
+            break
+          case err.POSITION_UNAVAILABLE:
+            geoError.value = 'Location unavailable'
+            break
+          case err.TIMEOUT:
+            geoError.value = 'Location request timed out'
+            break
+          default:
+            geoError.value = 'Could not get location'
+        }
+        resolve()
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000 // Cache location for 1 min
+      }
+    )
+  })
+}
+
+// Build map URL dynamically from user's real coordinates
+const mapEmbedUrl = computed(() => {
+  const lat = userLat.value ?? 14.5995  // fallback only if geo fails
+  const lng = userLng.value ?? 120.9842
+  const delta = 0.01 // tighter zoom around the user's actual position
+  const bbox = `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`
+})
+
+// ── Save location to backend ──────────────────────────
+async function saveLocation() {
+  if (userLat.value === null || userLng.value === null || !lastScanId.value) return
+
+  isSavingLocation.value = true
+  try {
+    const token = localStorage.getItem('token')
+    await $fetch(`${config.public.apiBase}/scans/${lastScanId.value}/location`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        latitude: userLat.value,
+        longitude: userLng.value,
+      },
+    })
+    locationSaved.value = true
+  } catch (error) {
+    console.error('Failed to save location:', error)
+    alert('Failed to save location. Please try again.')
+  } finally {
+    isSavingLocation.value = false
+  }
+}
 
 async function openCamera() {
   try {
@@ -257,6 +365,8 @@ function clearImage() {
   previewUrl.value = null
   selectedFile.value = null
   result.value = null
+  lastScanId.value = null
+  locationSaved.value = false
   if (fileInput.value) fileInput.value.value = ''
 }
 async function analyzeImage() {
@@ -264,11 +374,22 @@ async function analyzeImage() {
 
   isAnalyzing.value = true
   result.value = null
+  lastScanId.value = null
+  locationSaved.value = false
+
+  // Start fetching the user's GPS location in parallel with the scan
+  fetchUserLocation()
 
   try {
     const token = localStorage.getItem('token')
     const formData = new FormData()
     formData.append('image', selectedFile.value)
+
+    // Include GPS coordinates if already available
+    if (userLat.value !== null && userLng.value !== null) {
+      formData.append('latitude', String(userLat.value))
+      formData.append('longitude', String(userLng.value))
+    }
     
     // Send to backend
     const data = await $fetch<any>(`${config.public.apiBase}/scans`, {
@@ -276,6 +397,9 @@ async function analyzeImage() {
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
     })
+
+    // Store the scan ID so we can update location later
+    lastScanId.value = data.id
 
     // Map result from backend to UI state
     const rawClass = data.result_classification || 'unknown';
@@ -294,3 +418,4 @@ async function analyzeImage() {
   }
 }
 </script>
+
