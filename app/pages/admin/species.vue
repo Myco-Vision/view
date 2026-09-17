@@ -213,7 +213,11 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
+definePageMeta({ 
+  layout: 'admin',
+  middleware: 'role',
+  roles: ['admin', 'super_admin'],
+})
 
 const config = useRuntimeConfig()
 const activeTab = ref<'verified' | 'candidates'>('verified')
@@ -406,9 +410,4 @@ async function deleteSpecies(sp: Species) {
     alert('Failed to delete species.')
   }
 }
-definePageMeta({ 
-  layout: 'admin',
-  middleware: 'role',
-  roles: ['admin', 'super_admin'],
-})
 </script>
