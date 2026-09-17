@@ -326,7 +326,7 @@ async function fetchScans() {
         name: scan.result_name || 'Unknown Species',
         classification: rawClass.charAt(0).toUpperCase() + rawClass.slice(1),
         confidence: scan.confidence_level || 0,
-        location: scan.latitude && scan.longitude ? `${scan.latitude}, ${scan.longitude}` : 'Unknown Location',
+        location: scan.location_name || (scan.latitude && scan.longitude ? `${scan.latitude}, ${scan.longitude}` : 'Unknown Location'),
         date: new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
         image: scan.image_path ? `${config.public.apiBase.replace('/api', '')}/storage/${scan.image_path}` : 'https://placehold.co/320x320/e8f0e8/a3a3a3?text=No+Image',
         notes: scan.notes

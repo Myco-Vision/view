@@ -135,8 +135,9 @@
                 <span class="w-[10px] h-[10px] border-[1.5px] border-[#64748b]/30 border-t-[#64748b] rounded-full animate-spin" />
                 Getting location…
               </span>
-              <span v-else-if="userLat !== null" class="text-[11px] text-[#64748b]">
-                📍 {{ userLat.toFixed(5) }}, {{ userLng!.toFixed(5) }}
+              <span v-else-if="userLat !== null" class="text-[11px] text-[#64748b] text-right">
+                <span v-if="locationName" class="font-semibold text-[#0f172a] block">📍 {{ locationName }}</span>
+                <span :class="locationName ? 'text-[10px] text-[#94a3b8]' : ''" class="block">📍 {{ userLat.toFixed(5) }}, {{ userLng!.toFixed(5) }}</span>
               </span>
             </div>
           </div>
@@ -202,6 +203,7 @@ let mediaStream: MediaStream | null = null
 // ── Geolocation state ─────────────────────────────────
 const userLat = ref<number | null>(null)
 const userLng = ref<number | null>(null)
+const locationName = ref<string | null>(null)
 const isLocating = ref(false)
 const geoError = ref<string | null>(null)
 const lastScanId = ref<number | null>(null)
@@ -230,10 +232,25 @@ function fetchUserLocation(): Promise<void> {
     geoError.value = null
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         userLat.value = position.coords.latitude
         userLng.value = position.coords.longitude
         isLocating.value = false
+
+        // Fetch location name via OpenStreetMap Nominatim reverse geocoding API
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLat.value}&lon=${userLng.value}&format=json`)
+          if (res.ok) {
+            const geoData = await res.json()
+            const addr = geoData.address || {}
+            const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || ''
+            const state = addr.state || addr.region || ''
+            const country = addr.country || ''
+            locationName.value = [city, state, country].filter(Boolean).join(', ') || geoData.display_name || null
+          }
+        } catch (e) {
+          console.warn('Reverse geocoding failed:', e)
+        }
         resolve()
       },
       (err) => {
@@ -287,6 +304,7 @@ async function saveLocation() {
       body: {
         latitude: userLat.value,
         longitude: userLng.value,
+        location_name: locationName.value,
       },
     })
     locationSaved.value = true
@@ -444,10 +462,13 @@ async function analyzeImage() {
     const formData = new FormData()
     formData.append('image', selectedFile.value)
 
-    // Include GPS coordinates if already available
+    // Include GPS coordinates & location name if available
     if (userLat.value !== null && userLng.value !== null) {
       formData.append('latitude', String(userLat.value))
       formData.append('longitude', String(userLng.value))
+      if (locationName.value) {
+        formData.append('location_name', locationName.value)
+      }
     }
     
     // Send to backend

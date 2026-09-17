@@ -167,7 +167,7 @@ function mapScan(raw: any) {
     species:     raw.result_name ?? '—',
     cls:         raw.result_classification ?? 'unknown',
     confidence:  Math.round(raw.confidence_level ?? 0),
-    location:    raw.latitude != null ? `${Number(raw.latitude).toFixed(4)}, ${Number(raw.longitude).toFixed(4)}` : '—',
+    location:    raw.location_name || (raw.latitude != null ? `${Number(raw.latitude).toFixed(4)}, ${Number(raw.longitude).toFixed(4)}` : '—'),
     date:        formatDate(raw.created_at),
     _raw:        raw,
   }
