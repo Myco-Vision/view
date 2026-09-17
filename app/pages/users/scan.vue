@@ -126,14 +126,19 @@
         <div class="flex-1 flex flex-col gap-2 min-h-0">
           <div class="flex items-center justify-between">
             <p class="text-[13px] font-medium text-[#0f172a]">Pin mushroom location</p>
-            <span v-if="geoError" class="text-[11px] text-[#ef4444]">{{ geoError }}</span>
-            <span v-else-if="isLocating" class="text-[11px] text-[#64748b] flex items-center gap-1">
-              <span class="w-[10px] h-[10px] border-[1.5px] border-[#64748b]/30 border-t-[#64748b] rounded-full animate-spin" />
-              Getting location…
-            </span>
-            <span v-else-if="userLat !== null" class="text-[11px] text-[#64748b]">
-              📍 {{ userLat.toFixed(5) }}, {{ userLng!.toFixed(5) }}
-            </span>
+            <div class="flex items-center gap-2">
+              <span v-if="geoError" class="text-[11px] text-[#ef4444] flex items-center gap-1.5">
+                {{ geoError }}
+                <button @click="fetchUserLocation" class="text-[11px] font-semibold text-[#059669] hover:underline cursor-pointer bg-transparent border-none p-0">Retry</button>
+              </span>
+              <span v-else-if="isLocating" class="text-[11px] text-[#64748b] flex items-center gap-1">
+                <span class="w-[10px] h-[10px] border-[1.5px] border-[#64748b]/30 border-t-[#64748b] rounded-full animate-spin" />
+                Getting location…
+              </span>
+              <span v-else-if="userLat !== null" class="text-[11px] text-[#64748b]">
+                📍 {{ userLat.toFixed(5) }}, {{ userLng!.toFixed(5) }}
+              </span>
+            </div>
           </div>
           <div class="flex-1 rounded-[10px] overflow-hidden border border-[#e2e8f0] min-h-0">
             <iframe
