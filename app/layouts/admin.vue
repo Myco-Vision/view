@@ -91,7 +91,7 @@
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Users</span></transition>
         </NuxtLink>
 
-        <NuxtLink to="/admin/scans" :title="(sidebarCollapsed && !mobileOpen) ? 'Scans Log' : ''" @click="mobileOpen = false"
+        <!-- <NuxtLink to="/admin/scans" :title="(sidebarCollapsed && !mobileOpen) ? 'Scans Log' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
           <span class="flex items-center justify-center shrink-0 w-5">
@@ -101,7 +101,7 @@
             </svg>
           </span>
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Scans Log</span></transition>
-        </NuxtLink>
+        </NuxtLink> -->
 
         <p v-if="!sidebarCollapsed || mobileOpen" class="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.8px] px-2 mt-3 mb-0.5 whitespace-nowrap">Management</p>
 

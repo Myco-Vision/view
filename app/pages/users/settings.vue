@@ -169,23 +169,21 @@
                 <p class="text-[13.5px] font-medium text-[#0f172a]">Share Data for Research</p>
                 <p class="text-[12px] text-[#64748b] mt-0.5">Help improve mushroom identification AI (anonymous)</p>
               </div>
-              <button class="relative w-[42px] h-6 rounded-full border-none cursor-pointer shrink-0 transition-colors duration-200" :class="privacy.shareData ? 'bg-[#10b981]' : 'bg-[#d1d5db]'" @click="privacy.shareData = !privacy.shareData">
-                <div class="absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-transform duration-200" :class="privacy.shareData ? 'translate-x-[18px]' : ''"></div>
-              </button>
-            </div>
-            <div class="flex items-center justify-between gap-3">
-              <div class="flex-1 min-w-0">
-                <p class="text-[13.5px] font-medium text-[#0f172a]">Public Collection</p>
-                <p class="text-[12px] text-[#64748b] mt-0.5">Allow others to view your mushroom collection</p>
-              </div>
-              <button class="relative w-[42px] h-6 rounded-full border-none cursor-pointer shrink-0 transition-colors duration-200" :class="privacy.publicCollection ? 'bg-[#10b981]' : 'bg-[#d1d5db]'" @click="privacy.publicCollection = !privacy.publicCollection">
-                <div class="absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-transform duration-200" :class="privacy.publicCollection ? 'translate-x-[18px]' : ''"></div>
-              </button>
+              <button 
+  class="relative w-[42px] h-6 rounded-full border-none cursor-pointer shrink-0 transition-colors duration-200" 
+  :class="privacy.shareData ? 'bg-[#10b981]' : 'bg-[#d1d5db]'" 
+  @click="handleToggleClick">
+    <div 
+      class="absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-transform duration-200" 
+      :class="privacy.shareData ? 'translate-x-[18px]' : ''">
+    </div>
+</button>
+
             </div>
           </div>
         </div>
 
-        <!-- Danger Zone -->
+                <!-- Danger Zone -->
         <div class="bg-[#fff8f8] border border-[#fecaca] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">
           <p class="text-[14px] font-bold text-[#dc2626] flex items-center gap-[7px]">
             <span class="text-[16px]">⚠️</span> Danger Zone
@@ -197,6 +195,86 @@
       </div>
     </div>
   </div>
+
+  <!-- 🟢 PLACE TELEPORT HERE (INSIDE TEMPLATE) -->
+  <Teleport to="body">
+    <div 
+      v-if="showConsentModal" 
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+      @click.self="closeConsentModal"
+    >
+      <div class="bg-white rounded-2xl w-[520px] max-w-full shadow-2xl overflow-hidden border border-[#e2e8f0] animate-in fade-in zoom-in duration-200">
+        
+        <!-- Modal Header -->
+        <div class="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-full bg-[#d1fae5] text-[#059669] flex items-center justify-center font-bold text-lg">
+              🧬
+            </div>
+            <div>
+              <h3 class="text-[16px] font-bold text-[#0f172a]">Data Sharing Permission</h3>
+              <p class="text-[12px] text-[#64748b]">Help train Myco-Vision mushroom AI</p>
+            </div>
+          </div>
+          <button 
+            class="text-[#94a3b8] hover:text-[#0f172a] text-xl font-bold bg-transparent border-none cursor-pointer"
+            @click="closeConsentModal"
+          >✕</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-5 flex flex-col gap-4">
+          <p class="text-[13px] text-[#475569] leading-relaxed">
+            By granting permission, your scanned mushroom data will be included in our anonymized dataset to help retrain and improve AI accuracy for species identification.
+          </p>
+
+          <!-- Included Data Section -->
+          <div class="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3.5 flex flex-col gap-2.5">
+            <p class="text-[12px] font-bold text-[#0f172a] uppercase tracking-wider">Data Included for AI Training:</p>
+            
+            <ul class="flex flex-col gap-2 text-[12.5px] text-[#334155]">
+              <li class="flex items-start gap-2">
+                <span class="text-[15px]">📸</span>
+                <span><strong>Mushroom Images:</strong> High-quality photos of scanned mushroom specimens.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-[15px]">📍</span>
+                <span><strong>Geolocation Data:</strong> Latitude, longitude, and region where the specimen was scanned.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-[15px]">🏷️</span>
+                <span><strong>Species Name & Details:</strong> Identified scientific name, common name, and classification.</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Privacy Shield Guarantee -->
+          <div class="flex items-center gap-2.5 p-3 rounded-lg bg-[#ecfdf5] border border-[#a7f3d0] text-[#065f46] text-[12px]">
+            <span class="text-[16px]">🔒</span>
+            <span><strong>Your Privacy is Protected:</strong> Your personal identity, email address, and account details are <u>never</u> attached or shared.</span>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-4 border-t border-[#f1f5f9] bg-[#f8fafc] flex items-center justify-end gap-2.5">
+          <button 
+            class="py-2 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium text-[#475569] hover:bg-[#f1f5f9] cursor-pointer"
+            @click="closeConsentModal"
+          >
+            Cancel
+          </button>
+          <button 
+            class="py-2 px-5 rounded-lg bg-gradient-to-r from-[#10b981] to-[#059669] text-white text-[13px] font-semibold cursor-pointer shadow-sm hover:opacity-90 disabled:opacity-50"
+            :disabled="isSavingConsent"
+            @click="confirmPermission"
+          >
+            {{ isSavingConsent ? 'Saving...' : 'I Permit & Share Data' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -204,12 +282,21 @@ definePageMeta({ layout: 'user' })
 
 const config = useRuntimeConfig()
 
+// User Profile State
 const userProfile = reactive({
   name: 'User',
   email: '',
   initials: 'U',
   joined: '...',
   photo: ''
+})
+
+// Privacy Modal State
+const showConsentModal = ref(false)
+const isSavingConsent  = ref(false)
+
+const privacy = reactive({
+  shareData: false,
 })
 
 onMounted(() => {
@@ -219,6 +306,9 @@ onMounted(() => {
     userProfile.name = user.name || user.username || 'User'
     userProfile.email = user.email || 'No email'
     
+    // Set initial consent toggle state from DB/localStorage
+    privacy.shareData = Boolean(user.allow_data_training)
+
     // Initials
     userProfile.initials = userProfile.name
       .split(' ')
@@ -252,15 +342,73 @@ const quick = reactive({
   location:      true,
 })
 
-const privacy = reactive({
-  shareData:        false,
-  publicCollection: false,
-})
-
 const storageUsed    = 120
 const storageTotal   = 500
 const storagePercent = Math.round((storageUsed / storageTotal) * 100)
 
-function clearCache()  { alert('Cache cleared!') }
-function exportData()  { alert('Exporting data…') }
+function clearCache() { alert('Cache cleared!') }
+function exportData() { alert('Exporting data…') }
+
+// ── Consent Toggle & Modal Handlers ──────────────────────────────────────────
+
+function handleToggleClick() {
+  if (!privacy.shareData) {
+    // If turning ON -> Open modal for consent confirmation
+    showConsentModal.value = true
+  } else {
+    // If turning OFF -> Revoke consent directly
+    revokePermission()
+  }
+}
+
+function closeConsentModal() {
+  showConsentModal.value = false
+}
+
+// User clicks "I Permit & Share Data" in Modal
+async function confirmPermission() {
+  isSavingConsent.value = true
+  try {
+    await saveConsentApi(true)
+    privacy.shareData = true
+    showConsentModal.value = false
+  } catch (err) {
+    alert('Failed to update data sharing permission.')
+  } finally {
+    isSavingConsent.value = false
+  }
+}
+
+// User revokes data sharing
+async function revokePermission() {
+  try {
+    await saveConsentApi(false)
+    privacy.shareData = false
+  } catch (err) {
+    alert('Failed to update data sharing permission.')
+  }
+}
+
+// API Helper to send PUT request
+async function saveConsentApi(allow: boolean) {
+  const token = localStorage.getItem('token') || useCookie('token').value
+  if (!token) {
+    throw new Error('No authentication token found. Please log in again.')
+  }
+  const config = useRuntimeConfig()
+
+  const res = await $fetch<{ user: any }>(`${config.public.apiBase}/user/consent`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: { allow_data_training: allow }
+  })
+
+  // Update cached user in localStorage
+  const storedUser = localStorage.getItem('user')
+  if (storedUser) {
+    const user = JSON.parse(storedUser)
+    user.allow_data_training = res.user.allow_data_training
+    localStorage.setItem('user', JSON.stringify(user))
+  }
+}
 </script>

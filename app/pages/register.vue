@@ -32,15 +32,9 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="flex flex-col gap-1.5">
-            <label class="text-[0.78rem] font-medium text-[#555] tracking-[0.01em]">Username</label>
-            <input v-model="form.username" type="text" placeholder="mariasalem" class="w-full py-[0.65rem] px-[0.85rem] border-[1.5px] border-[#e0e0dc] rounded-lg font-dm text-[0.875rem] text-[#2c2c2c] bg-[#fafaf8] outline-none transition-all duration-200 box-border placeholder:text-[#bbb] focus:border-[#5a9e6f] focus:shadow-[0_0_0_3px_rgba(90,158,111,0.12)] focus:bg-white" :disabled="loading" />
-          </div>
-          <div class="flex flex-col gap-1.5">
             <label class="text-[0.78rem] font-medium text-[#555] tracking-[0.01em]">Email</label>
             <input v-model="form.email" type="email" placeholder="maria@example.com" class="w-full py-[0.65rem] px-[0.85rem] border-[1.5px] border-[#e0e0dc] rounded-lg font-dm text-[0.875rem] text-[#2c2c2c] bg-[#fafaf8] outline-none transition-all duration-200 box-border placeholder:text-[#bbb] focus:border-[#5a9e6f] focus:shadow-[0_0_0_3px_rgba(90,158,111,0.12)] focus:bg-white" :disabled="loading" />
           </div>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="flex flex-col gap-1.5">
             <label class="text-[0.78rem] font-medium text-[#555] tracking-[0.01em]">Contact no.</label>
             <input v-model="form.contact" type="text" placeholder="+63 955 123 5566" class="w-full py-[0.65rem] px-[0.85rem] border-[1.5px] border-[#e0e0dc] rounded-lg font-dm text-[0.875rem] text-[#2c2c2c] bg-[#fafaf8] outline-none transition-all duration-200 box-border placeholder:text-[#bbb] focus:border-[#5a9e6f] focus:shadow-[0_0_0_3px_rgba(90,158,111,0.12)] focus:bg-white" :disabled="loading" />
