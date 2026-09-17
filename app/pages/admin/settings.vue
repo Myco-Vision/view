@@ -221,5 +221,9 @@ function removeAdmin(a: any) {
 }
 
 function saveAll() { alert('Settings saved successfully!') }
-definePageMeta({ layout: 'admin' })
+definePageMeta({ 
+  layout: 'admin',
+  middleware: 'role',
+  roles: ['admin', 'super_admin'],
+})
 </script>

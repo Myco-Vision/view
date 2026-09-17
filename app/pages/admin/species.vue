@@ -406,4 +406,9 @@ async function deleteSpecies(sp: Species) {
     alert('Failed to delete species.')
   }
 }
+definePageMeta({ 
+  layout: 'admin',
+  middleware: 'role',
+  roles: ['admin', 'super_admin'],
+})
 </script>

@@ -16,10 +16,8 @@
           <div class="relative w-full h-full flex flex-col">
             <video ref="videoRef" autoplay playsinline class="flex-1 w-full object-cover bg-[#111]"></video>
             <div class="absolute bottom-0 left-0 right-0 h-[80px] bg-black/60 flex items-center justify-between px-5 backdrop-blur-[5px]">
-              <button class="bg-transparent border-none text-white cursor-pointer text-[14px] font-medium font-sans w-[60px] text-left" @click="closeCamera">Cancel</button>
-              <button class="w-14 h-14 rounded-full border-[3px] border-white flex items-center justify-center p-0.5 transition-transform duration-[0.15s] active:scale-[0.92] bg-transparent cursor-pointer" @click="takeSnapshot">
-                <span class="w-full h-full bg-white rounded-full"></span>
-              </button>
+              <button class="bg-transparent border-none text-white cursor-pointer text-[14px] font-medium font-sans" @click="closeCamera">Cancel</button>
+              <span class="text-white text-[13px] font-medium">{{ scanStatus }}</span>
               <div style="width: 60px;"></div> <!-- Spacer -->
             </div>
           </div>
@@ -191,7 +189,7 @@ const isAnalyzing = ref(false)
 const selectedFile = ref<File | null>(null)
 const result = ref<any>(null)
 
-// ── Camera state ──────────────────────────────────────
+// ── Camera / auto-scan state ──────────────────────────
 const isCameraOpen = ref(false)
 const videoRef = ref<HTMLVideoElement | null>(null)
 let mediaStream: MediaStream | null = null
@@ -204,6 +202,13 @@ const geoError = ref<string | null>(null)
 const lastScanId = ref<number | null>(null)
 const isSavingLocation = ref(false)
 const locationSaved = ref(false)
+
+const isScanning = ref(false)
+const scanStatus = ref('')
+let scanIntervalId: ReturnType<typeof setInterval> | null = null
+let scanInFlight = false
+const SCAN_INTERVAL_MS = 1500
+const CONFIDENCE_THRESHOLD = 85 // auto-stop once this confident
 
 const config = useRuntimeConfig()
 
@@ -291,14 +296,14 @@ async function saveLocation() {
 async function openCamera() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment' } // Prefer back camera on mobile
+      video: { facingMode: 'environment' }
     })
     mediaStream = stream
     isCameraOpen.value = true
-    // Wait for DOM to render the video element
     nextTick(() => {
       if (videoRef.value) {
         videoRef.value.srcObject = stream
+        startAutoScan()
       }
     })
   } catch (error) {
@@ -308,6 +313,7 @@ async function openCamera() {
 }
 
 function closeCamera() {
+  stopAutoScan()
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop())
     mediaStream = null
@@ -315,30 +321,78 @@ function closeCamera() {
   isCameraOpen.value = false
 }
 
-function takeSnapshot() {
-  if (!videoRef.value) return
-  
+function startAutoScan() {
+  if (scanIntervalId) return
+  isScanning.value = true
+  scanIntervalId = setInterval(captureFrameAndAnalyze, SCAN_INTERVAL_MS)
+}
+
+function stopAutoScan() {
+  if (scanIntervalId) {
+    clearInterval(scanIntervalId)
+    scanIntervalId = null
+  }
+  isScanning.value = false
+  scanStatus.value = ''
+}
+
+async function captureFrameAndAnalyze() {
+  if (!videoRef.value || scanInFlight) return
+  scanInFlight = true
+  scanStatus.value = 'Scanning...'
+
   const video = videoRef.value
   const canvas = document.createElement('canvas')
   canvas.width = video.videoWidth
   canvas.height = video.videoHeight
-  
   const ctx = canvas.getContext('2d')
-  if (ctx) {
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const file = new File([blob], 'snapshot.jpg', { type: 'image/jpeg' })
+  if (!ctx) { scanInFlight = false; return }
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+  canvas.toBlob(async (blob) => {
+    if (!blob) { scanInFlight = false; return }
+    const file = new File([blob], 'scan.jpg', { type: 'image/jpeg' })
+
+    try {
+      const token = localStorage.getItem('token')
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const data = await $fetch<any>(`${config.public.apiBase}/scans`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+
+      const rawClass = data.result_classification || 'unknown'
+      const confidence = data.confidence_level || 0
+
+      if (confidence >= CONFIDENCE_THRESHOLD) {
         selectedFile.value = file
         loadPreview(file)
+        result.value = {
+          name: data.result_name || 'Unknown',
+          classification: rawClass.charAt(0).toUpperCase() + rawClass.slice(1),
+          confidence,
+          descriptionRest: ' is the identified species based on your scan. More details will be populated here when the species database is fully linked.',
+          reference: 'https://en.wikipedia.org/wiki/' + encodeURIComponent(data.result_name || 'Mushroom')
+        }
+        stopAutoScan()
+        closeCamera()
+      } else {
+        scanStatus.value = `Low confidence (${confidence}%) — keep scanning...`
       }
-    }, 'image/jpeg', 0.9)
-  }
-  closeCamera()
+    } catch (error) {
+      console.error('Auto-scan request failed:', error)
+      scanStatus.value = 'Scan error, retrying...'
+    } finally {
+      scanInFlight = false
+    }
+  }, 'image/jpeg', 0.85)
 }
 
 onUnmounted(() => {
-  closeCamera() // Cleanup
+  closeCamera()
 })
 
 function handleFileChange(e: Event) {
@@ -418,4 +472,3 @@ async function analyzeImage() {
   }
 }
 </script>
-
