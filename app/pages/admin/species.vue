@@ -19,6 +19,7 @@
           <option value="poisonous">Poisonous</option>
           <option value="unknown">Unknown</option>
         </select>
+        <button v-if="activeTab === 'verified'" class="py-2 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[#334155] text-[13.5px] font-semibold font-sans cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc] flex items-center gap-1.5" @click="exportCatalogPdf">📄 Export Catalog PDF</button>
         <button v-if="activeTab === 'verified'" class="py-2 px-[18px] rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="openAdd">+ Add Species</button>
       </div>
     </div>
@@ -77,6 +78,7 @@
               <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle text-[12.5px] text-[#94a3b8] whitespace-nowrap group-last:border-none">{{ formatDate(sp.created_at) }}</td>
               <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
                 <div class="flex gap-1.5">
+                  <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#e0f2fe] hover:border-[#bae6fd]" title="Generate PDF" @click="exportSpeciesPdf(sp)">📄</button>
                   <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" title="Edit" @click="openEdit(sp)">✏️</button>
                   <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#fee2e2] hover:border-[#fecaca]" title="Delete" @click="deleteSpecies(sp)">🗑</button>
                 </div>
@@ -202,9 +204,13 @@
             <label class="text-[12.5px] font-semibold text-[#475569]">Description</label>
             <textarea v-model="form.description" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none resize-y transition-colors duration-[0.18s] focus:border-[#10b981]" rows="3" placeholder="Brief description…" />
           </div>
-          <div class="flex justify-end gap-2.5 pt-1">
-            <button class="py-[9px] px-5 rounded-lg border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans cursor-pointer text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f8fafc]" @click="closeModal">Cancel</button>
-            <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="saveSpecies">{{ promoteScanId ? 'Confirm & Save to DB' : (editingId ? 'Update' : 'Add Species') }}</button>
+          <div class="flex justify-between items-center pt-1">
+            <button v-if="editingId" class="py-[9px] px-4 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] text-[13px] font-semibold text-[#0f172a] cursor-pointer hover:bg-[#e2e8f0] flex items-center gap-1.5" @click="exportCurrentFormPdf">📄 Generate PDF</button>
+            <div v-else></div>
+            <div class="flex gap-2.5">
+              <button class="py-[9px] px-5 rounded-lg border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans cursor-pointer text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f8fafc]" @click="closeModal">Cancel</button>
+              <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="saveSpecies">{{ promoteScanId ? 'Confirm & Save to DB' : (editingId ? 'Update' : 'Add Species') }}</button>
+            </div>
           </div>
         </div>
       </div>
@@ -409,5 +415,196 @@ async function deleteSpecies(sp: Species) {
   } catch (err) {
     alert('Failed to delete species.')
   }
+}
+
+function exportCurrentFormPdf() {
+  exportSpeciesPdf({
+    id: editingId.value || 0,
+    name: form.name,
+    scientific_name: form.scientific_name,
+    classification: form.classification,
+    habitat: form.habitat,
+    description: form.description,
+    image_path: form.image_path,
+  })
+}
+
+function exportSpeciesPdf(sp: Species) {
+  const printWindow = window.open('', '_blank', 'width=850,height=950')
+  if (!printWindow) {
+    alert('Please allow popups to generate PDF.')
+    return
+  }
+
+  const isEdible = (sp.classification || '').toLowerCase() === 'edible'
+  const isPoisonous = (sp.classification || '').toLowerCase() === 'poisonous'
+  const badgeBg = isEdible ? '#d1fae5' : (isPoisonous ? '#fee2e2' : '#fef3c7')
+  const badgeColor = isEdible ? '#065f46' : (isPoisonous ? '#991b1b' : '#92400e')
+
+  const imgHtml = sp.image_path ? `
+    <div style="text-align: center; margin-top: 25px;">
+      <img src="${getImageUrl(sp.image_path)}" style="max-width: 100%; max-height: 280px; border-radius: 12px; border: 1px solid #cbd5e1; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.08);" alt="${sp.name}" />
+    </div>
+  ` : ''
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${sp.name} - Mushroom Species Datasheet</title>
+      <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 40px; color: #1e293b; background: #fff; line-height: 1.5; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-b: 2.5px solid #10b981; padding-bottom: 15px; margin-bottom: 25px; }
+        .brand { font-size: 22px; font-weight: 800; color: #065f46; display: flex; items-center; gap: 8px; }
+        .doc-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1.2px; }
+        .title-section { margin-bottom: 24px; }
+        .common-name { font-size: 28px; font-weight: 800; color: #0f172a; margin: 0; }
+        .scientific-name { font-size: 16px; font-style: italic; color: #475569; margin-top: 4px; font-weight: 500; }
+        .badge { display: inline-block; padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; text-transform: capitalize; background: ${badgeBg}; color: ${badgeColor}; margin-top: 12px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+        .card h3 { margin-top: 0; font-size: 14px; font-weight: 700; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-row { display: flex; margin-bottom: 8px; font-size: 13.5px; }
+        .info-label { width: 140px; color: #64748b; font-weight: 500; shrink: 0; }
+        .info-val { color: #0f172a; font-weight: 600; flex: 1; }
+        .desc-text { font-size: 13.5px; color: #334155; line-height: 1.65; margin: 0; text-align: justify; }
+        .footer { margin-top: 45px; border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; }
+        @media print {
+          body { margin: 20px; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="brand">🍄 MycoVision</div>
+        <div class="doc-title">Mushroom Species Datasheet</div>
+      </div>
+
+      <div class="title-section">
+        <h1 class="common-name">${sp.name}</h1>
+        <div class="scientific-name">${sp.scientific_name || sp.name}</div>
+        <div class="badge">${sp.classification || 'Unknown'}</div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Species Specifications</h3>
+          <div class="info-row"><span class="info-label">Database ID:</span><span class="info-val">#${sp.id || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Common Name:</span><span class="info-val">${sp.name}</span></div>
+          <div class="info-row"><span class="info-label">Scientific Name:</span><span class="info-val"><em>${sp.scientific_name || sp.name}</em></span></div>
+          <div class="info-row"><span class="info-label">Classification:</span><span class="info-val" style="text-transform: capitalize;">${sp.classification}</span></div>
+          <div class="info-row"><span class="info-label">Habitat / Region:</span><span class="info-val">${sp.habitat || 'Global'}</span></div>
+          <div class="info-row"><span class="info-label">Cataloged On:</span><span class="info-val">${formatDate(sp.created_at)}</span></div>
+        </div>
+
+        <div class="card">
+          <h3>Description & Research Notes</h3>
+          <p class="desc-text">${sp.description || 'No detailed description recorded for this mushroom species.'}</p>
+        </div>
+      </div>
+
+      ${imgHtml}
+
+      <div class="footer">
+        <span>MycoVision Official Species Database Report</span>
+        <span>Generated: ${new Date().toLocaleString()}</span>
+      </div>
+
+      \x3Cscript\x3E
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 300);
+        };
+      \x3C/script\x3E
+    </body>
+    </html>
+  `
+
+  printWindow.document.write(htmlContent)
+  printWindow.document.close()
+}
+
+function exportCatalogPdf() {
+  const printWindow = window.open('', '_blank', 'width=950,height=1000')
+  if (!printWindow) {
+    alert('Please allow popups to generate PDF.')
+    return
+  }
+
+  const rowsHtml = filteredSpecies.value.map((sp, idx) => `
+    <tr>
+      <td style="font-family: monospace;">#${sp.id}</td>
+      <td><strong>${sp.name}</strong><br><em style="color: #64748b; font-size: 12px;">${sp.scientific_name || sp.name}</em></td>
+      <td><span class="badge ${sp.classification}">${sp.classification}</span></td>
+      <td>${sp.habitat || 'Global'}</td>
+      <td>${formatDate(sp.created_at)}</td>
+    </tr>
+  `).join('')
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>MycoVision Species Catalog Report</title>
+      <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 35px; color: #1e293b; background: #fff; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #10b981; padding-bottom: 12px; margin-bottom: 20px; }
+        .brand { font-size: 22px; font-weight: 800; color: #065f46; }
+        .doc-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        .summary-bar { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 13.5px; color: #475569; display: flex; justify-content: space-between; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; background: #f1f5f9; padding: 10px 12px; font-size: 11.5px; border-bottom: 2px solid #cbd5e1; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 11px 12px; font-size: 13px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        .badge { padding: 4px 10px; border-radius: 14px; font-size: 11.5px; font-weight: 700; text-transform: capitalize; display: inline-block; }
+        .edible { background: #d1fae5; color: #065f46; }
+        .poisonous { background: #fee2e2; color: #991b1b; }
+        .unknown { background: #fef3c7; color: #92400e; }
+        .footer { margin-top: 35px; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+        @media print {
+          body { margin: 20px; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="brand">🍄 MycoVision Species Catalog</div>
+        <div class="doc-title">Official Database Summary</div>
+      </div>
+      <div class="summary-bar">
+        <span>Verified Records Shown: <strong>${filteredSpecies.value.length}</strong> / Total: <strong>${species.value.length}</strong></span>
+        <span>Date: <strong>${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</strong></span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Species Name</th>
+            <th>Classification</th>
+            <th>Habitat / Region</th>
+            <th>Date Added</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml || '<tr><td colspan="5" style="text-align: center; color: #64748b;">No species entries found.</td></tr>'}
+        </tbody>
+      </table>
+      <div class="footer">
+        <span>MycoVision Admin Systems Export</span>
+        <span>Generated: ${new Date().toLocaleString()}</span>
+      </div>
+      \x3Cscript\x3E
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 300);
+        };
+      \x3C/script\x3E
+    </body>
+    </html>
+  `
+
+  printWindow.document.write(htmlContent)
+  printWindow.document.close()
 }
 </script>
