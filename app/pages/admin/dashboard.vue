@@ -11,6 +11,12 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="loading" class="flex items-center justify-center py-16">
+      <div class="w-8 h-8 border-[3px] border-[#e2e8f0] border-t-[#10b981] rounded-full animate-spin"></div>
+    </div>
+
+    <template v-else>
     <!-- KPI Cards -->
     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
       <div v-for="stat in stats" :key="stat.label" class="bg-white border border-[#e2e8f0] rounded-[14px] p-[18px] px-5 flex items-center gap-3.5 relative transition-shadow duration-[0.18s] hover:shadow-[0_4px_20px_rgba(0,0,0,0.07)]">
@@ -21,7 +27,7 @@
           <p class="text-[22px] font-bold text-[#0f172a] leading-[1.2]">{{ stat.value }}</p>
           <p class="text-[12.5px] text-[#64748b] mt-0.5">{{ stat.label }}</p>
         </div>
-        <span class="absolute top-3.5 right-3.5 text-[11px] font-semibold py-[3px] px-2 rounded-full bg-[#d1fae5] text-[#065f46]">▲ {{ stat.change }}</span>
+        <span v-if="stat.change" class="absolute top-3.5 right-3.5 text-[11px] font-semibold py-[3px] px-2 rounded-full bg-[#d1fae5] text-[#065f46]">▲ {{ stat.change }}</span>
       </div>
     </div>
 
@@ -63,13 +69,13 @@
             <circle cx="60" cy="60" r="44" fill="none" stroke="#f59e0b" stroke-width="18"
                     :stroke-dasharray="`${unknownDash} ${circumference}`" :stroke-dashoffset="`-${edibleDash + poisonDash}`"
                     transform="rotate(-90 60 60)"/>
-            <text x="60" y="56" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">186</text>
+            <text x="60" y="56" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">{{ dashData.species_count }}</text>
             <text x="60" y="70" text-anchor="middle" font-size="8" fill="#64748b">Species</text>
           </svg>
           <div class="flex flex-col gap-2 w-full">
-            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#10b981]"></span>Edible (58%)</div>
-            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#ef4444]"></span>Poisonous (28%)</div>
-            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#f59e0b]"></span>Unknown (14%)</div>
+            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#10b981]"></span>Edible ({{ dashData.edible_pct }}%)</div>
+            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#ef4444]"></span>Poisonous ({{ dashData.poisonous_pct }}%)</div>
+            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#f59e0b]"></span>Unknown ({{ dashData.unknown_pct }}%)</div>
           </div>
         </div>
       </div>
@@ -82,7 +88,8 @@
           <p class="text-[14px] font-semibold text-[#0f172a]">Recent Scans</p>
           <NuxtLink to="/admin/scans" class="text-[13px] text-[#10b981] no-underline font-medium hover:underline">View all →</NuxtLink>
         </div>
-        <table class="w-full border-collapse mt-1">
+        <div v-if="recentScans.length === 0" class="text-center py-8 text-[#94a3b8] text-[13.5px]">No scans recorded yet.</div>
+        <table v-else class="w-full border-collapse mt-1">
           <thead>
             <tr>
               <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-2 px-2.5 border-b border-[#f1f5f9]">User</th>
@@ -95,7 +102,7 @@
           <tbody>
             <tr v-for="scan in recentScans" :key="scan.id" class="hover:bg-[#f8fafc]">
               <td class="py-2.5 px-2.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle flex items-center gap-2 whitespace-nowrap">
-                <div class="w-[26px] h-[26px] rounded-full bg-gradient-to-br from-[#10b981] to-[#059669] text-white text-[10px] font-bold flex items-center justify-center shrink-0">{{ scan.userInitials }}</div>{{ scan.user }}
+                <div class="w-[26px] h-[26px] rounded-full bg-gradient-to-br from-[#10b981] to-[#059669] text-white text-[10px] font-bold flex items-center justify-center shrink-0">{{ getInitials(scan.user) }}</div>{{ scan.user }}
               </td>
               <td class="py-2.5 px-2.5 text-[13px] text-[#1e293b] border-b border-[#f8fafc] align-middle italic">{{ scan.species }}</td>
               <td class="py-2.5 px-2.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle">
@@ -131,42 +138,83 @@
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 definePageMeta({ layout: 'admin' })
 
+const config = useRuntimeConfig()
+const loading = ref(true)
+
 const todayDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
-const stats = [
-  { label: 'Total Users',     value: '1,248', change: '12% this month', iconBg: '#dbeafe', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
-  { label: 'Scans Today',     value: '342',   change: '8% vs yesterday', iconBg: '#d1fae5', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' },
-  { label: 'Avg. Confidence', value: '91.4%', change: '2.1% this week',  iconBg: '#fef3c7', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' },
-  { label: 'Species in DB',   value: '186',   change: '3 added this week', iconBg: '#f3e8ff', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="1.8"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>' },
-]
+// Dashboard data from API
+const dashData = ref<any>({
+  total_users: 0, total_admins: 0, total_scans: 0, scans_today: 0,
+  scans_yesterday: 0, edible_scans: 0, poisonous_scans: 0, unknown_scans: 0,
+  species_count: 0, avg_confidence: 0, users_this_month: 0, users_last_month: 0,
+  scan_volume: [], edible_pct: 0, poisonous_pct: 0, unknown_pct: 0, recent_scans: [],
+})
 
-const chartDays  = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const scanValues = [48, 72, 55, 91, 63, 110, 88]
-const maxV = Math.max(...scanValues)
+const recentScans = computed(() => dashData.value.recent_scans || [])
+
+const stats = computed(() => {
+  const d = dashData.value
+  const userChange = d.users_last_month > 0
+    ? Math.round(((d.users_this_month - d.users_last_month) / d.users_last_month) * 100)
+    : d.users_this_month > 0 ? 100 : 0
+  const scanChange = d.scans_yesterday > 0
+    ? Math.round(((d.scans_today - d.scans_yesterday) / d.scans_yesterday) * 100)
+    : d.scans_today > 0 ? 100 : 0
+
+  return [
+    { label: 'Total Users',     value: d.total_users.toLocaleString(), change: userChange >= 0 ? `${userChange}% this month` : '', iconBg: '#dbeafe', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
+    { label: 'Scans Today',     value: d.scans_today.toLocaleString(), change: scanChange >= 0 ? `${scanChange}% vs yesterday` : '', iconBg: '#d1fae5', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' },
+    { label: 'Avg. Confidence', value: d.avg_confidence + '%', change: '', iconBg: '#fef3c7', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' },
+    { label: 'Species in DB',   value: d.species_count.toLocaleString(), change: '', iconBg: '#f3e8ff', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="1.8"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>' },
+  ]
+})
+
+// Chart computations
+const chartDays = computed(() => (dashData.value.scan_volume || []).map((v: any) => v.date))
+const scanValues = computed(() => {
+  const vols = (dashData.value.scan_volume || []).map((v: any) => v.count)
+  return vols.length > 0 ? vols : [0]
+})
+
 const W = 420; const H = 120; const pad = 14
-const scanDots = scanValues.map((v, i) => ({
-  x: pad + (i / (scanValues.length - 1)) * (W - pad * 2),
-  y: H - pad - (v / maxV) * (H - pad * 2),
-}))
-const scanPoints  = scanDots.map(p => `${p.x},${p.y}`).join(' ')
-const scanAreaPath = `M${scanDots[0].x},${scanDots[0].y} ` +
-  scanDots.slice(1).map(p => `L${p.x},${p.y}`).join(' ') +
-  ` L${scanDots[scanDots.length-1].x},${H} L${scanDots[0].x},${H} Z`
+const scanDots = computed(() => {
+  const vals = scanValues.value
+  const maxV = Math.max(...vals, 1)
+  return vals.map((v: number, i: number) => ({
+    x: pad + (i / Math.max(vals.length - 1, 1)) * (W - pad * 2),
+    y: H - pad - (v / maxV) * (H - pad * 2),
+  }))
+})
+const scanPoints = computed(() => scanDots.value.map((p: any) => `${p.x},${p.y}`).join(' '))
+const scanAreaPath = computed(() => {
+  const dots = scanDots.value
+  if (dots.length < 2) return ''
+  return `M${dots[0].x},${dots[0].y} ` +
+    dots.slice(1).map((p: any) => `L${p.x},${p.y}`).join(' ') +
+    ` L${dots[dots.length-1].x},${H} L${dots[0].x},${H} Z`
+})
 
+// Donut chart
 const circumference = 2 * Math.PI * 44
-const edibleDash  = (58 / 100) * circumference
-const poisonDash  = (28 / 100) * circumference
-const unknownDash = (14 / 100) * circumference
+const edibleDash = computed(() => ((dashData.value.edible_pct || 0) / 100) * circumference)
+const poisonDash = computed(() => ((dashData.value.poisonous_pct || 0) / 100) * circumference)
+const unknownDash = computed(() => ((dashData.value.unknown_pct || 0) / 100) * circumference)
 
-const recentScans: any[] = []
 function confColor(val: number) {
   return val >= 80 ? '#10b981' : val >= 60 ? '#f59e0b' : '#ef4444'
+}
+
+function getInitials(name: string) {
+  if (!name) return '?'
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
 const healthItems = [
@@ -175,4 +223,19 @@ const healthItems = [
   { label: 'Storage',      val: 45, color: '#3b82f6' },
   { label: 'Model Uptime', val: 99, color: '#10b981' },
 ]
+
+// Fetch real data
+onMounted(async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const data = await $fetch<any>(`${config.public.apiBase}/admin/dashboard`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    dashData.value = data
+  } catch (error) {
+    console.error('Failed to load dashboard:', error)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
