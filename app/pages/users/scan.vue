@@ -259,7 +259,9 @@ async function captureFrameAndAnalyze() {
       const rawClass = data.result_classification || 'unknown'
       const confidence = data.confidence_level || 0
 
-      if (confidence >= CONFIDENCE_THRESHOLD) {
+      if (rawClass === 'not_mushroom') {
+        scanStatus.value = 'No mushroom detected — keep scanning...'
+      } else if (confidence >= CONFIDENCE_THRESHOLD) {
         selectedFile.value = file
         loadPreview(file)
         result.value = {
