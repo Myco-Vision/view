@@ -171,7 +171,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'user' })
+definePageMeta({ layout: 'user', middleware: 'auth' })
 
 const firstName = ref('User')
 

@@ -112,6 +112,19 @@ const showConfirm = ref(false)
 const loading = ref(false)
 const error = ref('')
 
+// Redirect if already logged in
+onMounted(() => {
+  const token = localStorage.getItem('token')
+  const role = localStorage.getItem('role')
+  if (token) {
+    if (role === 'admin' || role === 'super_admin') {
+      navigateTo('/admin/dashboard')
+    } else {
+      navigateTo('/users/scan')
+    }
+  }
+})
+
 const form = reactive({
   firstName: '',
   lastName: '',
@@ -125,8 +138,12 @@ const form = reactive({
 
 function goNext() {
   error.value = ''
-  if (!form.firstName || !form.lastName || !form.username || !form.email || !form.password || !form.confirmPassword) {
+  if (!form.firstName || !form.lastName || !form.username || !form.email || !form.contact || !form.address || !form.password || !form.confirmPassword) {
     error.value = 'Please fill out all required fields.'
+    return
+  }
+  if (form.password.length < 8) {
+    error.value = 'Password must be at least 8 characters.'
     return
   }
   if (form.password !== form.confirmPassword) {

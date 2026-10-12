@@ -56,6 +56,19 @@ const loading     = ref(false)
 const error       = ref('')
 const showPassword = ref(false)
 
+// Redirect if already logged in
+onMounted(() => {
+  const token = localStorage.getItem('token')
+  const role = localStorage.getItem('role')
+  if (token) {
+    if (role === 'admin' || role === 'super_admin') {
+      navigateTo('/admin/dashboard')
+    } else {
+      navigateTo('/users/scan')
+    }
+  }
+})
+
 async function handleLogin() {
   error.value = ''
 

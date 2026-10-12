@@ -254,7 +254,7 @@
 
 <script setup lang="ts">
 // Ensure this page uses the admin layout
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: 'auth' })
 
 const config = useRuntimeConfig()
 
