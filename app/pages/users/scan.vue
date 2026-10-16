@@ -1,8 +1,26 @@
 <template>
   <div class="flex flex-col gap-[18px] h-full">
 
-    <!-- Welcome Header -->
-    <h1 class="text-[22px] font-normal text-[#0f172a]">Welcome, <strong class="font-bold">{{ firstName }}!</strong></h1>
+    <!-- Welcome Header & Quota Badge -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <h1 class="text-[22px] font-normal text-[#0f172a]">Welcome, <strong class="font-bold">{{ firstName }}!</strong></h1>
+
+      <!-- Scan Quota Badge -->
+      <div class="flex items-center gap-2">
+        <div v-if="isSubscribed" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/25 text-xs font-bold">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span>Unlimited Scans (PRO)</span>
+        </div>
+        <div v-else class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold"
+          :class="remainingScans === 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-slate-100 border-slate-200 text-slate-700'"
+        >
+          <span>Free Tier: <strong>{{ remainingScans !== null ? remainingScans : 3 }} / 3</strong> scans left</span>
+          <NuxtLink to="/users/subscription" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 underline ml-0.5">
+            Upgrade
+          </NuxtLink>
+        </div>
+      </div>
+    </div>
 
     <!-- Two-column card -->
     <div class="grid grid-cols-1 lg:grid-cols-2 bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden flex-1">
@@ -10,6 +28,22 @@
       <!-- ── LEFT: Input Panel ─────────────────────────── -->
       <div class="p-6 py-6 px-[22px] flex flex-col gap-3 overflow-hidden border-r border-[#e2e8f0]">
         <h2 class="text-[15px] font-semibold text-[#0f172a] text-center mb-0.5">Scan Mushroom</h2>
+
+        <!-- Quota exhausted callout -->
+        <div v-if="!canScan && !isSubscribed" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col gap-2">
+          <div class="flex items-start gap-2">
+            <span class="text-base shrink-0">⚠️</span>
+            <div>
+              <p class="font-bold">Free Scan Limit Reached (3 of 3 used)</p>
+              <p class="text-[11.5px] mt-0.5 text-amber-800 leading-relaxed">
+                You've used all 3 free scans. All your saved scans remain permanently accessible! Subscribe for only ₱149/mo to continue identifying mushrooms.
+              </p>
+            </div>
+          </div>
+          <NuxtLink to="/users/subscription" class="self-start py-1.5 px-3 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition no-underline">
+            Upgrade to Premium →
+          </NuxtLink>
+        </div>
 
         <!-- Camera Overlay Modal -->
         <div v-if="isCameraOpen" class="absolute inset-0 bg-black z-50 flex flex-col">
@@ -171,20 +205,116 @@
         </div>
       </div>
     </div>
+
+    <!-- ── UPGRADE TO PREMIUM MODAL ───────────────────────── -->
+    <Teleport to="body">
+      <div v-if="showUpgradeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 relative animate-in fade-in zoom-in duration-200">
+          <button @click="showUpgradeModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-sm p-1 cursor-pointer bg-transparent border-none">
+            ✕
+          </button>
+
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Free Scan Limit Reached (3 of 3 used)</h3>
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+              You've completed your <strong>3 free lifetime scans</strong>. All your saved scans, collections, and history remain permanently safe! To continue identifying wild mushrooms, upgrade to MycoVision Premium.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 flex flex-col gap-2.5 text-xs text-slate-700">
+            <div class="flex items-center justify-between font-bold">
+              <span>✨ Premium Monthly</span>
+              <span class="text-emerald-700 font-extrabold text-sm">₱149 / month</span>
+            </div>
+            <div class="flex items-center justify-between font-bold">
+              <span>🌟 Premium Annual <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Save ~27%</span></span>
+              <span class="text-emerald-700 font-extrabold text-sm">₱1,299 / year</span>
+            </div>
+            <div class="pt-1 border-t border-slate-200/60 text-[11px] text-slate-500 flex items-center gap-2">
+              <span class="font-medium text-slate-700">Supported Payments:</span>
+              <span class="font-semibold text-slate-600">GCash • Maya • Cards • GrabPay</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2.5 pt-2">
+            <button @click="showUpgradeModal = false" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">
+              Maybe Later
+            </button>
+            <NuxtLink to="/users/subscription" @click="showUpgradeModal = false" class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition no-underline shadow-sm">
+              View Plans &amp; Subscribe →
+            </NuxtLink>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
 definePageMeta({ layout: 'user' })
 
-const firstName = ref('User')
+const firstName        = ref('User')
+const isSubscribed     = ref(false)
+const remainingScans   = ref<number | null>(null)
+const canScan          = ref(true)
+const showUpgradeModal = ref(false)
 
-onMounted(() => {
+async function loadSubscriptionInfo() {
   const storedUser = localStorage.getItem('user')
   if (storedUser) {
-    const user = JSON.parse(storedUser)
-    firstName.value = user.first_name || user.name?.split(' ')[0] || user.username || 'User'
+    try {
+      const u = JSON.parse(storedUser)
+      firstName.value = u.first_name || u.name?.split(' ')[0] || u.username || 'User'
+      if (typeof u.is_subscribed !== 'undefined') isSubscribed.value = !!u.is_subscribed
+      if (typeof u.remaining_scans !== 'undefined') remainingScans.value = u.remaining_scans
+      if (typeof u.can_scan !== 'undefined') canScan.value = !!u.can_scan
+    } catch (e) {}
   }
+
+  const token = localStorage.getItem('token')
+  if (token) {
+    try {
+      const data: any = await $fetch(`${config.public.apiBase}/subscription/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      isSubscribed.value = !!data.is_subscribed
+      remainingScans.value = data.remaining_scans
+      canScan.value = !!data.can_scan
+
+      if (storedUser) {
+        const u = JSON.parse(storedUser)
+        u.is_subscribed = data.is_subscribed
+        u.remaining_scans = data.remaining_scans
+        u.can_scan = data.can_scan
+        localStorage.setItem('user', JSON.stringify(u))
+      }
+    } catch (e) {}
+  }
+}
+
+function checkScanEligibility(): boolean {
+  if (isSubscribed.value) return true
+  if (canScan.value && (remainingScans.value === null || remainingScans.value > 0)) {
+    return true
+  }
+  showUpgradeModal.value = true
+  return false
+}
+
+onMounted(() => {
+  loadSubscriptionInfo()
+  window.addEventListener('subscription-updated', loadSubscriptionInfo)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('subscription-updated', loadSubscriptionInfo)
 })
 
 // ── Upload state ─────────────────────────────────────
@@ -325,6 +455,8 @@ async function saveLocation() {
 }
 
 async function openCamera() {
+  if (!checkScanEligibility()) return
+
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'environment' }
@@ -395,6 +527,10 @@ async function captureFrameAndAnalyze() {
         body: formData,
       })
 
+      // Update quota count
+      loadSubscriptionInfo()
+      window.dispatchEvent(new CustomEvent('subscription-updated'))
+
       const rawClass = data.result_classification || 'unknown'
       const confidence = data.confidence_level || 0
 
@@ -413,8 +549,16 @@ async function captureFrameAndAnalyze() {
       } else {
         scanStatus.value = `Low confidence (${confidence}%) — keep scanning...`
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Auto-scan request failed:', error)
+      if (error?.data?.error === 'SCAN_LIMIT_REACHED' || error?.status === 403 || error?.statusCode === 403) {
+        stopAutoScan()
+        closeCamera()
+        canScan.value = false
+        remainingScans.value = 0
+        showUpgradeModal.value = true
+        return
+      }
       scanStatus.value = 'Scan error, retrying...'
     } finally {
       scanInFlight = false
@@ -427,6 +571,10 @@ onUnmounted(() => {
 })
 
 function handleFileChange(e: Event) {
+  if (!checkScanEligibility()) {
+    if (fileInput.value) fileInput.value.value = ''
+    return
+  }
   const file = (e.target as HTMLInputElement).files?.[0]
   if (file) {
     selectedFile.value = file
@@ -435,6 +583,7 @@ function handleFileChange(e: Event) {
 }
 function handleDrop(e: DragEvent) {
   isDragging.value = false
+  if (!checkScanEligibility()) return
   const file = e.dataTransfer?.files?.[0]
   if (file) {
     selectedFile.value = file
@@ -456,6 +605,7 @@ function clearImage() {
 }
 async function analyzeImage() {
   if (!selectedFile.value) return
+  if (!checkScanEligibility()) return
 
   isAnalyzing.value = true
   result.value = null
@@ -489,6 +639,10 @@ async function analyzeImage() {
     // Store the scan ID so we can update location later
     lastScanId.value = data.id
 
+    // Update quota count
+    loadSubscriptionInfo()
+    window.dispatchEvent(new CustomEvent('subscription-updated'))
+
     // Map result from backend to UI state
     const rawClass = data.result_classification || 'unknown';
     result.value = {
@@ -498,9 +652,15 @@ async function analyzeImage() {
       descriptionRest: ' is the identified species based on your scan. More details will be populated here when the species database is fully linked.',
       reference: 'https://en.wikipedia.org/wiki/' + encodeURIComponent(data.result_name || 'Mushroom')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Scan upload failed:', error)
-    alert('Failed to analyze the image. Please try again.')
+    if (error?.data?.error === 'SCAN_LIMIT_REACHED' || error?.status === 403 || error?.statusCode === 403) {
+      canScan.value = false
+      remainingScans.value = 0
+      showUpgradeModal.value = true
+    } else {
+      alert('Failed to analyze the image. Please try again.')
+    }
   } finally {
     isAnalyzing.value = false
   }
