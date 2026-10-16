@@ -11,9 +11,9 @@
       <div class="flex items-center gap-2.5 flex-wrap">
         <div class="relative">
           <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="searchQuery" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-[200px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search species…" />
+          <input v-model="searchQuery" @input="debouncedFilter" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-[200px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search species…" />
         </div>
-        <select v-model="clsFilter" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
+        <select v-model="clsFilter" @change="filterSpecies" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
           <option value="">All Classifications</option>
           <option value="edible">Edible</option>
           <option value="poisonous">Poisonous</option>
@@ -61,13 +61,13 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="loading" class="text-center">
-              <td colspan="7" class="py-8 text-[#64748b] text-[13.5px]">Loading species database...</td>
+            <tr v-if="loading" class="animate-pulse">
+              <td colspan="7" class="py-8 text-center text-[#94a3b8] text-[13.5px]">Loading species database...</td>
             </tr>
-            <tr v-else-if="filteredSpecies.length === 0" class="text-center">
-              <td colspan="7" class="py-8 text-[#64748b] text-[13.5px]">No verified species found on record.</td>
+            <tr v-else-if="filteredSpecies.length === 0">
+              <td colspan="7" class="py-8 text-center text-[#94a3b8] text-[13.5px]">No verified species found on record.</td>
             </tr>
-            <tr v-for="sp in filteredSpecies" :key="sp.id" class="hover:bg-[#f8fafc] group">
+            <tr v-else v-for="sp in paginatedSpecies" :key="sp.id" class="hover:bg-[#f8fafc] group">
               <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle font-mono text-[12px] text-[#94a3b8] group-last:border-none">{{ sp.id }}</td>
               <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle italic font-semibold text-[#0f172a] group-last:border-none">{{ sp.scientific_name || sp.name }}</td>
               <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">{{ sp.name }}</td>
@@ -89,6 +89,11 @@
       </div>
       <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
         <span class="text-[12.5px] text-[#64748b]">{{ filteredSpecies.length }} of {{ species.length }} species</span>
+        <div class="flex items-center gap-2.5">
+          <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="page <= 1" @click="page--">‹</button>
+          <span class="text-[12.5px] text-[#475569]">Page {{ page }} of {{ totalPages }}</span>
+          <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="page >= totalPages" @click="page++">›</button>
+        </div>
       </div>
     </div>
 
@@ -167,6 +172,7 @@
           <button class="bg-transparent border-none cursor-pointer text-[16px] text-[#94a3b8] hover:text-[#ef4444]" @click="closeModal">✕</button>
         </div>
         <div class="p-[22px] flex flex-col gap-4">
+          <div v-if="formError" class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[13px] font-medium">{{ formError }}</div>
           <div v-if="form.image_path" class="flex items-center gap-3 p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl">
             <img :src="getImageUrl(form.image_path)" class="w-14 h-14 rounded-lg object-cover border" />
             <div>
@@ -209,7 +215,10 @@
             <div v-else></div>
             <div class="flex gap-2.5">
               <button class="py-[9px] px-5 rounded-lg border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans cursor-pointer text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f8fafc]" @click="closeModal">Cancel</button>
-              <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="saveSpecies">{{ promoteScanId ? 'Confirm & Save to DB' : (editingId ? 'Update' : 'Add Species') }}</button>
+              <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 flex items-center justify-center min-w-[100px]" @click="saveSpecies" :disabled="isSaving">
+              <span v-if="isSaving" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+              <span v-else>{{ promoteScanId ? 'Confirm & Save to DB' : (editingId ? 'Update' : 'Add Species') }}</span>
+            </button>
             </div>
           </div>
         </div>
@@ -227,6 +236,10 @@ definePageMeta({
 
 const config = useRuntimeConfig()
 const activeTab = ref<'verified' | 'candidates'>('verified')
+const isSaving = ref(false)
+const formError = ref('')
+const page = ref(1)
+const perPage = 15
 
 const searchQuery = ref('')
 const clsFilter   = ref('')
@@ -270,6 +283,11 @@ const form = reactive({
   description: '',
   image_path: ''
 })
+
+const getHeaders = () => {
+  const token = localStorage.getItem('token')
+  return { Authorization: `Bearer ${token}` }
+}
 
 onMounted(() => {
   fetchVerifiedSpecies()
@@ -320,6 +338,19 @@ const filteredCandidates = computed(() => candidateScans.value.filter(c => {
   return matchQ && matchC
 }))
 
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredSpecies.value.length / perPage)))
+const paginatedSpecies = computed(() => {
+  const start = (page.value - 1) * perPage
+  return filteredSpecies.value.slice(start, start + perPage)
+})
+
+let debounceTimer: any = null
+function debouncedFilter() {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => { page.value = 1 }, 300)
+}
+function filterSpecies() { page.value = 1 }
+
 function getImageUrl(path?: string) {
   if (!path) return 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=150&q=80'
   if (path.startsWith('http')) return path
@@ -334,6 +365,7 @@ function formatDate(dateStr?: string) {
 function openAdd() {
   editingId.value = null
   promoteScanId.value = null
+  formError.value = ''
   Object.assign(form, { name: '', scientific_name: '', classification: '', habitat: '', description: '', image_path: '' })
   showModal.value = true
 }
@@ -341,6 +373,7 @@ function openAdd() {
 function openEdit(sp: Species) {
   editingId.value = sp.id
   promoteScanId.value = null
+  formError.value = ''
   Object.assign(form, {
     name: sp.name,
     scientific_name: sp.scientific_name || sp.name,
@@ -355,6 +388,7 @@ function openEdit(sp: Species) {
 function openPromoteModal(scan: ScanCandidate) {
   promoteScanId.value = scan.id
   editingId.value = null
+  formError.value = ''
   Object.assign(form, {
     name: scan.result_name,
     scientific_name: scan.result_name,
@@ -368,32 +402,33 @@ function openPromoteModal(scan: ScanCandidate) {
 
 async function saveSpecies() {
   if (!form.name || !form.classification) {
-    alert('Please fill in required fields.')
+    formError.value = 'Please fill in required fields (Name and Classification).'
     return
   }
-
-  const token = localStorage.getItem('token')
+  formError.value = ''
+  isSaving.value = true
 
   try {
     if (editingId.value) {
       await $fetch(`${config.public.apiBase}/admin/species/${editingId.value}`, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: getHeaders(),
         body: form
       })
     } else {
       await $fetch(`${config.public.apiBase}/admin/species`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: getHeaders(),
         body: form
       })
     }
-
     closeModal()
     fetchVerifiedSpecies()
-    alert(promoteScanId.value ? 'Candidate scan successfully promoted & saved to Species DB!' : 'Species saved successfully!')
+    if (promoteScanId.value) alert('Candidate scan successfully promoted & saved to Species DB!')
   } catch (err: any) {
-    alert(err?.data?.message || 'Failed to save species.')
+    formError.value = err?.data?.message || 'Failed to save species.'
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -401,19 +436,19 @@ function closeModal() {
   showModal.value = false
   promoteScanId.value = null
   editingId.value = null
+  formError.value = ''
 }
 
 async function deleteSpecies(sp: Species) {
   if (!confirm(`Delete "${sp.name}" from database?`)) return
-  const token = localStorage.getItem('token')
   try {
     await $fetch(`${config.public.apiBase}/admin/species/${sp.id}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` }
+      headers: getHeaders()
     })
     fetchVerifiedSpecies()
-  } catch (err) {
-    alert('Failed to delete species.')
+  } catch (err: any) {
+    alert(err?.data?.message || 'Failed to delete species.')
   }
 }
 
