@@ -250,7 +250,7 @@ async function captureFrameAndAnalyze() {
       const formData = new FormData()
       formData.append('image', file)
 
-      const data = await $fetch<any>(`${config.public.apiBase}/scans`, {
+      const data = await $fetch<any>(`${config.public.apiBase}/scans/preview`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -262,17 +262,14 @@ async function captureFrameAndAnalyze() {
       if (rawClass === 'not_mushroom') {
         scanStatus.value = 'No mushroom detected — keep scanning...'
       } else if (confidence >= CONFIDENCE_THRESHOLD) {
-        selectedFile.value = file
-        loadPreview(file)
-        result.value = {
-          name: data.result_name || 'Unknown',
-          classification: rawClass.charAt(0).toUpperCase() + rawClass.slice(1),
-          confidence,
-          descriptionRest: ' is the identified species based on your scan. More details will be populated here when the species database is fully linked.',
-          reference: 'https://en.wikipedia.org/wiki/' + encodeURIComponent(data.result_name || 'Mushroom')
+        scanStatus.value = 'Saving result...'
+        try {
+          await saveFinalScan(file)
+          closeCamera()
+        } catch (saveError) {
+          console.error('Final save failed:', saveError)
+          scanStatus.value = 'Could not save — keep scanning...'
         }
-        stopAutoScan()
-        closeCamera()
       } else {
         scanStatus.value = `Low confidence (${confidence}%) — keep scanning...`
       }
@@ -283,6 +280,29 @@ async function captureFrameAndAnalyze() {
       scanInFlight = false
     }
   }, 'image/jpeg', 0.85)
+}
+
+async function saveFinalScan(file: File) {
+  const token = localStorage.getItem('token')
+  const formData = new FormData()
+  formData.append('image', file)
+
+  const data = await $fetch<any>(`${config.public.apiBase}/scans`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  })
+
+  const rawClass = data.result_classification || 'unknown'
+  selectedFile.value = null
+  loadPreview(file)
+  result.value = {
+    name: data.result_name || 'Unknown',
+    classification: rawClass.charAt(0).toUpperCase() + rawClass.slice(1),
+    confidence: data.confidence_level || 0,
+    descriptionRest: ' is the identified species based on your scan. More details will be populated here when the species database is fully linked.',
+    reference: 'https://en.wikipedia.org/wiki/' + encodeURIComponent(data.result_name || 'Mushroom'),
+  }
 }
 
 onUnmounted(() => {
