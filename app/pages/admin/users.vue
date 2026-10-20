@@ -106,7 +106,11 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'admin', middleware: 'auth' })
+definePageMeta({ 
+  layout: 'admin',
+  middleware: 'role',
+  roles: ['admin', 'super_admin'],
+})
 
 const config = useRuntimeConfig()
 const loading = ref(true)

@@ -136,7 +136,11 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'admin', middleware: 'auth' })
+definePageMeta({ 
+  layout: 'admin',
+  middleware: 'role',
+  roles: ['admin', 'super_admin'],
+})
 
 const config = useRuntimeConfig()
 const loading = ref(true)
@@ -144,6 +148,7 @@ const searchQuery = ref('')
 const clsFilter   = ref('')
 const dateFilter  = ref('')
 const selectedScan = ref<any>(null)
+
 
 const scans = ref<any[]>([])
 const pagination = reactive({ current_page: 1, last_page: 1, total: 0, from: 0, to: 0 })
