@@ -85,6 +85,19 @@
 <script setup lang="ts">
 const config = useRuntimeConfig()
 
+// Redirect if already logged in
+onMounted(() => {
+  const token = localStorage.getItem('token')
+  const role  = localStorage.getItem('role')
+  if (token) {
+    if (role === 'admin' || role === 'super_admin') {
+      navigateTo('/admin/dashboard')
+    } else {
+      navigateTo('/users/scan')
+    }
+  }
+})
+
 const form        = reactive({ email: '', password: '' })
 const loading     = ref(false)
 const error       = ref('')
