@@ -45,6 +45,18 @@
           <span class="whitespace-nowrap">Collection</span>
         </NuxtLink>
 
+        <NuxtLink to="/users/subscription" @click="mobileOpen = false" class="flex items-center gap-2.5 py-[9px] px-3 rounded-[10px] text-sidebar-muted no-underline text-[13.5px] font-medium transition-colors duration-200 hover:bg-sidebar-hover hover:text-sidebar-text" active-class="!bg-primary !text-white">
+          <span class="flex items-center justify-center shrink-0">
+            <svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+          </span>
+          <span class="whitespace-nowrap flex-1">Subscription</span>
+          <span v-if="isSubscribed" class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600">PRO</span>
+          <span v-else-if="remainingScans >= 0" class="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600">{{ remainingScans }}/3 left</span>
+        </NuxtLink>
+
         <NuxtLink to="/users/settings" @click="mobileOpen = false" class="flex items-center gap-2.5 py-[9px] px-3 rounded-[10px] text-sidebar-muted no-underline text-[13.5px] font-medium transition-colors duration-200 hover:bg-sidebar-hover hover:text-sidebar-text" active-class="!bg-primary !text-white">
           <span class="flex items-center justify-center shrink-0"><svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15 1.65 1.65 0 0 0 3.17 14H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68 1.65 1.65 0 0 0 10 3.17V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9 1.65 1.65 0 0 0 20.83 10H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
           <span class="whitespace-nowrap">Settings</span>
@@ -89,17 +101,61 @@
 <script setup lang="ts">
 const config = useRuntimeConfig()
 
-const mobileOpen = ref(false)
-const userName   = ref('')
-const userAvatar = ref('')
+const mobileOpen     = ref(false)
+const userName       = ref('')
+const userAvatar     = ref('')
+const isSubscribed   = ref(false)
+const remainingScans = ref<number | null>(null)
 
-onMounted(() => {
+async function refreshUserSubscription() {
   const storedUser = localStorage.getItem('user')
   if (storedUser) {
-    const user = JSON.parse(storedUser)
-    userName.value = user.name || user.username || 'User'
-    userAvatar.value = user.profile_photo ? `${config.public.apiBase.replace('/api', '')}/storage/${user.profile_photo}` : ''
+    try {
+      const user = JSON.parse(storedUser)
+      userName.value = user.name || user.username || 'User'
+      userAvatar.value = user.profile_photo ? `${config.public.apiBase.replace('/api', '')}/storage/${user.profile_photo}` : ''
+      if (typeof user.is_subscribed !== 'undefined') {
+        isSubscribed.value = !!user.is_subscribed
+      }
+      if (typeof user.remaining_scans !== 'undefined') {
+        remainingScans.value = user.remaining_scans
+      }
+    } catch (e) {
+      console.error(e)
+    }
   }
+
+  // Also fetch live status from API
+  const token = localStorage.getItem('token')
+  if (token) {
+    try {
+      const data: any = await $fetch(`${config.public.apiBase}/subscription/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      isSubscribed.value = !!data.is_subscribed
+      remainingScans.value = data.remaining_scans
+
+      // Keep stored user updated
+      if (storedUser) {
+        const u = JSON.parse(storedUser)
+        u.is_subscribed = data.is_subscribed
+        u.remaining_scans = data.remaining_scans
+        u.subscription_tier = data.subscription_tier
+        localStorage.setItem('user', JSON.stringify(u))
+      }
+    } catch (e) {
+      // Ignore network errors on background refresh
+    }
+  }
+}
+
+onMounted(() => {
+  refreshUserSubscription()
+  window.addEventListener('subscription-updated', refreshUserSubscription)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('subscription-updated', refreshUserSubscription)
 })
 
 const userInitials = computed(() => {

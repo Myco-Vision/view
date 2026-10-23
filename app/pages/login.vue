@@ -1,9 +1,43 @@
 <template>
-  <div class="min-h-screen bg-[#f5f5f3] flex items-center justify-center font-dm px-4 py-8">
-    <div class="bg-white rounded-xl shadow-[0_4px_32px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.04)] w-full max-w-[400px] pt-10 px-6 sm:px-8 pb-8">
-      <div class="text-center mb-8">
-        <h2 class="font-serif text-[1.35rem] font-normal text-[#2c2c2c] m-0 tracking-[-0.01em]">Login to <span class="text-[#5a9e6f] italic font-semibold">MycoVision</span></h2>
+  <div class="min-h-screen bg-[#f5f5f3] flex flex-col items-center justify-center font-dm px-4 py-8">
+    
+    <!-- Back to Landing Page link -->
+    <div class="w-full max-w-[400px] mb-4">
+      <NuxtLink to="/" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-emerald-700 transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        <span>Back to Home</span>
+      </NuxtLink>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-[0_4px_32px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.04)] w-full max-w-[400px] pt-8 px-6 sm:px-8 pb-8 border border-slate-100">
+      <div class="text-center mb-6">
+        <h2 class="font-serif text-[1.4rem] font-normal text-[#2c2c2c] m-0 tracking-[-0.01em]">Login to <span class="text-[#5a9e6f] italic font-semibold">MycoVision</span></h2>
+        <p class="text-xs text-slate-400 mt-1">Sign in as a Forager Member or System Administrator</p>
       </div>
+
+      <!-- Quick Fill Buttons -->
+      <div class="mb-4 p-2 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+        <span class="text-[11px] text-slate-500 font-medium">Quick Demo:</span>
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            @click="fillUser"
+            class="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition cursor-pointer"
+          >
+            User
+          </button>
+          <button
+            type="button"
+            @click="fillAdmin"
+            class="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-100 text-amber-800 hover:bg-amber-200 transition cursor-pointer"
+          >
+            Admin
+          </button>
+        </div>
+      </div>
+
       <div class="flex flex-col gap-3">
         <!-- Error banner -->
         <div v-if="error" class="bg-red-50 border-[1.5px] border-red-300 rounded-lg text-red-700 text-[0.85rem] py-[0.65rem] px-[0.9rem]">{{ error }}</div>
@@ -55,6 +89,18 @@ const form        = reactive({ email: '', password: '' })
 const loading     = ref(false)
 const error       = ref('')
 const showPassword = ref(false)
+
+function fillUser() {
+  form.email = 'forager@example.com'
+  form.password = 'password'
+  error.value = ''
+}
+
+function fillAdmin() {
+  form.email = 'superadmin@mycovision.com'
+  form.password = 'SuperAdmin123!'
+  error.value = ''
+}
 
 async function handleLogin() {
   error.value = ''

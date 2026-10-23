@@ -168,6 +168,7 @@
           <div class="flex flex-col gap-px overflow-hidden">
             <span class="text-[13px] font-semibold text-slate-200 whitespace-nowrap overflow-hidden text-ellipsis">{{ adminName }}</span>
             <span class="text-[11px] font-medium" :class="userRole === 'super_admin' ? 'text-amber-500' : 'text-emerald-500'">{{ userRole === 'super_admin' ? 'Super Admin' : 'Administrator' }}</span>
+            <span class="text-[11px] text-emerald-500 font-medium">{{ roleLabel }}</span>
           </div>
         </div>
         <div v-else class="w-8 h-8 rounded-lg text-white text-xs font-bold flex items-center justify-center mx-auto" :class="userRole === 'super_admin' ? 'bg-gradient-to-br from-amber-500 to-amber-600' : 'bg-gradient-to-br from-emerald-500 to-emerald-600'">{{ adminInitials }}</div>

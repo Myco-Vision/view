@@ -1,9 +1,12 @@
 <template>
   <div class="flex flex-col gap-[22px]">
+    <!-- Page Header -->
     <div class="flex items-end justify-between gap-3 flex-wrap">
       <div>
         <h1 class="text-[22px] font-bold text-[#0f172a]">Species Database</h1>
-        <p class="text-[13.5px] text-[#64748b] mt-[3px]">{{ pagination.total }} mushroom species on record</p>
+        <p class="text-[13.5px] text-[#64748b] mt-[3px]">
+          Manage verified database species and review user-scanned research candidate data.
+        </p>
       </div>
       <div class="flex items-center gap-2.5 flex-wrap">
         <div class="relative">
@@ -16,52 +19,78 @@
           <option value="poisonous">Poisonous</option>
           <option value="unknown">Unknown</option>
         </select>
-        <button class="py-2 px-[18px] rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="openAdd">+ Add Species</button>
+        <button v-if="activeTab === 'verified'" class="py-2 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[#334155] text-[13.5px] font-semibold font-sans cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc] flex items-center gap-1.5" @click="exportCatalogPdf">📄 Export Catalog PDF</button>
+        <button v-if="activeTab === 'verified'" class="py-2 px-[18px] rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="openAdd">+ Add Species</button>
       </div>
     </div>
 
-    <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
+    <!-- Tabs Navigation Bar -->
+    <div class="flex items-center gap-2 border-b border-[#e2e8f0]">
+      <button
+        class="py-2.5 px-4 text-[14px] font-semibold transition-colors duration-200 border-b-2 -mb-[1px] cursor-pointer flex items-center gap-2"
+        :class="activeTab === 'verified' ? 'border-[#10b981] text-[#10b981]' : 'border-transparent text-[#64748b] hover:text-[#0f172a]'"
+        @click="activeTab = 'verified'"
+      >
+        <span>📚 Verified Species (In DB)</span>
+        <span class="py-0.5 px-2 rounded-full text-[11px] bg-[#f1f5f9] text-[#475569]">{{ species.length }}</span>
+      </button>
+
+      <button
+        class="py-2.5 px-4 text-[14px] font-semibold transition-colors duration-200 border-b-2 -mb-[1px] cursor-pointer flex items-center gap-2"
+        :class="activeTab === 'candidates' ? 'border-[#10b981] text-[#10b981]' : 'border-transparent text-[#64748b] hover:text-[#0f172a]'"
+        @click="activeTab = 'candidates'"
+      >
+        <span>🔬 Candidate Scans (New Data - Not in DB)</span>
+        <span class="py-0.5 px-2 rounded-full text-[11px] bg-[#d1fae5] text-[#065f46] font-bold">{{ candidateScans.length }}</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Verified Species -->
+    <div v-if="activeTab === 'verified'" class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
       <div class="overflow-x-auto">
-      <table class="w-full border-collapse">
-        <thead>
-          <tr>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">#</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Scientific Name</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Common Name</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Classification</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Habitat</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Added</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading" class="animate-pulse">
-            <td colspan="7" class="py-8 text-center text-[#94a3b8] text-[13.5px]">Loading species...</td>
-          </tr>
-          <tr v-else-if="filteredSpecies.length === 0">
-            <td colspan="7" class="py-8 text-center text-[#94a3b8] text-[14px]">No species found.</td>
-          </tr>
-          <tr v-else v-for="sp in paginatedSpecies" :key="sp.id" class="hover:bg-[#f8fafc] group">
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle font-mono text-[12px] text-[#94a3b8] group-last:border-none">{{ sp.id }}</td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle italic font-semibold text-[#0f172a] group-last:border-none">{{ sp.scientific_name || '-' }}</td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">{{ sp.name }}</td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
-              <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="sp.classification === 'edible' ? 'bg-[#d1fae5] text-[#065f46]' : (sp.classification === 'poisonous' ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#fef3c7] text-[#92400e]')">{{ sp.classification }}</span>
-            </td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle text-[12.5px] text-[#64748b] group-last:border-none">{{ sp.habitat || '-' }}</td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle text-[12.5px] text-[#94a3b8] whitespace-nowrap group-last:border-none">{{ formatDate(sp.created_at) }}</td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
-              <div class="flex gap-1.5">
-                <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" title="Edit" @click="openEdit(sp)">✏️</button>
-                <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#fee2e2] hover:border-[#fecaca]" title="Delete" @click="deleteSpecies(sp)">🗑</button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <table class="w-full border-collapse">
+          <thead>
+            <tr>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">#</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Scientific Name</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Common Name</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Classification</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Habitat / Region</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Added</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loading" class="animate-pulse">
+              <td colspan="7" class="py-8 text-center text-[#94a3b8] text-[13.5px]">Loading species database...</td>
+            </tr>
+            <tr v-else-if="filteredSpecies.length === 0">
+              <td colspan="7" class="py-8 text-center text-[#94a3b8] text-[13.5px]">No verified species found on record.</td>
+            </tr>
+            <template v-else>
+              <tr v-for="sp in paginatedSpecies" :key="sp.id" class="hover:bg-[#f8fafc] group">
+                <td class="py-2.5 px-3.5 text-[12px] text-[#94a3b8] border-b border-[#f8fafc] align-middle font-mono group-last:border-none">{{ sp.id }}</td>
+                <td class="py-2.5 px-3.5 text-[13px] text-[#0f172a] border-b border-[#f8fafc] align-middle italic font-semibold group-last:border-none">{{ sp.scientific_name || '-' }}</td>
+                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">{{ sp.name }}</td>
+                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="sp.classification === 'edible' ? 'bg-[#d1fae5] text-[#065f46]' : (sp.classification === 'poisonous' ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#fef3c7] text-[#92400e]')">{{ sp.classification }}</span>
+                </td>
+                <td class="py-2.5 px-3.5 text-[12.5px] text-[#64748b] border-b border-[#f8fafc] align-middle group-last:border-none">{{ sp.habitat || '-' }}</td>
+                <td class="py-2.5 px-3.5 text-[12.5px] text-[#94a3b8] border-b border-[#f8fafc] align-middle whitespace-nowrap group-last:border-none">{{ formatDate(sp.created_at) }}</td>
+                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <div class="flex gap-1.5">
+                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#e0f2fe] hover:border-[#bae6fd]" title="Generate PDF" @click="exportSpeciesPdf(sp)">📄</button>
+                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" title="Edit" @click="openEdit(sp)">✏️</button>
+                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#fee2e2] hover:border-[#fecaca]" title="Delete" @click="deleteSpecies(sp)">🗑</button>
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
       </div>
       <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
-        <span class="text-[12.5px] text-[#64748b]">{{ filteredSpecies.length }} of {{ allSpecies.length }} species</span>
+        <span class="text-[12.5px] text-[#64748b]">{{ filteredSpecies.length }} of {{ species.length }} species</span>
         <div class="flex items-center gap-2.5">
           <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="page <= 1" @click="page--">‹</button>
           <span class="text-[12.5px] text-[#475569]">Page {{ page }} of {{ totalPages }}</span>
@@ -70,15 +99,92 @@
       </div>
     </div>
 
-    <!-- Add / Edit Modal -->
+    <!-- Tab 2: Candidate Scans -->
+    <div v-if="activeTab === 'candidates'" class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
+      <div class="bg-[#f8fafc] p-3.5 border-b border-[#f1f5f9] flex items-center justify-between">
+        <p class="text-[12.5px] text-[#475569]">
+          Showing user scans where <strong class="text-[#059669]">Share Data for Research</strong> is enabled. Admins can promote valid candidate scans into official DB species.
+        </p>
+        <button class="py-1.5 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12px] font-medium text-[#475569] cursor-pointer hover:bg-[#f1f5f9]" @click="fetchCandidateScans">🔄 Refresh</button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Image</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Detected Species</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Classification</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Scanned By</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Location / Coords</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Consent Status</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loadingCandidates" class="text-center">
+              <td colspan="7" class="py-8 text-[#64748b] text-[13.5px]">Loading consented research candidate scans...</td>
+            </tr>
+            <tr v-else-if="filteredCandidates.length === 0" class="text-center">
+              <td colspan="7" class="py-8 text-[#64748b] text-[13.5px]">No candidate scans found from opted-in users yet.</td>
+            </tr>
+            <template v-else>
+              <tr v-for="scan in filteredCandidates" :key="scan.id" class="hover:bg-[#f8fafc] group">
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
+                  <img :src="getImageUrl(scan.image_path)" class="w-11 h-11 rounded-lg object-cover border border-[#e2e8f0]" alt="Scan" />
+                </td>
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
+                  <p class="font-semibold text-[#0f172a] text-[13.5px]">{{ scan.result_name }}</p>
+                  <p class="text-[11.5px] text-[#64748b]">Confidence: {{ scan.confidence_level }}%</p>
+                </td>
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
+                  <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="scan.result_classification === 'edible' ? 'bg-[#d1fae5] text-[#065f46]' : (scan.result_classification === 'poisonous' ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#fef3c7] text-[#92400e]')">{{ scan.result_classification }}</span>
+                </td>
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle text-[12.5px] text-[#334155]">
+                  <p class="font-medium text-[#0f172a]">{{ scan.user?.name || 'Anonymous User' }}</p>
+                  <p class="text-[11.5px] text-[#94a3b8]">{{ scan.user?.email }}</p>
+                </td>
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle text-[12px] text-[#64748b]">
+                  <span v-if="scan.latitude && scan.longitude">📍 {{ scan.latitude }}, {{ scan.longitude }}</span>
+                  <span v-else class="text-[#94a3b8]">No GPS Data</span>
+                </td>
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
+                  <span class="py-1 px-2.5 rounded-full text-[11px] font-bold bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0] inline-flex items-center gap-1">
+                    ✓ Consented for ML
+                  </span>
+                </td>
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
+                  <button
+                    class="py-1.5 px-3 rounded-lg bg-[#10b981] text-white text-[12px] font-semibold border-none cursor-pointer hover:bg-[#059669] transition-colors"
+                    @click="openPromoteModal(scan)"
+                  >
+                    ➕ Add to Species DB
+                  </button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Add / Edit / Promote Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] backdrop-blur-[2px]" @click.self="closeModal">
       <div class="bg-white rounded-2xl w-[560px] max-w-[95vw] shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
         <div class="flex items-center justify-between py-[18px] px-[22px] border-b border-[#f1f5f9]">
-          <p class="text-[15px] font-bold text-[#0f172a]">{{ editingId ? 'Edit Species' : 'Add New Species' }}</p>
+          <p class="text-[15px] font-bold text-[#0f172a]">{{ promoteScanId ? 'Promote Scan to Official Species DB' : (editingId ? 'Edit Species' : 'Add New Species') }}</p>
           <button class="bg-transparent border-none cursor-pointer text-[16px] text-[#94a3b8] hover:text-[#ef4444]" @click="closeModal">✕</button>
         </div>
         <div class="p-[22px] flex flex-col gap-4">
           <div v-if="formError" class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[13px] font-medium">{{ formError }}</div>
+          <div v-if="form.image_path" class="flex items-center gap-3 p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl">
+            <img :src="getImageUrl(form.image_path)" class="w-14 h-14 rounded-lg object-cover border" alt="Reference" />
+            <div>
+              <p class="text-[12px] font-bold text-[#0f172a]">Candidate Photo Attached</p>
+              <p class="text-[11.5px] text-[#64748b]">This photo will be saved as the reference image for this DB species.</p>
+            </div>
+          </div>
+
           <div class="grid grid-cols-2 gap-3.5">
             <div class="flex flex-col gap-1.5">
               <label class="text-[12.5px] font-semibold text-[#475569]">Common Name *</label>
@@ -100,20 +206,24 @@
               </select>
             </div>
             <div class="flex flex-col gap-1.5">
-              <label class="text-[12.5px] font-semibold text-[#475569]">Habitat</label>
-              <input v-model="form.habitat" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Tropical forests" />
+              <label class="text-[12.5px] font-semibold text-[#475569]">Habitat / Region</label>
+              <input v-model="form.habitat" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Southeast Asia" />
             </div>
           </div>
           <div class="flex flex-col gap-1.5">
             <label class="text-[12.5px] font-semibold text-[#475569]">Description</label>
             <textarea v-model="form.description" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none resize-y transition-colors duration-[0.18s] focus:border-[#10b981]" rows="3" placeholder="Brief description…" />
           </div>
-          <div class="flex justify-end gap-2.5 pt-1">
-            <button class="py-[9px] px-5 rounded-lg border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans cursor-pointer text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f8fafc]" @click="closeModal">Cancel</button>
-            <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 flex items-center justify-center min-w-[100px]" @click="saveSpecies" :disabled="isSaving">
-              <span v-if="isSaving" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-              <span v-else>{{ editingId ? 'Update' : 'Add Species' }}</span>
-            </button>
+          <div class="flex justify-between items-center pt-1">
+            <button v-if="editingId" class="py-[9px] px-4 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] text-[13px] font-semibold text-[#0f172a] cursor-pointer hover:bg-[#e2e8f0] flex items-center gap-1.5" @click="exportCurrentFormPdf">📄 Generate PDF</button>
+            <div v-else></div>
+            <div class="flex gap-2.5">
+              <button class="py-[9px] px-5 rounded-lg border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans cursor-pointer text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f8fafc]" @click="closeModal">Cancel</button>
+              <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px]" @click="saveSpecies" :disabled="isSaving">
+                <span v-if="isSaving" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                <span v-else>{{ promoteScanId ? 'Confirm & Save to DB' : (editingId ? 'Update' : 'Add Species') }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -122,51 +232,120 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
+definePageMeta({
+  layout: 'admin',
+  middleware: 'role',
+  roles: ['admin', 'super_admin'],
+})
 
 const config = useRuntimeConfig()
-const loading = ref(true)
+
+const activeTab = ref<'verified' | 'candidates'>('verified')
 const isSaving = ref(false)
+const formError = ref('')
+const page = ref(1)
+const perPage = 15
+
 const searchQuery = ref('')
-const clsFilter   = ref('')
-const page        = ref(1)
-const perPage     = 10
-const showModal   = ref(false)
-const editingId   = ref<number | null>(null)
-const formError   = ref('')
+const clsFilter = ref('')
+const loading = ref(false)
+const loadingCandidates = ref(false)
+const showModal = ref(false)
+const editingId = ref<number | null>(null)
+const promoteScanId = ref<number | null>(null)
 
-const form = reactive({ name: '', scientific_name: '', classification: '', habitat: '', description: '' })
+interface Species {
+  id: number
+  name: string
+  scientific_name?: string
+  classification: string
+  habitat?: string
+  description?: string
+  image_path?: string
+  created_at?: string
+}
 
-const allSpecies = ref<any[]>([])
-const pagination = reactive({ total: 0 })
+interface ScanCandidate {
+  id: number
+  result_name: string
+  result_classification: string
+  confidence_level: number
+  latitude?: number
+  longitude?: number
+  image_path: string
+  created_at: string
+  user?: { id: number; name: string; email: string }
+}
+
+const species = ref<Species[]>([])
+const candidateScans = ref<ScanCandidate[]>([])
+
+const form = reactive({
+  name: '',
+  scientific_name: '',
+  classification: '',
+  habitat: '',
+  description: '',
+  image_path: ''
+})
 
 const getHeaders = () => {
   const token = localStorage.getItem('token')
   return { Authorization: `Bearer ${token}` }
 }
 
-async function fetchSpecies() {
+// Escape user-provided text before putting it into the PDF print windows
+const esc = (s: any) =>
+  String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
+
+onMounted(() => {
+  fetchVerifiedSpecies()
+  fetchCandidateScans()
+})
+
+async function fetchVerifiedSpecies() {
   loading.value = true
   try {
-    const res = await $fetch<any[]>(`${config.public.apiBase}/admin/species`, {
+    const data = await $fetch<Species[]>(`${config.public.apiBase}/admin/species`, {
       headers: getHeaders(),
     })
-    allSpecies.value = res
-    pagination.total = res.length
-  } catch (error) {
-    console.error('Failed to fetch species:', error)
+    species.value = data
+  } catch (err) {
+    console.error('Failed to fetch verified species:', err)
   } finally {
     loading.value = false
   }
 }
 
-onMounted(() => { fetchSpecies() })
+async function fetchCandidateScans() {
+  loadingCandidates.value = true
+  try {
+    const res = await $fetch<any>(`${config.public.apiBase}/admin/scans?only_consented=1`, {
+      headers: getHeaders(),
+    })
+    const rawData = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : [])
+    candidateScans.value = rawData
+  } catch (err) {
+    console.error('Failed to fetch candidate scans:', err)
+  } finally {
+    loadingCandidates.value = false
+  }
+}
 
-// Client-side filtering (species list is typically not huge)
-const filteredSpecies = computed(() => allSpecies.value.filter(s => {
+const filteredSpecies = computed(() => species.value.filter(s => {
   const q = searchQuery.value.toLowerCase()
-  const matchQ = !q || (s.scientific_name || '').toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+  const sName = (s.scientific_name || '').toLowerCase()
+  const cName = (s.name || '').toLowerCase()
+  const matchQ = !q || sName.includes(q) || cName.includes(q)
   const matchC = !clsFilter.value || s.classification === clsFilter.value
+  return matchQ && matchC
+}))
+
+const filteredCandidates = computed(() => candidateScans.value.filter(c => {
+  const q = searchQuery.value.toLowerCase()
+  const matchQ = !q || (c.result_name || '').toLowerCase().includes(q)
+  const matchC = !clsFilter.value || c.result_classification === clsFilter.value
   return matchQ && matchC
 }))
 
@@ -176,6 +355,9 @@ const paginatedSpecies = computed(() => {
   return filteredSpecies.value.slice(start, start + perPage)
 })
 
+// Keep the current page valid after deletes / filter changes
+watch(totalPages, t => { if (page.value > t) page.value = t })
+
 let debounceTimer: any = null
 function debouncedFilter() {
   clearTimeout(debounceTimer)
@@ -183,20 +365,28 @@ function debouncedFilter() {
 }
 function filterSpecies() { page.value = 1 }
 
-function formatDate(dateStr: string) {
+function getImageUrl(path?: string) {
+  if (!path) return 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=150&q=80'
+  if (path.startsWith('http')) return path
+  return `${config.public.apiBase.replace(/\/api\/?$/, '')}/storage/${path}`
+}
+
+function formatDate(dateStr?: string) {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function openAdd() {
   editingId.value = null
+  promoteScanId.value = null
   formError.value = ''
-  Object.assign(form, { name: '', scientific_name: '', classification: '', habitat: '', description: '' })
+  Object.assign(form, { name: '', scientific_name: '', classification: '', habitat: '', description: '', image_path: '' })
   showModal.value = true
 }
 
-function openEdit(sp: any) {
+function openEdit(sp: Species) {
   editingId.value = sp.id
+  promoteScanId.value = null
   formError.value = ''
   Object.assign(form, {
     name: sp.name,
@@ -204,6 +394,23 @@ function openEdit(sp: any) {
     classification: sp.classification,
     habitat: sp.habitat || '',
     description: sp.description || '',
+    image_path: sp.image_path || ''
+  })
+  showModal.value = true
+}
+
+function openPromoteModal(scan: ScanCandidate) {
+  promoteScanId.value = scan.id
+  editingId.value = null
+  formError.value = ''
+  // Deliberately NOT copying GPS coordinates or the user's name into public species fields.
+  Object.assign(form, {
+    name: scan.result_name,
+    scientific_name: '',
+    classification: scan.result_classification,
+    habitat: '',
+    description: '',
+    image_path: scan.image_path
   })
   showModal.value = true
 }
@@ -216,22 +423,30 @@ async function saveSpecies() {
   formError.value = ''
   isSaving.value = true
 
+  // Capture before closeModal() resets it
+  const promotedScanId = promoteScanId.value
+
   try {
     if (editingId.value) {
       await $fetch(`${config.public.apiBase}/admin/species/${editingId.value}`, {
         method: 'PUT',
         headers: getHeaders(),
-        body: form,
+        body: form
       })
     } else {
       await $fetch(`${config.public.apiBase}/admin/species`, {
         method: 'POST',
         headers: getHeaders(),
-        body: form,
+        body: promotedScanId ? { ...form, scan_id: promotedScanId } : form
       })
     }
     closeModal()
-    fetchSpecies()
+    fetchVerifiedSpecies()
+    if (promotedScanId) {
+      // Remove the promoted scan so it can't be promoted twice
+      candidateScans.value = candidateScans.value.filter(c => c.id !== promotedScanId)
+      alert('Candidate scan successfully promoted & saved to Species DB!')
+    }
   } catch (err: any) {
     formError.value = err?.data?.message || 'Failed to save species.'
   } finally {
@@ -239,23 +454,218 @@ async function saveSpecies() {
   }
 }
 
-function closeModal() { showModal.value = false }
+function closeModal() {
+  showModal.value = false
+  promoteScanId.value = null
+  editingId.value = null
+  formError.value = ''
+}
 
-async function deleteSpecies(sp: any) {
-  if (!confirm(`Delete "${sp.name}"?`)) return
+async function deleteSpecies(sp: Species) {
+  if (!confirm(`Delete "${sp.name}" from database?`)) return
   try {
     await $fetch(`${config.public.apiBase}/admin/species/${sp.id}`, {
       method: 'DELETE',
-      headers: getHeaders(),
+      headers: getHeaders()
     })
-    fetchSpecies()
+    fetchVerifiedSpecies()
   } catch (err: any) {
     alert(err?.data?.message || 'Failed to delete species.')
   }
 }
-definePageMeta({ 
-  layout: 'admin',
-  middleware: 'role',
-  roles: ['admin', 'super_admin'],
-})
+
+function exportCurrentFormPdf() {
+  exportSpeciesPdf({
+    id: editingId.value || 0,
+    name: form.name,
+    scientific_name: form.scientific_name,
+    classification: form.classification,
+    habitat: form.habitat,
+    description: form.description,
+    image_path: form.image_path,
+  })
+}
+
+function exportSpeciesPdf(sp: Species) {
+  const printWindow = window.open('', '_blank', 'width=850,height=950')
+  if (!printWindow) {
+    alert('Please allow popups to generate PDF.')
+    return
+  }
+
+  const cls = (sp.classification || '').toLowerCase()
+  const isEdible = cls === 'edible'
+  const isPoisonous = cls === 'poisonous'
+  const badgeBg = isEdible ? '#d1fae5' : (isPoisonous ? '#fee2e2' : '#fef3c7')
+  const badgeColor = isEdible ? '#065f46' : (isPoisonous ? '#991b1b' : '#92400e')
+
+  const imgHtml = sp.image_path ? `
+    <div style="text-align: center; margin-top: 25px;">
+      <img src="${esc(getImageUrl(sp.image_path))}" style="max-width: 100%; max-height: 280px; border-radius: 12px; border: 1px solid #cbd5e1; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.08);" alt="${esc(sp.name)}" />
+    </div>
+  ` : ''
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${esc(sp.name)} - Mushroom Species Datasheet</title>
+      <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 40px; color: #1e293b; background: #fff; line-height: 1.5; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #10b981; padding-bottom: 15px; margin-bottom: 25px; }
+        .brand { font-size: 22px; font-weight: 800; color: #065f46; display: flex; align-items: center; gap: 8px; }
+        .doc-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1.2px; }
+        .title-section { margin-bottom: 24px; }
+        .common-name { font-size: 28px; font-weight: 800; color: #0f172a; margin: 0; }
+        .scientific-name { font-size: 16px; font-style: italic; color: #475569; margin-top: 4px; font-weight: 500; }
+        .badge { display: inline-block; padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; text-transform: capitalize; background: ${badgeBg}; color: ${badgeColor}; margin-top: 12px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+        .card h3 { margin-top: 0; font-size: 14px; font-weight: 700; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-row { display: flex; margin-bottom: 8px; font-size: 13.5px; }
+        .info-label { width: 140px; color: #64748b; font-weight: 500; flex-shrink: 0; }
+        .info-val { color: #0f172a; font-weight: 600; flex: 1; }
+        .desc-text { font-size: 13.5px; color: #334155; line-height: 1.65; margin: 0; text-align: justify; }
+        .footer { margin-top: 45px; border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; }
+        @media print {
+          body { margin: 20px; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="brand">🍄 MycoVision</div>
+        <div class="doc-title">Mushroom Species Datasheet</div>
+      </div>
+
+      <div class="title-section">
+        <h1 class="common-name">${esc(sp.name)}</h1>
+        <div class="scientific-name">${esc(sp.scientific_name || '-')}</div>
+        <div class="badge">${esc(sp.classification || 'Unknown')}</div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Species Specifications</h3>
+          <div class="info-row"><span class="info-label">Database ID:</span><span class="info-val">#${esc(sp.id || 'N/A')}</span></div>
+          <div class="info-row"><span class="info-label">Common Name:</span><span class="info-val">${esc(sp.name)}</span></div>
+          <div class="info-row"><span class="info-label">Scientific Name:</span><span class="info-val"><em>${esc(sp.scientific_name || '-')}</em></span></div>
+          <div class="info-row"><span class="info-label">Classification:</span><span class="info-val" style="text-transform: capitalize;">${esc(sp.classification)}</span></div>
+          <div class="info-row"><span class="info-label">Habitat / Region:</span><span class="info-val">${esc(sp.habitat || '-')}</span></div>
+          <div class="info-row"><span class="info-label">Cataloged On:</span><span class="info-val">${esc(formatDate(sp.created_at))}</span></div>
+        </div>
+
+        <div class="card">
+          <h3>Description &amp; Research Notes</h3>
+          <p class="desc-text">${esc(sp.description || 'No detailed description recorded for this mushroom species.')}</p>
+        </div>
+      </div>
+
+      ${imgHtml}
+
+      <div class="footer">
+        <span>MycoVision Official Species Database Report</span>
+        <span>Generated: ${esc(new Date().toLocaleString())}</span>
+      </div>
+
+      \x3Cscript\x3E
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 300);
+        };
+      \x3C/script\x3E
+    </body>
+    </html>
+  `
+
+  printWindow.document.write(htmlContent)
+  printWindow.document.close()
+}
+
+function exportCatalogPdf() {
+  const printWindow = window.open('', '_blank', 'width=950,height=1000')
+  if (!printWindow) {
+    alert('Please allow popups to generate PDF.')
+    return
+  }
+
+  const rowsHtml = filteredSpecies.value.map(sp => {
+    const clsKey = ['edible', 'poisonous'].includes(sp.classification) ? sp.classification : 'unknown'
+    return `
+    <tr>
+      <td style="font-family: monospace;">#${esc(sp.id)}</td>
+      <td><strong>${esc(sp.name)}</strong><br><em style="color: #64748b; font-size: 12px;">${esc(sp.scientific_name || '-')}</em></td>
+      <td><span class="badge ${clsKey}">${esc(sp.classification)}</span></td>
+      <td>${esc(sp.habitat || '-')}</td>
+      <td>${esc(formatDate(sp.created_at))}</td>
+    </tr>
+  `
+  }).join('')
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>MycoVision Species Catalog Report</title>
+      <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 35px; color: #1e293b; background: #fff; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #10b981; padding-bottom: 12px; margin-bottom: 20px; }
+        .brand { font-size: 22px; font-weight: 800; color: #065f46; }
+        .doc-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        .summary-bar { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 13.5px; color: #475569; display: flex; justify-content: space-between; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; background: #f1f5f9; padding: 10px 12px; font-size: 11.5px; border-bottom: 2px solid #cbd5e1; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 11px 12px; font-size: 13px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        .badge { padding: 4px 10px; border-radius: 14px; font-size: 11.5px; font-weight: 700; text-transform: capitalize; display: inline-block; }
+        .edible { background: #d1fae5; color: #065f46; }
+        .poisonous { background: #fee2e2; color: #991b1b; }
+        .unknown { background: #fef3c7; color: #92400e; }
+        .footer { margin-top: 35px; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+        @media print {
+          body { margin: 20px; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="brand">🍄 MycoVision Species Catalog</div>
+        <div class="doc-title">Official Database Summary</div>
+      </div>
+      <div class="summary-bar">
+        <span>Verified Records Shown: <strong>${filteredSpecies.value.length}</strong> / Total: <strong>${species.value.length}</strong></span>
+        <span>Date: <strong>${esc(new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}</strong></span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Species Name</th>
+            <th>Classification</th>
+            <th>Habitat / Region</th>
+            <th>Date Added</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml || '<tr><td colspan="5" style="text-align: center; color: #64748b;">No species entries found.</td></tr>'}
+        </tbody>
+      </table>
+      <div class="footer">
+        <span>MycoVision Admin Systems Export</span>
+        <span>Generated: ${esc(new Date().toLocaleString())}</span>
+      </div>
+      \x3Cscript\x3E
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 300);
+        };
+      \x3C/script\x3E
+    </body>
+    </html>
+  `
+
+  printWindow.document.write(htmlContent)
+  printWindow.document.close()
+}
 </script>

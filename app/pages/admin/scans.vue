@@ -22,11 +22,11 @@
           <option value="week">This Week</option>
           <option value="month">This Month</option>
         </select>
-        <button class="py-2 px-4 rounded-lg bg-[#0f172a] text-white border-none text-[13px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-85" @click="exportCSV">⬇ Export CSV</button>
+        <button class="py-2 px-4 rounded-lg bg-[#0f172a] text-white border-none text-[13px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed" :disabled="scans.length === 0" title="Exports the scans shown on this page" @click="exportCSV">⬇ Export Page CSV</button>
       </div>
     </div>
 
-    <!-- Stats Strip -->
+    <!-- Stats Strip (Total is global; the rest are for the current page only) -->
     <div class="flex gap-3.5 flex-wrap">
       <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
         <span class="text-[22px] font-bold text-[#0f172a]">{{ pagination.total }}</span>
@@ -34,71 +34,79 @@
       </div>
       <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
         <span class="text-[22px] font-bold text-[#10b981]">{{ edibleCount }}</span>
-        <span class="text-[12px] text-[#64748b]">Edible</span>
+        <span class="text-[12px] text-[#64748b]">Edible (this page)</span>
       </div>
       <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
         <span class="text-[22px] font-bold text-[#ef4444]">{{ poisonousCount }}</span>
-        <span class="text-[12px] text-[#64748b]">Poisonous</span>
+        <span class="text-[12px] text-[#64748b]">Poisonous (this page)</span>
       </div>
       <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
         <span class="text-[22px] font-bold text-[#f59e0b]">{{ unknownCount }}</span>
-        <span class="text-[12px] text-[#64748b]">Unknown</span>
+        <span class="text-[12px] text-[#64748b]">Unknown (this page)</span>
       </div>
       <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
         <span class="text-[22px] font-bold text-[#0f172a]">{{ avgConfidence }}%</span>
-        <span class="text-[12px] text-[#64748b]">Avg. Confidence</span>
+        <span class="text-[12px] text-[#64748b]">Avg. Confidence (this page)</span>
       </div>
     </div>
 
     <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full border-collapse">
-        <thead>
-          <tr>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">#</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">User</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Species Identified</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Classification</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Confidence</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Location</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Date & Time</th>
-            <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading" class="animate-pulse">
-            <td colspan="8" class="py-8 text-center text-[#94a3b8] text-[13.5px]">Loading scans...</td>
-          </tr>
-          <tr v-else-if="scans.length === 0">
-            <td colspan="8" class="py-8 text-center text-[#94a3b8] text-[14px]">No scans found.</td>
-          </tr>
-          <tr v-else v-for="scan in scans" :key="scan.id" class="hover:bg-[#f8fafc] group">
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle font-mono text-[#94a3b8] text-[12px] group-last:border-none">{{ scan.id }}</td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
-              <div class="flex items-center gap-2 whitespace-nowrap">
-                <div class="w-[26px] h-[26px] rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0 bg-gradient-to-br from-[#10b981] to-[#059669]">{{ getInitials(scan.user?.name) }}</div>
-                {{ scan.user?.name || 'Unknown' }}
-              </div>
-            </td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle italic group-last:border-none">{{ scan.species?.name || scan.result_name || 'Unknown' }}</td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
-              <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="clsBadge(scan.result_classification)">{{ scan.result_classification || 'unknown' }}</span>
-            </td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
-              <div class="flex items-center gap-[7px]">
-                <div class="h-1.5 rounded-[10px] min-w-[4px] w-[60px]"><div class="h-full rounded-[10px]" :style="{ width: (scan.confidence_level || 0) + '%', background: confColor(scan.confidence_level || 0) }"></div></div>
-                <span class="text-[12px] text-[#475569]">{{ Math.round(scan.confidence_level || 0) }}%</span>
-              </div>
-            </td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle text-[12.5px] text-[#64748b] group-last:border-none">
-              {{ scan.latitude && scan.longitude ? `📍 ${Number(scan.latitude).toFixed(2)}, ${Number(scan.longitude).toFixed(2)}` : '—' }}
-            </td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle text-[12.5px] text-[#94a3b8] whitespace-nowrap group-last:border-none">{{ formatDate(scan.created_at) }}</td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
-              <button class="py-[5px] px-[14px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] text-[12.5px] font-semibold cursor-pointer font-sans text-[#0f172a] transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" @click="openScan(scan)">View</button>
-            </td>
-          </tr>
-        </tbody>
+          <thead>
+            <tr>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">#</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">User</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Species Identified</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Classification</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Confidence</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Location</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Date &amp; Time</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loading" class="animate-pulse">
+              <td colspan="8" class="py-8 text-center text-[#94a3b8] text-[13.5px]">Loading scans...</td>
+            </tr>
+            <tr v-else-if="fetchError">
+              <td colspan="8" class="py-8 text-center text-[#ef4444] text-[13.5px]">
+                {{ fetchError }}
+                <button class="ml-2 underline cursor-pointer bg-transparent border-none text-[#ef4444]" @click="fetchScans(pagination.current_page)">Retry</button>
+              </td>
+            </tr>
+            <tr v-else-if="scans.length === 0">
+              <td colspan="8" class="py-8 text-center text-[#94a3b8] text-[14px]">No scans found.</td>
+            </tr>
+            <template v-else>
+              <tr v-for="scan in scans" :key="scan.id" class="hover:bg-[#f8fafc] group">
+                <td class="py-2.5 px-3.5 text-[12px] text-[#94a3b8] border-b border-[#f8fafc] align-middle font-mono group-last:border-none">{{ scan.id }}</td>
+                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <div class="flex items-center gap-2 whitespace-nowrap">
+                    <div class="w-[26px] h-[26px] rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0 bg-gradient-to-br from-[#10b981] to-[#059669]">{{ getInitials(scan.user?.name) }}</div>
+                    {{ scan.user?.name || 'Unknown' }}
+                  </div>
+                </td>
+                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle italic group-last:border-none">{{ scan.species?.name || scan.result_name || 'Unknown' }}</td>
+                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="clsBadge(scan.result_classification)">{{ scan.result_classification || 'unknown' }}</span>
+                </td>
+                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <div class="flex items-center gap-[7px]">
+                    <div class="h-1.5 rounded-[10px] min-w-[4px] w-[60px] bg-[#f1f5f9] overflow-hidden"><div class="h-full rounded-[10px]" :style="{ width: Math.min(100, scan.confidence_level || 0) + '%', background: confColor(scan.confidence_level || 0) }"></div></div>
+                    <span class="text-[12px] text-[#475569]">{{ Math.round(scan.confidence_level || 0) }}%</span>
+                  </div>
+                </td>
+                <td class="py-2.5 px-3.5 text-[12.5px] text-[#64748b] border-b border-[#f8fafc] align-middle group-last:border-none">
+                  {{ hasCoords(scan) ? `📍 ${Number(scan.latitude).toFixed(2)}, ${Number(scan.longitude).toFixed(2)}` : '—' }}
+                </td>
+                <td class="py-2.5 px-3.5 text-[12.5px] text-[#94a3b8] border-b border-[#f8fafc] align-middle whitespace-nowrap group-last:border-none">{{ formatDate(scan.created_at) }}</td>
+                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <button class="py-[5px] px-[14px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] text-[12.5px] font-semibold cursor-pointer font-sans text-[#0f172a] transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" @click="openScan(scan)">View</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
         </table>
       </div>
       <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
@@ -127,7 +135,7 @@
               <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="clsBadge(selectedScan.result_classification)">{{ selectedScan.result_classification || 'unknown' }}</span>
             </div>
             <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Confidence</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ Math.round(selectedScan.confidence_level || 0) }}%</p></div>
-            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Location</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedScan.latitude && selectedScan.longitude ? `${Number(selectedScan.latitude).toFixed(4)}, ${Number(selectedScan.longitude).toFixed(4)}` : 'N/A' }}</p></div>
+            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Location</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ hasCoords(selectedScan) ? `${Number(selectedScan.latitude).toFixed(4)}, ${Number(selectedScan.longitude).toFixed(4)}` : 'N/A' }}</p></div>
           </div>
         </div>
       </div>
@@ -144,6 +152,7 @@ definePageMeta({
 
 const config = useRuntimeConfig()
 const loading = ref(true)
+const fetchError = ref('')
 const searchQuery = ref('')
 const clsFilter = ref('')
 const dateFilter = ref('')
@@ -152,7 +161,8 @@ const selectedScan = ref<any>(null)
 const scans = ref<any[]>([])
 const pagination = reactive({ current_page: 1, last_page: 1, total: 0, from: 0, to: 0 })
 
-// Stats from the current page only (approximate)
+// Stats computed from the current page only (approximate).
+// For true totals per classification, have the API return aggregate counts.
 const edibleCount = computed(() => scans.value.filter(s => s.result_classification === 'edible').length)
 const poisonousCount = computed(() => scans.value.filter(s => s.result_classification === 'poisonous').length)
 const unknownCount = computed(() => scans.value.filter(s => !s.result_classification || s.result_classification === 'unknown').length)
@@ -171,11 +181,13 @@ function debouncedFetch() {
   if (debounceTimer) clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => fetchScans(), 300)
 }
+onBeforeUnmount(() => { if (debounceTimer) clearTimeout(debounceTimer) })
 
 let requestId = 0
 async function fetchScans(page = 1) {
   const myId = ++requestId
   loading.value = true
+  fetchError.value = ''
   try {
     const query: Record<string, string> = { page: String(page) }
     if (searchQuery.value) query.search = searchQuery.value
@@ -188,14 +200,17 @@ async function fetchScans(page = 1) {
     })
     if (myId !== requestId) return // a newer request superseded this one
 
-    scans.value = res.data
+    scans.value = Array.isArray(res.data) ? res.data : []
     pagination.current_page = res.current_page
     pagination.last_page = res.last_page
     pagination.total = res.total
     pagination.from = res.from
     pagination.to = res.to
-  } catch (error) {
+  } catch (error: any) {
+    if (myId !== requestId) return
     console.error('Failed to fetch scans:', error)
+    scans.value = []
+    fetchError.value = error?.data?.message || 'Failed to load scans.'
   } finally {
     if (myId === requestId) loading.value = false
   }
@@ -203,17 +218,13 @@ async function fetchScans(page = 1) {
 
 onMounted(() => { fetchScans() })
 
-const AVATAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#ec4899']
-function avatarColor(name?: string) {
-  if (!name) return '#94a3b8'
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h)
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
-}
-
 function getInitials(name: string | undefined) {
   if (!name) return '?'
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  return name.split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'
+}
+
+function hasCoords(scan: any) {
+  return scan?.latitude != null && scan?.longitude != null && scan.latitude !== '' && scan.longitude !== ''
 }
 
 function clsBadge(cls: string) {
@@ -224,33 +235,36 @@ function clsBadge(cls: string) {
 
 function confColor(v: number) { return v >= 80 ? '#10b981' : v >= 60 ? '#f59e0b' : '#ef4444' }
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr?: string) {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })
 }
 
 function openScan(scan: any) { selectedScan.value = scan }
 
-function csvCell(v: unknown) {
+// Text cells get a leading apostrophe if they could be read as a spreadsheet formula.
+// Numeric cells are left alone so negative numbers (e.g. longitude) stay valid.
+function csvCell(v: unknown, numeric = false) {
   let s = String(v ?? '')
-  if (/^[=+\-@]/.test(s)) s = "'" + s // block spreadsheet formula injection
+  if (!numeric && /^[=+\-@\t\r]/.test(s)) s = "'" + s
   return `"${s.replace(/"/g, '""')}"`
 }
 
 function exportCSV() {
   const headers = ['ID', 'User', 'Species', 'Classification', 'Confidence', 'Latitude', 'Longitude', 'Date']
   const rows = scans.value.map(s => [
-    s.id,
-    s.user?.name || 'Unknown',
-    s.species?.name || s.result_name || 'Unknown',
-    s.result_classification || 'unknown',
-    Math.round(s.confidence_level || 0),
-    s.latitude || '',
-    s.longitude || '',
-    s.created_at,
-  ])
-  const csv = [headers, ...rows].map(r => r.map(csvCell).join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
+    csvCell(s.id, true),
+    csvCell(s.user?.name || 'Unknown'),
+    csvCell(s.species?.name || s.result_name || 'Unknown'),
+    csvCell(s.result_classification || 'unknown'),
+    csvCell(Math.round(s.confidence_level || 0), true),
+    csvCell(hasCoords(s) ? Number(s.latitude).toFixed(4) : '', true),
+    csvCell(hasCoords(s) ? Number(s.longitude).toFixed(4) : '', true),
+    csvCell(s.created_at),
+  ].join(','))
+  // BOM so Excel reads UTF-8 names correctly
+  const csv = '\uFEFF' + [headers.map(h => csvCell(h)).join(','), ...rows].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
