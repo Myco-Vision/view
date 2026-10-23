@@ -12,6 +12,12 @@ export default defineNuxtConfig({
   // Point Nuxt to the app/ directory
   srcDir: 'app/',
 
+  // Serve static assets from the root public/ folder.
+  // In Nuxt 3 this path is resolved relative to srcDir (app/), so '../public' = view/public
+  dir: {
+    public: '../public',
+  },
+
   // Runtime config — accessible via useRuntimeConfig()
   runtimeConfig: {
     public: {

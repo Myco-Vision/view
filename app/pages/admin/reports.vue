@@ -65,7 +65,7 @@
           <div v-for="(sp, i) in topSpecies" :key="sp.result_name" class="flex items-center gap-2.5">
             <span class="text-[12px] font-italic text-[#334155] w-[90px] shrink-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ sp.result_name }}</span>
             <div class="flex-1 h-2 bg-[#f1f5f9] rounded-[10px] overflow-hidden">
-              <div class="h-full rounded-[10px] transition-all duration-400" :style="{ width: (sp.count / topSpecies[0].count * 100) + '%', background: speciesColors[i] || '#10b981' }"></div>
+              <div class="h-full rounded-[10px] transition-all duration-400" :style="{ width: (sp.count / topSpecies[0].count * 100) + '%', background: speciesColors[Number(i)] || '#10b981' }"></div>
             </div>
             <span class="text-[12px] font-semibold text-[#0f172a] w-8 text-right">{{ sp.count }}</span>
           </div>
@@ -121,8 +121,8 @@
         <div v-if="topUsers.length === 0" class="text-center py-4 text-[#94a3b8] text-[13px]">No active users</div>
         <div v-else class="flex flex-col gap-2.5">
           <div v-for="(u, i) in topUsers" :key="u.name" class="flex items-center gap-2.5">
-            <span class="text-[12px] font-bold w-[22px]" :class="i < 3 ? 'text-[#f59e0b]' : 'text-[#94a3b8]'">#{{ i + 1 }}</span>
-            <div class="w-7 h-7 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0" :style="{ background: userColors[i] || '#10b981' }">{{ u.initials }}</div>
+            <span class="text-[12px] font-bold w-[22px]" :class="Number(i) < 3 ? 'text-[#f59e0b]' : 'text-[#94a3b8]'">#{{ Number(i) + 1 }}</span>
+            <div class="w-7 h-7 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0" :style="{ background: userColors[Number(i)] || '#10b981' }">{{ u.initials }}</div>
             <div class="min-w-[80px]">
               <p class="text-[12.5px] font-semibold text-[#0f172a]">{{ u.name }}</p>
               <p class="text-[11px] text-[#94a3b8]">{{ u.scans }} scans</p>

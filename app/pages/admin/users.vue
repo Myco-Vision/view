@@ -12,7 +12,7 @@
         </div>
         <select v-model="roleFilter" @change="fetchUsers()" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none cursor-pointer">
           <option value="">All Roles</option>
-          <option value="user">User</option>
+          <option value="forager">Forager</option>
           <option value="admin">Admin</option>
         </select>
       </div>
@@ -59,7 +59,7 @@
             <td class="py-3 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
               <div class="flex gap-1.5">
                 <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" title="View profile" @click="openUser(user)">👁</button>
-                <button v-if="user.role === 'user'" class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#fee2e2] hover:border-[#fecaca]" title="Delete user" @click="deleteUser(user)">🗑</button>
+                <button v-if="user.role === 'forager'" class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#fee2e2] hover:border-[#fecaca]" title="Delete user" @click="deleteUser(user)">🗑</button>
               </div>
             </td>
           </tr>
