@@ -112,6 +112,7 @@ definePageMeta({
   roles: ['admin', 'super_admin'],
 })
 
+const { success: toastSuccess, error: toastError } = useToast()
 const config = useRuntimeConfig()
 const loading = ref(true)
 const searchQuery  = ref('')
@@ -189,9 +190,10 @@ async function deleteUser(user: any) {
       method: 'DELETE',
       headers: getHeaders(),
     })
+    toastSuccess(`User ${user.name} deleted successfully.`)
     fetchUsers(pagination.current_page)
   } catch (err: any) {
-    alert(err?.data?.message || 'Failed to delete user.')
+    toastError(err?.data?.message || 'Failed to delete user.')
   }
 }
 </script>
