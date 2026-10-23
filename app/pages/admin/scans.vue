@@ -8,15 +8,15 @@
       <div class="flex items-center gap-2.5 flex-wrap">
         <div class="relative">
           <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="searchQuery" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-full sm:w-[200px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search scans…" />
+          <input v-model="searchQuery" @input="debouncedFetch" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-full sm:w-[200px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search scans…" />
         </div>
-        <select v-model="clsFilter" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
+        <select v-model="clsFilter" @change="fetchScans()" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
           <option value="">All Classifications</option>
           <option value="edible">Edible</option>
           <option value="poisonous">Poisonous</option>
           <option value="unknown">Unknown</option>
         </select>
-        <select v-model="dateFilter" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
+        <select v-model="dateFilter" @change="fetchScans()" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
           <option value="">All Time</option>
           <option value="today">Today</option>
           <option value="week">This Week</option>
@@ -29,7 +29,7 @@
     <!-- Stats Strip -->
     <div class="flex gap-3.5 flex-wrap">
       <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
-        <span class="text-[22px] font-bold text-[#0f172a]">{{ scans.length }}</span>
+        <span class="text-[22px] font-bold text-[#0f172a]">{{ pagination.total }}</span>
         <span class="text-[12px] text-[#64748b]">Total Scans</span>
       </div>
       <div class="bg-white border border-[#e2e8f0] rounded-xl py-3.5 px-5 flex-1 min-w-[100px] flex flex-col items-center gap-1">
@@ -66,26 +66,34 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="scan in pagedScans" :key="scan.id" class="hover:bg-[#f8fafc] group">
+          <tr v-if="loading" class="animate-pulse">
+            <td colspan="8" class="py-8 text-center text-[#94a3b8] text-[13.5px]">Loading scans...</td>
+          </tr>
+          <tr v-else-if="scans.length === 0">
+            <td colspan="8" class="py-8 text-center text-[#94a3b8] text-[14px]">No scans found.</td>
+          </tr>
+          <tr v-else v-for="scan in scans" :key="scan.id" class="hover:bg-[#f8fafc] group">
             <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle font-mono text-[#94a3b8] text-[12px] group-last:border-none">{{ scan.id }}</td>
             <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
               <div class="flex items-center gap-2 whitespace-nowrap">
-                <div class="w-[26px] h-[26px] rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0" :style="{ background: scan.avatarColor }">{{ scan.initials }}</div>
-                {{ scan.user }}
+                <div class="w-[26px] h-[26px] rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0 bg-gradient-to-br from-[#10b981] to-[#059669]">{{ getInitials(scan.user?.name) }}</div>
+                {{ scan.user?.name || 'Unknown' }}
               </div>
             </td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle italic group-last:border-none">{{ scan.species }}</td>
+            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle italic group-last:border-none">{{ scan.species?.name || scan.result_name || 'Unknown' }}</td>
             <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
-              <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="scan.cls === 'edible' ? 'bg-[#d1fae5] text-[#065f46]' : (scan.cls === 'poisonous' ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#fef3c7] text-[#92400e]')">{{ scan.cls }}</span>
+              <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="clsBadge(scan.result_classification)">{{ scan.result_classification || 'unknown' }}</span>
             </td>
             <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
               <div class="flex items-center gap-[7px]">
-                <div class="h-1.5 rounded-[10px] min-w-[4px] w-[60px]"><div class="h-full rounded-[10px]" :style="{ width: scan.confidence + '%', background: confColor(scan.confidence) }"></div></div>
-                <span class="text-[12px] text-[#475569]">{{ scan.confidence }}%</span>
+                <div class="h-1.5 rounded-[10px] min-w-[4px] w-[60px]"><div class="h-full rounded-[10px]" :style="{ width: (scan.confidence_level || 0) + '%', background: confColor(scan.confidence_level || 0) }"></div></div>
+                <span class="text-[12px] text-[#475569]">{{ Math.round(scan.confidence_level || 0) }}%</span>
               </div>
             </td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle text-[12.5px] text-[#64748b] group-last:border-none">📍 {{ scan.location }}</td>
-            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle text-[12.5px] text-[#94a3b8] whitespace-nowrap group-last:border-none">{{ scan.date }}</td>
+            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle text-[12.5px] text-[#64748b] group-last:border-none">
+              {{ scan.latitude && scan.longitude ? `📍 ${Number(scan.latitude).toFixed(2)}, ${Number(scan.longitude).toFixed(2)}` : '—' }}
+            </td>
+            <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle text-[12.5px] text-[#94a3b8] whitespace-nowrap group-last:border-none">{{ formatDate(scan.created_at) }}</td>
             <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
               <button class="py-[5px] px-[14px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] text-[12.5px] font-semibold cursor-pointer font-sans text-[#0f172a] transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" @click="openScan(scan)">View</button>
             </td>
@@ -94,11 +102,11 @@
         </table>
       </div>
       <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
-        <span class="text-[12.5px] text-[#64748b]">Showing {{ filteredScans.length }} of {{ scans.length }} scans</span>
+        <span class="text-[12.5px] text-[#64748b]">Showing {{ pagination.from || 0 }} to {{ pagination.to || 0 }} of {{ pagination.total }} scans</span>
         <div class="flex items-center gap-2.5">
-          <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="page <= 1" @click="page--">‹</button>
-          <span class="text-[12.5px] text-[#475569]">Page {{ page }} of {{ totalPages }}</span>
-          <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="page >= totalPages" @click="page++">›</button>
+          <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="pagination.current_page <= 1" @click="fetchScans(pagination.current_page - 1)">‹</button>
+          <span class="text-[12.5px] text-[#475569]">Page {{ pagination.current_page }} of {{ pagination.last_page }}</span>
+          <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="pagination.current_page >= pagination.last_page" @click="fetchScans(pagination.current_page + 1)">›</button>
         </div>
       </div>
     </div>
@@ -112,14 +120,14 @@
         </div>
         <div class="p-[22px]">
           <div class="grid grid-cols-2 gap-3">
-            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">User</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedScan.user }}</p></div>
-            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Date</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedScan.date }}</p></div>
-            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Species</p><p class="text-[14px] font-semibold text-[#0f172a] italic">{{ selectedScan.species }}</p></div>
+            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">User</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedScan.user?.name || 'Unknown' }}</p></div>
+            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Date</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ formatDate(selectedScan.created_at) }}</p></div>
+            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Species</p><p class="text-[14px] font-semibold text-[#0f172a] italic">{{ selectedScan.species?.name || selectedScan.result_name || 'Unknown' }}</p></div>
             <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Classification</p>
-              <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="selectedScan.cls === 'edible' ? 'bg-[#d1fae5] text-[#065f46]' : (selectedScan.cls === 'poisonous' ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#fef3c7] text-[#92400e]')">{{ selectedScan.cls }}</span>
+              <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="clsBadge(selectedScan.result_classification)">{{ selectedScan.result_classification || 'unknown' }}</span>
             </div>
-            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Confidence</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedScan.confidence }}%</p></div>
-            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Location</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedScan.location }}</p></div>
+            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Confidence</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ Math.round(selectedScan.confidence_level || 0) }}%</p></div>
+            <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Location</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedScan.latitude && selectedScan.longitude ? `${Number(selectedScan.latitude).toFixed(4)}, ${Number(selectedScan.longitude).toFixed(4)}` : 'N/A' }}</p></div>
           </div>
         </div>
       </div>
@@ -128,112 +136,126 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ 
+definePageMeta({
   layout: 'admin',
   middleware: 'role',
   roles: ['admin', 'super_admin'],
 })
 
 const config = useRuntimeConfig()
-
+const loading = ref(true)
 const searchQuery = ref('')
-const clsFilter   = ref('')
-const dateFilter  = ref('')
-const page        = ref(1)
-const perPage     = 10
+const clsFilter = ref('')
+const dateFilter = ref('')
 const selectedScan = ref<any>(null)
-const isLoading   = ref(false)
 
-const AVATAR_COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9','#ec4899']
-function avatarColor(name: string) {
+const scans = ref<any[]>([])
+const pagination = reactive({ current_page: 1, last_page: 1, total: 0, from: 0, to: 0 })
+
+// Stats from the current page only (approximate)
+const edibleCount = computed(() => scans.value.filter(s => s.result_classification === 'edible').length)
+const poisonousCount = computed(() => scans.value.filter(s => s.result_classification === 'poisonous').length)
+const unknownCount = computed(() => scans.value.filter(s => !s.result_classification || s.result_classification === 'unknown').length)
+const avgConfidence = computed(() => {
+  if (scans.value.length === 0) return 0
+  return Math.round(scans.value.reduce((a, s) => a + (s.confidence_level || 0), 0) / scans.value.length)
+})
+
+const getHeaders = () => {
+  const token = localStorage.getItem('token')
+  return { Authorization: `Bearer ${token}` }
+}
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+function debouncedFetch() {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => fetchScans(), 300)
+}
+
+let requestId = 0
+async function fetchScans(page = 1) {
+  const myId = ++requestId
+  loading.value = true
+  try {
+    const query: Record<string, string> = { page: String(page) }
+    if (searchQuery.value) query.search = searchQuery.value
+    if (clsFilter.value) query.classification = clsFilter.value
+    if (dateFilter.value) query.date_filter = dateFilter.value
+
+    const res = await $fetch<any>(`${config.public.apiBase}/admin/scans`, {
+      headers: getHeaders(),
+      query,
+    })
+    if (myId !== requestId) return // a newer request superseded this one
+
+    scans.value = res.data
+    pagination.current_page = res.current_page
+    pagination.last_page = res.last_page
+    pagination.total = res.total
+    pagination.from = res.from
+    pagination.to = res.to
+  } catch (error) {
+    console.error('Failed to fetch scans:', error)
+  } finally {
+    if (myId === requestId) loading.value = false
+  }
+}
+
+onMounted(() => { fetchScans() })
+
+const AVATAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#ec4899']
+function avatarColor(name?: string) {
+  if (!name) return '#94a3b8'
   let h = 0
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h)
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
 }
-function initials(name: string) {
+
+function getInitials(name: string | undefined) {
+  if (!name) return '?'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })
+
+function clsBadge(cls: string) {
+  if (cls === 'edible') return 'bg-[#d1fae5] text-[#065f46]'
+  if (cls === 'poisonous') return 'bg-[#fee2e2] text-[#991b1b]'
+  return 'bg-[#fef3c7] text-[#92400e]'
 }
-
-function mapScan(raw: any) {
-  const name = raw.user?.name ?? 'Unknown'
-  return {
-    id:          raw.id,
-    user:        name,
-    initials:    initials(name),
-    avatarColor: avatarColor(name),
-    species:     raw.result_name ?? '—',
-    cls:         raw.result_classification ?? 'unknown',
-    confidence:  Math.round(raw.confidence_level ?? 0),
-    location:    raw.latitude != null ? `${Number(raw.latitude).toFixed(4)}, ${Number(raw.longitude).toFixed(4)}` : '—',
-    date:        formatDate(raw.created_at),
-    _raw:        raw,
-  }
-}
-
-const scans = ref<any[]>([])
-
-async function fetchScans() {
-  isLoading.value = true
-  try {
-    const token = localStorage.getItem('token')
-    const res = await $fetch<any>(`${config.public.apiBase}/admin/scans`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    // Laravel paginate returns { data: [...] }
-    const rows = res.data ?? res
-    scans.value = rows.map(mapScan)
-  } catch (err) {
-    console.error('Failed to load scans', err)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-onMounted(fetchScans)
-
-const edibleCount    = computed(() => scans.value.filter(s => s.cls === 'edible').length)
-const poisonousCount = computed(() => scans.value.filter(s => s.cls === 'poisonous').length)
-const unknownCount   = computed(() => scans.value.filter(s => s.cls === 'unknown').length)
-const avgConfidence  = computed(() => {
-  if (!scans.value.length) return 0
-  return Math.round(scans.value.reduce((a, s) => a + s.confidence, 0) / scans.value.length)
-})
-
-const filteredScans = computed(() => scans.value.filter(s => {
-  const q      = searchQuery.value.toLowerCase()
-  const matchQ = !q || s.user.toLowerCase().includes(q) || s.species.toLowerCase().includes(q)
-  const matchC = !clsFilter.value || s.cls === clsFilter.value
-
-  let matchD = true
-  if (dateFilter.value) {
-    const scanDate = new Date(s._raw.created_at)
-    const now      = new Date()
-    if (dateFilter.value === 'today') {
-      matchD = scanDate.toDateString() === now.toDateString()
-    } else if (dateFilter.value === 'week') {
-      const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7)
-      matchD = scanDate >= weekAgo
-    } else if (dateFilter.value === 'month') {
-      matchD = scanDate.getMonth() === now.getMonth() && scanDate.getFullYear() === now.getFullYear()
-    }
-  }
-
-  return matchQ && matchC && matchD
-}))
-
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredScans.value.length / perPage)))
-const pagedScans = computed(() => {
-  const start = (page.value - 1) * perPage
-  return filteredScans.value.slice(start, start + perPage)
-})
-
-// Reset to page 1 whenever filters change
-watch([searchQuery, clsFilter, dateFilter], () => { page.value = 1 })
 
 function confColor(v: number) { return v >= 80 ? '#10b981' : v >= 60 ? '#f59e0b' : '#ef4444' }
-function openScan(scan: any)  { selectedScan.value = scan }
-function exportCSV()          { alert('Exporting scan log as CSV…') }
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })
+}
+
+function openScan(scan: any) { selectedScan.value = scan }
+
+function csvCell(v: unknown) {
+  let s = String(v ?? '')
+  if (/^[=+\-@]/.test(s)) s = "'" + s // block spreadsheet formula injection
+  return `"${s.replace(/"/g, '""')}"`
+}
+
+function exportCSV() {
+  const headers = ['ID', 'User', 'Species', 'Classification', 'Confidence', 'Latitude', 'Longitude', 'Date']
+  const rows = scans.value.map(s => [
+    s.id,
+    s.user?.name || 'Unknown',
+    s.species?.name || s.result_name || 'Unknown',
+    s.result_classification || 'unknown',
+    Math.round(s.confidence_level || 0),
+    s.latitude || '',
+    s.longitude || '',
+    s.created_at,
+  ])
+  const csv = [headers, ...rows].map(r => r.map(csvCell).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `scans_export_${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 </script>

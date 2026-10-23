@@ -6,7 +6,7 @@
         <p class="text-[13.5px] text-[#64748b] mt-[3px]">Platform performance and scan data insights</p>
       </div>
       <div class="flex items-center gap-2.5">
-        <select v-model="period" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
+        <select v-model="period" @change="fetchReports" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
           <option value="7">Last 7 Days</option>
           <option value="30">Last 30 Days</option>
           <option value="90">Last 90 Days</option>
@@ -15,6 +15,12 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="loading" class="flex items-center justify-center py-16">
+      <div class="w-8 h-8 border-[3px] border-[#e2e8f0] border-t-[#10b981] rounded-full animate-spin"></div>
+    </div>
+
+    <template v-else>
     <!-- Summary Cards -->
     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
       <div v-for="s in summaryStats" :key="s.label" class="bg-white border border-[#e2e8f0] rounded-[14px] py-[18px] px-5 text-center transition-shadow duration-[0.18s] hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
@@ -54,11 +60,12 @@
       <!-- Bar Chart: Top Species -->
       <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] flex-1 min-w-[200px] min-w-0">
         <div class="flex items-center justify-between mb-4"><p class="text-[14px] font-semibold text-[#0f172a]">Top 5 Identified Species</p></div>
-        <div class="flex flex-col gap-3">
-          <div v-for="sp in topSpecies" :key="sp.name" class="flex items-center gap-2.5">
-            <span class="text-[12px] font-italic text-[#334155] w-[90px] shrink-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ sp.name }}</span>
+        <div v-if="topSpecies.length === 0" class="text-center py-4 text-[#94a3b8] text-[13px]">No data available</div>
+        <div v-else class="flex flex-col gap-3">
+          <div v-for="(sp, i) in topSpecies" :key="sp.result_name" class="flex items-center gap-2.5">
+            <span class="text-[12px] font-italic text-[#334155] w-[90px] shrink-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ sp.result_name }}</span>
             <div class="flex-1 h-2 bg-[#f1f5f9] rounded-[10px] overflow-hidden">
-              <div class="h-full rounded-[10px] transition-all duration-400" :style="{ width: (sp.count / topSpecies[0].count * 100) + '%', background: sp.color }"></div>
+              <div class="h-full rounded-[10px] transition-all duration-400" :style="{ width: (sp.count / topSpecies[0].count * 100) + '%', background: speciesColors[i] || '#10b981' }"></div>
             </div>
             <span class="text-[12px] font-semibold text-[#0f172a] w-8 text-right">{{ sp.count }}</span>
           </div>
@@ -83,13 +90,13 @@
             <circle cx="70" cy="70" r="52" fill="none" stroke="#f59e0b" stroke-width="22"
                     :stroke-dasharray="`${d_unknown} ${d_total}`" :stroke-dashoffset="`-${d_edible + d_poison}`"
                     transform="rotate(-90 70 70)"/>
-            <text x="70" y="65" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">{{ totalScans }}</text>
+            <text x="70" y="65" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">{{ reportData.total_scans }}</text>
             <text x="70" y="82" text-anchor="middle" font-size="9" fill="#64748b">total scans</text>
           </svg>
           <div class="flex flex-col gap-2 w-full">
-            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#10b981]"></span><span>Edible</span><strong class="ml-auto text-[#0f172a]">{{ ediblePct }}%</strong></div>
-            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#ef4444]"></span><span>Poisonous</span><strong class="ml-auto text-[#0f172a]">{{ poisonPct }}%</strong></div>
-            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#f59e0b]"></span><span>Unknown</span><strong class="ml-auto text-[#0f172a]">{{ unknownPct }}%</strong></div>
+            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#10b981]"></span><span>Edible</span><strong class="ml-auto text-[#0f172a]">{{ reportData.edible_pct }}%</strong></div>
+            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#ef4444]"></span><span>Poisonous</span><strong class="ml-auto text-[#0f172a]">{{ reportData.poisonous_pct }}%</strong></div>
+            <div class="flex items-center gap-2 text-[12.5px] text-[#475569]"><span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#f59e0b]"></span><span>Unknown</span><strong class="ml-auto text-[#0f172a]">{{ reportData.unknown_pct }}%</strong></div>
           </div>
         </div>
       </div>
@@ -111,10 +118,11 @@
       <!-- Most Active Users -->
       <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] flex-1 min-w-0">
         <div class="flex items-center justify-between mb-4"><p class="text-[14px] font-semibold text-[#0f172a]">Most Active Users</p></div>
-        <div class="flex flex-col gap-2.5">
+        <div v-if="topUsers.length === 0" class="text-center py-4 text-[#94a3b8] text-[13px]">No active users</div>
+        <div v-else class="flex flex-col gap-2.5">
           <div v-for="(u, i) in topUsers" :key="u.name" class="flex items-center gap-2.5">
             <span class="text-[12px] font-bold w-[22px]" :class="i < 3 ? 'text-[#f59e0b]' : 'text-[#94a3b8]'">#{{ i + 1 }}</span>
-            <div class="w-7 h-7 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0" :style="{ background: u.color }">{{ u.initials }}</div>
+            <div class="w-7 h-7 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0" :style="{ background: userColors[i] || '#10b981' }">{{ u.initials }}</div>
             <div class="min-w-[80px]">
               <p class="text-[12.5px] font-semibold text-[#0f172a]">{{ u.name }}</p>
               <p class="text-[11px] text-[#94a3b8]">{{ u.scans }} scans</p>
@@ -126,68 +134,126 @@
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
+definePageMeta({ layout: 'admin' })
+
+const config = useRuntimeConfig()
+const loading = ref(true)
 const period = ref('30')
 
-const summaryStats = [
-  { val: '3,842', label: 'Total Scans',    sub: 'All time',           color: '#0f172a' },
-  { val: '91.4%', label: 'Avg. Confidence',sub: '+2.1% vs last month', color: '#10b981' },
-  { val: '1,248', label: 'Active Users',   sub: '+12% this month',    color: '#3b82f6' },
-  { val: '186',   label: 'Species in DB',  sub: '3 added this week',  color: '#8b5cf6' },
-]
+const reportData = ref<any>({
+  total_scans: 0, avg_confidence: 0, active_users: 0, species_count: 0,
+  edible_pct: 0, poisonous_pct: 0, unknown_pct: 0,
+  scan_volume: [], top_species: [], conf_buckets: [], top_users: [],
+})
 
-// Line chart data
-const lineLabels = ['Apr 11', 'Apr 15', 'Apr 19', 'Apr 23', 'Apr 27', 'May 1', 'May 5']
-const lineValues = [120, 158, 134, 210, 175, 248, 220]
+const getHeaders = () => {
+  const token = localStorage.getItem('token')
+  return { Authorization: `Bearer ${token}` }
+}
+
+async function fetchReports() {
+  loading.value = true
+  try {
+    const res = await $fetch<any>(`${config.public.apiBase}/admin/reports?period=${period.value}`, {
+      headers: getHeaders(),
+    })
+    reportData.value = res
+  } catch (error) {
+    console.error('Failed to load reports:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => { fetchReports() })
+
+// Summary stats
+const summaryStats = computed(() => {
+  const d = reportData.value
+  return [
+    { val: d.total_scans?.toLocaleString() || '0', label: 'Total Scans',     sub: `Last ${period.value} days`, color: '#0f172a' },
+    { val: (d.avg_confidence || 0) + '%',           label: 'Avg. Confidence', sub: 'All scans in period',       color: '#10b981' },
+    { val: d.active_users?.toLocaleString() || '0', label: 'Active Users',    sub: 'Users with scans',         color: '#3b82f6' },
+    { val: d.species_count?.toLocaleString() || '0',label: 'Species in DB',   sub: 'Total on record',          color: '#8b5cf6' },
+  ]
+})
+
+// Line chart
+const lineLabels = computed(() => (reportData.value.scan_volume || []).map((v: any) => v.label))
+const lineValues = computed(() => {
+  const vols = (reportData.value.scan_volume || []).map((v: any) => v.count)
+  return vols.length > 0 ? vols : [0]
+})
+
 const W = 600; const H = 160; const pad = 18
-const maxLV = Math.max(...lineValues)
 const gridYs = [20, 55, 90, 125, 155]
-const lineDots = lineValues.map((v, i) => ({
-  x: pad + (i / (lineValues.length - 1)) * (W - pad * 2),
-  y: H - pad - (v / maxLV) * (H - pad * 2),
-}))
-const linePoints   = lineDots.map(p => `${p.x},${p.y}`).join(' ')
-const lineAreaPath = `M${lineDots[0].x},${lineDots[0].y} ` +
-  lineDots.slice(1).map(p => `L${p.x},${p.y}`).join(' ') +
-  ` L${lineDots[lineDots.length-1].x},${H} L${lineDots[0].x},${H} Z`
 
-// Bar chart
-const topSpecies = [
-  { name: 'V. volvacea',   count: 412, color: '#10b981' },
-  { name: 'P. ostreatus',  count: 328, color: '#3b82f6' },
-  { name: 'L. edodes',     count: 275, color: '#8b5cf6' },
-  { name: 'G. lucidum',    count: 198, color: '#f59e0b' },
-  { name: 'A. auricula',   count: 163, color: '#06b6d4' },
-]
+const lineDots = computed(() => {
+  const vals = lineValues.value
+  const maxLV = Math.max(...vals, 1)
+  return vals.map((v: number, i: number) => ({
+    x: pad + (i / Math.max(vals.length - 1, 1)) * (W - pad * 2),
+    y: H - pad - (v / maxLV) * (H - pad * 2),
+  }))
+})
+const linePoints = computed(() => lineDots.value.map((p: any) => `${p.x},${p.y}`).join(' '))
+const lineAreaPath = computed(() => {
+  const dots = lineDots.value
+  if (dots.length < 2) return ''
+  return `M${dots[0].x},${dots[0].y} ` +
+    dots.slice(1).map((p: any) => `L${p.x},${p.y}`).join(' ') +
+    ` L${dots[dots.length-1].x},${H} L${dots[0].x},${H} Z`
+})
+
+// Top species
+const topSpecies = computed(() => reportData.value.top_species || [])
+const speciesColors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#06b6d4']
 
 // Donut
-const totalScans = 3842
-const ediblePct  = 58; const poisonPct = 28; const unknownPct = 14
-const d_total    = 2 * Math.PI * 52
-const d_edible   = (ediblePct  / 100) * d_total
-const d_poison   = (poisonPct  / 100) * d_total
-const d_unknown  = (unknownPct / 100) * d_total
+const d_total = 2 * Math.PI * 52
+const d_edible = computed(() => ((reportData.value.edible_pct || 0) / 100) * d_total)
+const d_poison = computed(() => ((reportData.value.poisonous_pct || 0) / 100) * d_total)
+const d_unknown = computed(() => ((reportData.value.unknown_pct || 0) / 100) * d_total)
 
 // Confidence buckets
-const confBuckets = [
-  { label: '90-100%', pct: 45, color: '#10b981' },
-  { label: '70-89%',  pct: 32, color: '#3b82f6' },
-  { label: '50-69%',  pct: 15, color: '#f59e0b' },
-  { label: '<50%',    pct: 8,  color: '#ef4444' },
-]
+const confBuckets = computed(() => reportData.value.conf_buckets || [])
 
 // Top users
-const topUsers = [
-  { name: 'Ana Reyes',    initials: 'AR', scans: 112, color: '#8b5cf6' },
-  { name: 'Mark Bautista',initials: 'MB', scans: 98,  color: '#6366f1' },
-  { name: 'Maria Salem',  initials: 'MS', scans: 87,  color: '#10b981' },
-  { name: 'Lisa Torres',  initials: 'LT', scans: 65,  color: '#ef4444' },
-  { name: 'Ben Santos',   initials: 'BS', scans: 53,  color: '#06b6d4' },
-]
+const topUsers = computed(() => reportData.value.top_users || [])
+const userColors = ['#8b5cf6', '#6366f1', '#10b981', '#ef4444', '#06b6d4']
 
-function exportReport() { alert('Exporting analytics report as CSV…') }
-definePageMeta({ layout: 'admin' })
+function exportReport() {
+  const d = reportData.value
+  const lines = [
+    `MycoVision Report — Last ${period.value} Days`,
+    `Generated: ${new Date().toISOString()}`,
+    '',
+    `Total Scans,${d.total_scans}`,
+    `Avg Confidence,${d.avg_confidence}%`,
+    `Active Users,${d.active_users}`,
+    `Species Count,${d.species_count}`,
+    `Edible %,${d.edible_pct}`,
+    `Poisonous %,${d.poisonous_pct}`,
+    `Unknown %,${d.unknown_pct}`,
+    '',
+    'Top Species,Count',
+    ...(d.top_species || []).map((s: any) => `${s.result_name},${s.count}`),
+    '',
+    'Top Users,Scans',
+    ...(d.top_users || []).map((u: any) => `${u.name},${u.scans}`),
+  ]
+  const csv = lines.join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `mycovision_report_${period.value}d_${new Date().toISOString().slice(0,10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 </script>
