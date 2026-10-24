@@ -422,17 +422,23 @@ async function saveAccount() {
 
 // Delete
 async function confirmDelete(user: any) {
-  if (confirm(`Permanently delete account for ${user.name}? This cannot be undone.`)) {
-    try {
-      await $fetch(`${config.public.apiBase}/admin/accounts/${user.id}`, {
-        method: 'DELETE',
-        headers: getHeaders()
-      })
-      toastSuccess(`Account for ${user.name} deleted.`)
-      fetchAccounts(pagination.current_page)
-    } catch (err: any) {
-      toastError(err?.data?.message || 'Failed to delete account.')
-    }
+  const { confirm } = useConfirm()
+  const ok = await confirm({
+    title: 'Permanently delete account?',
+    message: `The account for ${user.name} will be deleted. This cannot be undone.`,
+    tone: 'danger',
+    confirmText: 'Delete Account',
+  })
+  if (!ok) return
+  try {
+    await $fetch(`${config.public.apiBase}/admin/accounts/${user.id}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    })
+    toastSuccess(`Account for ${user.name} deleted.`)
+    fetchAccounts(pagination.current_page)
+  } catch (err: any) {
+    toastError(err?.data?.message || 'Failed to delete account.')
   }
 }
 

@@ -224,6 +224,15 @@ const userInitials = computed(() => {
 })
 
 async function handleLogout() {
+  const { confirm } = useConfirm()
+  const ok = await confirm({
+    title: 'Log out?',
+    message: 'You will need to sign in again to scan mushrooms and view your history.',
+    tone: 'warning',
+    confirmText: 'Log Out',
+  })
+  if (!ok) return
+  mobileOpen.value = false
   try {
     const token = localStorage.getItem('token')
     if (token) {

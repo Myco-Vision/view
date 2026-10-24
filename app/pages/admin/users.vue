@@ -184,7 +184,14 @@ function toggleAll(e: Event) {
 function openUser(user: any) { selectedUser.value = user }
 
 async function deleteUser(user: any) {
-  if (!confirm(`Delete user ${user.name}?`)) return
+  const { confirm } = useConfirm()
+  const ok = await confirm({
+    title: 'Delete this user?',
+    message: `${user.name} and all of their scans will be permanently deleted. This cannot be undone.`,
+    tone: 'danger',
+    confirmText: 'Delete User',
+  })
+  if (!ok) return
   try {
     await $fetch(`${config.public.apiBase}/admin/users/${user.id}`, {
       method: 'DELETE',

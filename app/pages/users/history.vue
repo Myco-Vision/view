@@ -338,7 +338,15 @@ async function fetchScans() {
 }
 
 async function deleteScan(item: MushroomScan) {
-  if (!confirm(`Are you sure you want to delete scan for "${item.name}"?`)) return
+  const { confirm } = useConfirm()
+  const toast = useToast()
+  const ok = await confirm({
+    title: 'Delete this scan?',
+    message: `"${item.name}" will be permanently removed from your scan history.`,
+    tone: 'danger',
+    confirmText: 'Delete',
+  })
+  if (!ok) return
   try {
     const token = localStorage.getItem('token')
     await $fetch(`${config.public.apiBase}/scans/${item.id}`, {
@@ -349,8 +357,9 @@ async function deleteScan(item: MushroomScan) {
     if (selectedScan.value?.id === item.id) {
       showModal.value = false
     }
+    toast.success('Scan deleted.')
   } catch (error) {
-    alert('Failed to delete scan.')
+    toast.error('Failed to delete scan.')
   }
 }
 

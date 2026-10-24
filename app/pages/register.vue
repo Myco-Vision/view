@@ -163,35 +163,77 @@
             </div>
 
             <!-- Password Row -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="flex flex-col gap-1.5">
-                <label class="text-[0.75rem] font-semibold text-slate-300 tracking-wide">Password</label>
-                <input
-                  v-model="form.password"
-                  type="password"
-                  placeholder="••••••••"
-                  class="w-full py-2.5 px-3.5 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
-                  :disabled="loading"
-                />
-              </div>
-              <div class="flex flex-col gap-1.5">
-                <label class="text-[0.75rem] font-semibold text-slate-300 tracking-wide">Confirm Password</label>
-                <div class="relative">
+            <div class="flex flex-col gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-[0.75rem] font-semibold text-slate-300 tracking-wide">Password</label>
                   <input
-                    v-model="form.confirmPassword"
-                    :type="showConfirm ? 'text' : 'password'"
+                    v-model="form.password"
+                    type="password"
                     placeholder="••••••••"
-                    class="w-full py-2.5 pl-3.5 pr-10 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
+                    class="w-full py-2.5 px-3.5 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
                     :disabled="loading"
                   />
-                  <button
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-300 transition cursor-pointer"
-                    type="button"
-                    @click="showConfirm = !showConfirm"
+                </div>
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-[0.75rem] font-semibold text-slate-300 tracking-wide">Confirm Password</label>
+                  <div class="relative">
+                    <input
+                      v-model="form.confirmPassword"
+                      :type="showConfirm ? 'text' : 'password'"
+                      placeholder="••••••••"
+                      class="w-full py-2.5 pl-3.5 pr-10 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
+                      :disabled="loading"
+                    />
+                    <button
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-300 transition cursor-pointer"
+                      type="button"
+                      @click="showConfirm = !showConfirm"
+                    >
+                      <svg v-if="!showConfirm" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Password Requirements Note -->
+              <div class="p-3 rounded-xl bg-stone-950/70 border border-emerald-900/50 flex flex-col gap-2">
+                <p class="text-[0.68rem] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <svg class="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Password Requirements
+                </p>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <span
+                    class="flex items-center gap-1.5 text-[0.7rem] font-medium transition-colors"
+                    :class="form.password.length >= 8 ? 'text-emerald-400' : 'text-slate-500'"
                   >
-                    <svg v-if="!showConfirm" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  </button>
+                    <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="form.password.length >= 8 ? 'bg-emerald-400' : 'bg-slate-600'" />
+                    At least 8 characters
+                  </span>
+                  <span
+                    class="flex items-center gap-1.5 text-[0.7rem] font-medium transition-colors"
+                    :class="/[A-Z]/.test(form.password) ? 'text-emerald-400' : 'text-slate-500'"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="/[A-Z]/.test(form.password) ? 'bg-emerald-400' : 'bg-slate-600'" />
+                    One uppercase letter (A–Z)
+                  </span>
+                  <span
+                    class="flex items-center gap-1.5 text-[0.7rem] font-medium transition-colors"
+                    :class="/[0-9]/.test(form.password) ? 'text-emerald-400' : 'text-slate-500'"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="/[0-9]/.test(form.password) ? 'bg-emerald-400' : 'bg-slate-600'" />
+                    One number (0–9)
+                  </span>
+                  <span
+                    class="flex items-center gap-1.5 text-[0.7rem] font-medium transition-colors"
+                    :class="/[^A-Za-z0-9]/.test(form.password) ? 'text-emerald-400' : 'text-slate-500'"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="/[^A-Za-z0-9]/.test(form.password) ? 'bg-emerald-400' : 'bg-slate-600'" />
+                    One special character (!@#$…)
+                  </span>
                 </div>
               </div>
             </div>
@@ -249,6 +291,38 @@
               </div>
             </div>
 
+            <!-- Terms & Agreement (popup trigger) -->
+            <button
+              type="button"
+              class="w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all cursor-pointer"
+              :class="agreedToTerms ? 'bg-emerald-950/60 border-emerald-500/50' : 'bg-stone-950/40 border-emerald-900/40 hover:border-emerald-700/50'"
+              @click="openTerms(false)"
+            >
+              <div
+                class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+                :class="agreedToTerms ? 'bg-emerald-500 text-stone-950' : 'bg-emerald-500/15 text-emerald-400'"
+              >
+                <svg v-if="agreedToTerms" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+                <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold" :class="agreedToTerms ? 'text-emerald-300' : 'text-white'">
+                  {{ agreedToTerms ? 'Terms & Agreement accepted' : 'Review Terms & Agreement' }}
+                </p>
+                <p class="text-[11px] text-slate-400">
+                  {{ agreedToTerms ? 'Tap to read again' : 'Required before creating your account' }}
+                </p>
+              </div>
+              <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+
             <!-- Error Banner -->
             <div v-if="error" class="flex items-start gap-2.5 p-3 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs">
               <svg class="w-4 h-4 shrink-0 text-red-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -267,9 +341,9 @@
                 ← Back
               </button>
               <button
-                class="flex-[2] py-2.5 px-4 rounded-xl font-bold text-sm text-stone-950 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                class="flex-[2] py-2.5 px-4 rounded-xl font-bold text-sm text-stone-950 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 @click="handleRegister"
-                :disabled="loading"
+                :disabled="loading || !agreedToTerms"
               >
                 <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -286,9 +360,164 @@
             <NuxtLink to="/login" class="text-emerald-400 hover:underline font-semibold ml-1">Sign in here</NuxtLink>
           </div>
 
+          <!-- Google Sign-In Alternative (Step 1 only) -->
+          <div v-if="step === 1" class="mt-4">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 h-px bg-emerald-900/50" />
+              <span class="text-[11px] text-slate-500 font-medium">or sign up with</span>
+              <div class="flex-1 h-px bg-emerald-900/50" />
+            </div>
+
+            <!-- Custom themed Google button -->
+            <button
+              type="button"
+              @click="onGoogleClick"
+              :disabled="googleLoading"
+              class="mt-3 w-full py-2.5 px-4 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 border bg-[#0d1f19] hover:bg-emerald-950/80 border-emerald-700/50 hover:border-emerald-500/60 text-slate-200 hover:text-white shadow-sm hover:shadow-emerald-900/30 hover:shadow-md"
+            >
+              <svg v-if="googleLoading" class="w-4 h-4 animate-spin text-emerald-400" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" class="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              <span>{{ googleLoading ? 'Setting up account…' : 'Continue with Google' }}</span>
+            </button>
+
+            <p class="mt-2.5 text-center text-[10px] text-slate-500">
+              You'll be asked to review and accept our
+              <button type="button" class="text-emerald-400 hover:underline font-semibold cursor-pointer" @click="openTerms(false)">Terms &amp; Agreement</button>
+              first. Your free forager account is created instantly.
+            </p>
+          </div>
+
         </div>
       </div>
     </main>
+
+    <!-- ── TERMS & AGREEMENT POPUP ── -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        leave-active-class="transition duration-150 ease-in"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showTerms"
+          class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          @click.self="closeTerms"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="terms-title"
+        >
+          <div class="relative w-full max-w-lg max-h-[88vh] flex flex-col bg-[#0d221b] border border-emerald-700/30 rounded-3xl shadow-2xl shadow-black/80 overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+
+            <!-- Header -->
+            <div class="relative flex items-start justify-between gap-3 px-6 pt-6 pb-4 border-b border-emerald-900/40">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 id="terms-title" class="text-base font-bold text-white">Terms &amp; Agreement</h2>
+                  <p v-if="!hasReadTerms" class="text-[11px] text-amber-300/80 font-medium">Scroll to the bottom to enable "I Agree"</p>
+                  <p v-else class="text-[11px] text-emerald-400 font-medium">✓ You've read everything</p>
+                </div>
+              </div>
+              <button type="button" class="text-slate-400 hover:text-emerald-300 transition cursor-pointer" aria-label="Close" @click="closeTerms">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Scrollable body -->
+            <div
+              ref="termsBox"
+              @scroll="onTermsScroll"
+              class="relative flex-1 overflow-y-auto px-6 py-5 text-xs leading-relaxed text-slate-300 flex flex-col gap-4"
+            >
+              <p class="text-slate-400">Last updated: October 2026. Please read these terms carefully before creating your MycoVision account.</p>
+
+              <div>
+                <p class="font-bold text-emerald-300 mb-1">1. Acceptance of Terms</p>
+                <p>By creating an account, you agree to be bound by these Terms &amp; Agreement and our Privacy Policy. If you do not agree, you may not create an account or use MycoVision.</p>
+              </div>
+
+              <div class="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30">
+                <p class="font-bold text-amber-300 mb-1">2. ⚠ Safety Disclaimer — Never Eat Based on AI Alone</p>
+                <p>MycoVision uses AI to estimate mushroom species. Results are <strong class="text-white">informational only</strong> and may be inaccurate. Many edible mushrooms have deadly look-alikes. You must <strong class="text-white">never consume any wild mushroom</strong> based solely on an app result. Always consult a qualified mycologist or expert before eating any foraged mushroom. MycoVision and its developers accept no liability for illness, injury, or death resulting from consumption.</p>
+              </div>
+
+              <div>
+                <p class="font-bold text-emerald-300 mb-1">3. Your Account</p>
+                <p>You are responsible for the accuracy of the information you provide and for keeping your password confidential. You are responsible for all activity under your account. Notify us immediately of any unauthorized use.</p>
+              </div>
+
+              <div>
+                <p class="font-bold text-emerald-300 mb-1">4. Free Plan &amp; Scan Limits</p>
+                <p>Free accounts include 3 lifetime AI mushroom scans. We may modify plans, limits, or features at any time. Attempts to bypass scan limits, such as creating multiple accounts, may result in suspension.</p>
+              </div>
+
+              <div>
+                <p class="font-bold text-emerald-300 mb-1">5. Data &amp; Privacy</p>
+                <p>We collect your name, username, email, contact number, address, and the images you upload for scanning. This data is used to operate the service, improve our AI models, and provide support. We do not sell your personal information. If you sign in with Google, we receive your name, email, and profile photo from Google.</p>
+              </div>
+
+              <div>
+                <p class="font-bold text-emerald-300 mb-1">6. Acceptable Use</p>
+                <p>You agree not to upload unlawful or harmful content, attempt to disrupt or reverse-engineer the service, or misuse results to mislead others about mushroom safety.</p>
+              </div>
+
+              <div>
+                <p class="font-bold text-emerald-300 mb-1">7. Termination</p>
+                <p>We may suspend or terminate accounts that violate these terms. You may request deletion of your account and data at any time by contacting support.</p>
+              </div>
+
+              <div>
+                <p class="font-bold text-emerald-300 mb-1">8. Changes to These Terms</p>
+                <p>We may update these terms from time to time. Continued use of MycoVision after changes means you accept the updated terms.</p>
+              </div>
+
+              <p class="text-slate-400 italic">End of Terms &amp; Agreement.</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="relative px-6 py-4 border-t border-emerald-900/40 bg-[#0a1b15]/80 flex flex-col gap-3">
+              <p class="text-[11px] text-slate-400 leading-snug">
+                By clicking "I Agree", you confirm you've read these terms and understand that MycoVision results must
+                <span class="text-amber-300 font-semibold">never</span> be the sole basis for eating a wild mushroom.
+              </p>
+              <div class="flex gap-3">
+                <button
+                  type="button"
+                  class="flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm text-emerald-300 bg-transparent border border-emerald-700/50 hover:bg-emerald-900/30 transition cursor-pointer"
+                  @click="declineTerms"
+                >
+                  Decline
+                </button>
+                <button
+                  type="button"
+                  class="flex-[2] py-2.5 px-4 rounded-xl font-bold text-sm text-stone-950 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  :disabled="!hasReadTerms"
+                  @click="acceptTerms"
+                >
+                  I Agree
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
   </div>
 </template>
@@ -298,7 +527,83 @@ const config = useRuntimeConfig()
 const step = ref(1)
 const showConfirm = ref(false)
 const loading = ref(false)
+const googleLoading = ref(false)
 const error = ref('')
+
+// Terms & Agreement popup state
+const agreedToTerms = ref(false)
+const hasReadTerms = ref(false)
+const showTerms = ref(false)
+const pendingGoogle = ref(false) // true when the popup was opened from the Google button
+const termsBox = ref<HTMLElement | null>(null)
+
+function onTermsScroll() {
+  const el = termsBox.value
+  if (!el) return
+  // Unlock "I Agree" once the user has scrolled to (near) the bottom
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) {
+    hasReadTerms.value = true
+  }
+}
+
+function openTerms(fromGoogle = false) {
+  pendingGoogle.value = fromGoogle
+  showTerms.value = true
+  // If the content already fits without scrolling, unlock immediately
+  nextTick(onTermsScroll)
+}
+
+function closeTerms() {
+  showTerms.value = false
+  pendingGoogle.value = false
+}
+
+function declineTerms() {
+  agreedToTerms.value = false
+  closeTerms()
+}
+
+function acceptTerms() {
+  if (!hasReadTerms.value) return
+  agreedToTerms.value = true
+  const launchGoogle = pendingGoogle.value
+  closeTerms()
+  if (launchGoogle) handleGoogleRegister()
+}
+
+// Google sign-up requires accepting the terms first
+function onGoogleClick() {
+  if (agreedToTerms.value) {
+    handleGoogleRegister()
+  } else {
+    openTerms(true)
+  }
+}
+
+// Close popup with Esc and lock page scroll while it is open
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && showTerms.value) closeTerms()
+}
+watch(showTerms, (open) => {
+  if (typeof document !== 'undefined') document.body.style.overflow = open ? 'hidden' : ''
+})
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown)
+  document.body.style.overflow = ''
+})
+
+
+// Load Google Identity Services script
+useHead({
+  script: [
+    {
+      src: 'https://accounts.google.com/gsi/client',
+      async: true,
+      defer: true,
+    },
+  ],
+})
 
 // Redirect if already logged in
 onMounted(() => {
@@ -312,6 +617,31 @@ onMounted(() => {
     }
   }
 })
+
+// Custom Google button — opens Google account picker popup on click
+function handleGoogleRegister() {
+  error.value = ''
+  const gsi = (window as any).google
+  if (!gsi) {
+    error.value = 'Google Sign-In is not available. Please refresh and try again.'
+    return
+  }
+  const tokenClient = gsi.accounts.oauth2.initTokenClient({
+    client_id: config.public.googleClientId,
+    scope: 'email profile',
+    prompt: 'select_account',
+    callback: async (resp: any) => {
+      if (resp.error) {
+        error.value = 'Google sign-up was cancelled or failed.'
+        googleLoading.value = false
+        return
+      }
+      await processGoogleToken(resp.access_token)
+    },
+  })
+  googleLoading.value = true
+  tokenClient.requestAccessToken()
+}
 
 const form = reactive({
   firstName: '',
@@ -334,6 +664,18 @@ function goNext() {
     error.value = 'Password must be at least 8 characters.'
     return
   }
+  if (!/[A-Z]/.test(form.password)) {
+    error.value = 'Password must contain at least one uppercase letter (A–Z).'
+    return
+  }
+  if (!/[0-9]/.test(form.password)) {
+    error.value = 'Password must contain at least one number (0–9).'
+    return
+  }
+  if (!/[^A-Za-z0-9]/.test(form.password)) {
+    error.value = 'Password must contain at least one special character (e.g. !@#$%).'
+    return
+  }
   if (form.password !== form.confirmPassword) {
     error.value = 'Passwords do not match.'
     return
@@ -343,6 +685,10 @@ function goNext() {
 
 async function handleRegister() {
   error.value = ''
+  if (!agreedToTerms.value) {
+    error.value = 'You must read and agree to the Terms & Agreement to create an account.'
+    return
+  }
   loading.value = true
 
   try {
@@ -378,6 +724,28 @@ async function handleRegister() {
     step.value = 1 // Go back to step 1 to let them fix the error
   } finally {
     loading.value = false
+  }
+}
+
+async function processGoogleToken(accessToken: string) {
+  googleLoading.value = true
+  error.value = ''
+  try {
+    const data = await $fetch<{ user: any; token: string }>(`${config.public.apiBase}/auth/google`, {
+      method: 'POST',
+      body: { access_token: accessToken },
+    })
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('user', JSON.stringify(data.user))
+    localStorage.setItem('role', data.user.role)
+    // Full-page redirect (not a client-side route change): the Google popup callback runs outside
+    // Vue's lifecycle, so an SPA transition left the old page stuck under the new layout.
+    const isAdmin = data.user.role === 'admin' || data.user.role === 'super_admin'
+    await navigateTo(isAdmin ? '/admin/dashboard' : '/users/scan', { external: true })
+  } catch (err: any) {
+    error.value = err?.data?.message || 'Google sign-up failed. Please try again.'
+  } finally {
+    googleLoading.value = false
   }
 }
 </script>

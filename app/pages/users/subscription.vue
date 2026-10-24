@@ -783,9 +783,15 @@ async function verifyReturnedPayment(sessionId: string, plan: string) {
 }
 
 async function confirmCancelSubscription() {
-  if (!confirm('Are you sure you want to cancel auto-renewal? You will keep unlimited scans until the end of your current period.')) {
-    return
-  }
+  const { confirm } = useConfirm()
+  const ok = await confirm({
+    title: 'Cancel auto-renewal?',
+    message: 'You will keep unlimited scans until the end of your current billing period, then your plan will not renew.',
+    tone: 'warning',
+    confirmText: 'Cancel Auto-Renewal',
+    cancelText: 'Keep Plan',
+  })
+  if (!ok) return
 
   const token = localStorage.getItem('token')
   if (!token) return
