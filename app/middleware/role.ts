@@ -5,6 +5,10 @@ export default defineNuxtRouteMiddleware((to) => {
   const role = localStorage.getItem('role') ?? ''
 
   if (allowed && !allowed.includes(role)) {
-    return navigateTo('/403')
+    // Redirect to role-appropriate home instead of a non-existent /403 page
+    if (role === 'admin' || role === 'super_admin') {
+      return navigateTo('/admin/dashboard')
+    }
+    return navigateTo('/users/scan')
   }
 })

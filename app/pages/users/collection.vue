@@ -237,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'user' })
+definePageMeta({ layout: 'user', middleware: 'auth' })
 
 const config = useRuntimeConfig()
 
@@ -349,7 +349,15 @@ async function fetchCollection() {
 }
 
 async function deleteItem(item: Mushroom) {
-  if (!confirm(`Remove "${item.name}" from your collection?`)) return
+  const { confirm } = useConfirm()
+  const toast = useToast()
+  const ok = await confirm({
+    title: 'Remove from collection?',
+    message: `"${item.name}" will be permanently deleted, including its scan record.`,
+    tone: 'danger',
+    confirmText: 'Remove',
+  })
+  if (!ok) return
   try {
     const token = localStorage.getItem('token')
     await $fetch(`${config.public.apiBase}/scans/${item.id}`, {
@@ -357,8 +365,9 @@ async function deleteItem(item: Mushroom) {
       headers: { Authorization: `Bearer ${token}` }
     })
     collection.value = collection.value.filter(m => m.id !== item.id)
+    toast.success('Removed from your collection.')
   } catch (error) {
-    alert('Failed to delete item.')
+    toast.error('Failed to delete item.')
   }
 }
 

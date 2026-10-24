@@ -406,7 +406,21 @@ async function saveSpecies() {
     return
   }
   formError.value = ''
+
+  // Promoting a user scan into the official DB is hard to undo — confirm first
+  if (promoteScanId.value) {
+    const { confirm } = useConfirm()
+    const ok = await confirm({
+      title: 'Add to Species DB?',
+      message: `"${form.name}" will be added to the official species database as a ${form.classification || 'new'} species.`,
+      tone: 'info',
+      confirmText: 'Add to DB',
+    })
+    if (!ok) return
+  }
+
   isSaving.value = true
+  const wasPromoting = !!promoteScanId.value
 
   try {
     if (editingId.value) {
@@ -424,7 +438,7 @@ async function saveSpecies() {
     }
     closeModal()
     fetchVerifiedSpecies()
-    if (promoteScanId.value) alert('Candidate scan successfully promoted & saved to Species DB!')
+    if (wasPromoting) useToast().success('Candidate scan successfully promoted & saved to Species DB!')
   } catch (err: any) {
     formError.value = err?.data?.message || 'Failed to save species.'
   } finally {
@@ -440,15 +454,24 @@ function closeModal() {
 }
 
 async function deleteSpecies(sp: Species) {
-  if (!confirm(`Delete "${sp.name}" from database?`)) return
+  const { confirm } = useConfirm()
+  const toast = useToast()
+  const ok = await confirm({
+    title: 'Delete species?',
+    message: `"${sp.name}" will be permanently removed from the species database.`,
+    tone: 'danger',
+    confirmText: 'Delete',
+  })
+  if (!ok) return
   try {
     await $fetch(`${config.public.apiBase}/admin/species/${sp.id}`, {
       method: 'DELETE',
       headers: getHeaders()
     })
     fetchVerifiedSpecies()
+    toast.success('Species deleted.')
   } catch (err: any) {
-    alert(err?.data?.message || 'Failed to delete species.')
+    toast.error(err?.data?.message || 'Failed to delete species.')
   }
 }
 

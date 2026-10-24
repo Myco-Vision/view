@@ -186,6 +186,7 @@ definePageMeta({
   roles: ['admin', 'super_admin'],
 })
 
+const { success: toastSuccess } = useToast()
 const config = useRuntimeConfig()
 const isSavingSettings = ref(false)
 
@@ -241,7 +242,7 @@ function saveAll() {
   isSavingSettings.value = true
   setTimeout(() => {
     isSavingSettings.value = false
-    alert('Settings saved successfully!') 
+    toastSuccess('Settings saved successfully!')
   }, 600)
 }
 </script>

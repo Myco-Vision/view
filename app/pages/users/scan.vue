@@ -22,92 +22,103 @@
       </div>
     </div>
 
+    <!-- Quota exhausted callout -->
+    <div v-if="!canScan && !isSubscribed" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col gap-2">
+      <div class="flex items-start gap-2">
+        <span class="text-base shrink-0">⚠️</span>
+        <div>
+          <p class="font-bold">Free Scan Limit Reached (3 of 3 used)</p>
+          <p class="text-[11.5px] mt-0.5 text-amber-800 leading-relaxed">
+            You've used all 3 free scans. All your saved scans remain permanently accessible! Subscribe for only ₱149/mo to continue identifying mushrooms.
+          </p>
+        </div>
+      </div>
+      <NuxtLink to="/users/subscription" class="self-start py-1.5 px-3 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition no-underline">
+        Upgrade to Premium →
+      </NuxtLink>
+    </div>
+
+    <!-- Camera Overlay (full screen) -->
+    <div v-if="isCameraOpen" class="fixed inset-0 bg-black z-50 flex flex-col">
+      <div class="relative w-full h-full flex flex-col">
+        <video ref="videoRef" autoplay playsinline class="flex-1 w-full object-cover bg-[#111]"></video>
+        <div class="absolute bottom-0 left-0 right-0 h-[80px] bg-black/60 flex items-center justify-between px-5 backdrop-blur-[5px]">
+          <button class="bg-transparent border-none text-white cursor-pointer text-[14px] font-medium font-sans" @click="closeCamera">Cancel</button>
+          <span class="text-white text-[13px] font-medium">{{ scanStatus }}</span>
+          <div style="width: 60px;"></div> <!-- Spacer -->
+        </div>
+      </div>
+    </div>
+
     <!-- Two-column card -->
     <div class="grid grid-cols-1 lg:grid-cols-2 bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden flex-1">
 
-      <!-- ── LEFT: Input Panel ─────────────────────────── -->
+      <!-- ── LEFT: Bento scan area ─────────────────────── -->
       <div class="p-6 py-6 px-[22px] flex flex-col gap-3 overflow-hidden border-r border-[#e2e8f0]">
         <h2 class="text-[15px] font-semibold text-[#0f172a] text-center mb-0.5">Scan Mushroom</h2>
 
-        <!-- Quota exhausted callout -->
-        <div v-if="!canScan && !isSubscribed" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col gap-2">
-          <div class="flex items-start gap-2">
-            <span class="text-base shrink-0">⚠️</span>
-            <div>
-              <p class="font-bold">Free Scan Limit Reached (3 of 3 used)</p>
-              <p class="text-[11.5px] mt-0.5 text-amber-800 leading-relaxed">
-                You've used all 3 free scans. All your saved scans remain permanently accessible! Subscribe for only ₱149/mo to continue identifying mushrooms.
-              </p>
-            </div>
+        <!-- Scan Result tile (shows preview once an image is chosen) -->
+        <div class="flex-1 min-h-[200px] relative rounded-[20px] border border-[#b0cfb0] bg-[#f8fbf3] overflow-hidden flex items-center justify-center">
+          <div v-if="!previewUrl" class="flex flex-col items-center justify-center gap-2 p-6 text-center">
+            <svg class="w-[64px] h-[64px] text-[#b0cfb0]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="16.5" cy="7.5" r="1.5" fill="currentColor"/>
+              <path d="M3 17l5.5-6.5 4 4.5 3-3.5L21 17" fill="currentColor" fill-opacity="0.35"/>
+            </svg>
+            <h3 class="text-[17px] font-semibold text-[#334155] mt-1">Scan Result</h3>
+            <p class="text-[12.5px] text-[#64748b]">Your image result will appear here</p>
           </div>
-          <NuxtLink to="/users/subscription" class="self-start py-1.5 px-3 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition no-underline">
-            Upgrade to Premium →
-          </NuxtLink>
+          <template v-else>
+            <img :src="previewUrl" alt="Mushroom preview" class="absolute inset-0 w-full h-full object-cover" />
+            <button class="absolute top-2.5 right-2.5 bg-black/50 text-white border-none rounded-md py-[3px] px-2.5 text-[12px] cursor-pointer font-sans" @click="clearImage">✕ Remove</button>
+          </template>
         </div>
 
-        <!-- Camera Overlay Modal -->
-        <div v-if="isCameraOpen" class="absolute inset-0 bg-black z-50 flex flex-col">
-          <div class="relative w-full h-full flex flex-col">
-            <video ref="videoRef" autoplay playsinline class="flex-1 w-full object-cover bg-[#111]"></video>
-            <div class="absolute bottom-0 left-0 right-0 h-[80px] bg-black/60 flex items-center justify-between px-5 backdrop-blur-[5px]">
-              <button class="bg-transparent border-none text-white cursor-pointer text-[14px] font-medium font-sans" @click="closeCamera">Cancel</button>
-              <span class="text-white text-[13px] font-medium">{{ scanStatus }}</span>
-              <div style="width: 60px;"></div> <!-- Spacer -->
-            </div>
-          </div>
-        </div>
-
-        <!-- Capture box -->
-        <button class="flex-1 flex flex-col items-center justify-center gap-2.5 p-5 border-2 border-dashed border-[#b0cfb0] rounded-xl bg-[#f8fbf3] cursor-pointer transition-colors duration-[0.18s] hover:bg-[#ecf5e4] hover:border-[#10b981] font-sans text-center min-h-0" @click="openCamera">
-          <span class="text-[#2d3a2d]">
-            <svg class="w-[42px] h-[42px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8
-                       a2 2 0 0 1 2-2h4l2-3h6l2 3h4
-                       a2 2 0 0 1 2 2z"/>
+        <!-- Capture + Upload tiles -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Capture Image -->
+          <button
+            class="flex flex-col items-center justify-center gap-1.5 py-6 px-3 rounded-[18px] border-none bg-[#d5f3e2] hover:bg-[#c3ecd4] cursor-pointer transition-all duration-[0.18s] hover:-translate-y-0.5 hover:shadow-md font-sans text-center"
+            @click="openCamera"
+          >
+            <svg class="w-[40px] h-[40px] text-[#059669]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
               <circle cx="12" cy="13" r="4"/>
             </svg>
-          </span>
-          <span class="text-[14px] font-semibold text-[#0f172a]">Capture Mushroom</span>
-        </button>
+            <span class="text-[14px] font-bold text-[#047857] mt-0.5">Capture Image</span>
+            <span class="text-[11.5px] text-[#4b7a66]">Take a photo of the mushroom</span>
+          </button>
 
-        <p class="text-center text-[13px] text-[#64748b] -my-[2px]">or</p>
-
-        <!-- Upload box -->
-        <label
-          class="flex-1 flex flex-col items-center justify-center gap-2.5 p-5 border-2 border-dashed border-[#b0cfb0] rounded-xl bg-[#f8fbf3] cursor-pointer transition-colors duration-[0.18s] hover:bg-[#ecf5e4] hover:border-[#10b981] font-sans text-center min-h-0"
-          :class="{ 'bg-[#ecf5e4] border-[#10b981]': isDragging }"
-          @dragover.prevent="isDragging = true"
-          @dragleave="isDragging = false"
-          @drop.prevent="handleDrop"
-        >
-          <input
-            ref="fileInput"
-            type="file"
-            accept="image/*"
-            class="absolute w-[1px] h-[1px] overflow-hidden [clip:rect(0,0,0,0)]"
-            @change="handleFileChange"
-          />
-          <span class="text-[#2d3a2d]">
-            <svg class="w-[42px] h-[42px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
+          <!-- Upload Image -->
+          <label
+            class="relative flex flex-col items-center justify-center gap-1.5 py-6 px-3 rounded-[18px] bg-[#e4efd6] hover:bg-[#d8e8c6] cursor-pointer transition-all duration-[0.18s] hover:-translate-y-0.5 hover:shadow-md font-sans text-center"
+            :class="{ 'bg-[#d8e8c6] ring-2 ring-[#10b981]': isDragging }"
+            @dragover.prevent="isDragging = true"
+            @dragleave="isDragging = false"
+            @drop.prevent="handleDrop"
+          >
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/*"
+              class="absolute w-[1px] h-[1px] overflow-hidden [clip:rect(0,0,0,0)]"
+              @change="handleFileChange"
+            />
+            <svg class="w-[40px] h-[40px] text-[#5c7a52]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+              <polyline points="12 12 12 17"/>
+              <polyline points="9.5 14.5 12 12 14.5 14.5"/>
             </svg>
-          </span>
-          <span class="text-[14px] font-semibold text-[#0f172a]">Upload Mushroom Image</span>
-          <span class="text-[12px] text-[#64748b]">Drag &amp; drop or select</span>
-        </label>
-
-        <!-- Image preview -->
-        <div v-if="previewUrl" class="relative rounded-[10px] overflow-hidden border border-[#e2e8f0]">
-          <img :src="previewUrl" alt="Mushroom preview" class="w-full h-[130px] object-cover block" />
-          <button class="absolute top-2 right-2 bg-black/50 text-white border-none rounded-md py-[3px] px-2.5 text-[12px] cursor-pointer font-sans" @click="clearImage">✕ Remove</button>
+            <span class="text-[14px] font-bold text-[#4d6a3f] mt-0.5">Upload Image</span>
+            <span class="text-[11.5px] text-[#6b8560]">Select a photo from your device</span>
+          </label>
         </div>
 
         <!-- Upload button -->
-        <button class="flex items-center justify-center gap-2 p-[13px] rounded-[10px] bg-[#7a956a] text-white border-none text-[14px] font-semibold font-sans cursor-pointer mt-auto transition-colors duration-[0.18s] disabled:opacity-55 disabled:cursor-not-allowed hover:not-disabled:bg-[#5c7a52]" @click="analyzeImage" :disabled="isAnalyzing || !selectedFile">
+        <button class="flex items-center justify-center gap-2 p-[13px] rounded-[10px] bg-[#7a956a] text-white border-none text-[14px] font-semibold font-sans cursor-pointer transition-colors duration-[0.18s] disabled:opacity-55 disabled:cursor-not-allowed hover:not-disabled:bg-[#5c7a52]" @click="analyzeImage" :disabled="isAnalyzing || !selectedFile">
           <span v-if="isAnalyzing" class="w-[15px] h-[15px] border-2 border-white/35 border-t-white rounded-full animate-spin" />
           {{ isAnalyzing ? 'Analyzing…' : 'Upload picture' }}
         </button>
@@ -156,12 +167,12 @@
           <a :href="result.reference" target="_blank" class="text-[11px] text-[#64748b] break-all no-underline leading-normal hover:underline">{{ result.reference }}</a>
         </div>
 
-        <!-- Map (dynamic based on user's real GPS location) -->
+        <!-- Map (dynamic based on GPS or manually entered coordinates) -->
         <div class="flex-1 flex flex-col gap-2 min-h-0">
-          <div class="flex items-center justify-between">
+          <div class="flex items-start justify-between gap-2">
             <p class="text-[13px] font-medium text-[#0f172a]">Pin mushroom location</p>
             <div class="flex items-center gap-2">
-              <span v-if="geoError" class="text-[11px] text-[#ef4444] flex items-center gap-1.5">
+              <span v-if="locationMode === 'gps' && geoError" class="text-[11px] text-[#ef4444] flex items-center gap-1.5">
                 {{ geoError }}
                 <button @click="fetchUserLocation" class="text-[11px] font-semibold text-[#059669] hover:underline cursor-pointer bg-transparent border-none p-0">Retry</button>
               </span>
@@ -170,11 +181,72 @@
                 Getting location…
               </span>
               <span v-else-if="userLat !== null" class="text-[11px] text-[#64748b] text-right">
-                <span v-if="locationName" class="font-semibold text-[#0f172a] block">📍 {{ locationName }}</span>
+                <span v-if="isResolvingName" class="text-[10px] text-[#94a3b8] block">Looking up place name…</span>
+                <span v-else-if="locationName" class="font-semibold text-[#0f172a] block">📍 {{ locationName }}</span>
                 <span :class="locationName ? 'text-[10px] text-[#94a3b8]' : ''" class="block">📍 {{ userLat.toFixed(5) }}, {{ userLng!.toFixed(5) }}</span>
               </span>
             </div>
           </div>
+
+          <!-- Location source toggle -->
+          <div class="grid grid-cols-2 gap-1 p-1 rounded-[10px] bg-[#f1f5f9] border border-[#e2e8f0]">
+            <button
+              type="button"
+              class="py-1.5 px-2 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors"
+              :class="locationMode === 'gps' ? 'bg-white text-[#059669] shadow-sm' : 'bg-transparent text-[#64748b] hover:text-[#0f172a]'"
+              @click="fetchUserLocation"
+            >
+              📡 Use my current location
+            </button>
+            <button
+              type="button"
+              class="py-1.5 px-2 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors"
+              :class="locationMode === 'manual' ? 'bg-white text-[#059669] shadow-sm' : 'bg-transparent text-[#64748b] hover:text-[#0f172a]'"
+              @click="selectManualMode"
+            >
+              ✏️ Enter coordinates
+            </button>
+          </div>
+
+          <!-- Manual coordinates form -->
+          <div v-if="locationMode === 'manual'" class="flex flex-col gap-1.5 p-2.5 rounded-[10px] bg-[#f0fdf4] border border-[#bbf7d0]">
+            <p class="text-[11.5px] text-[#166534] leading-snug">
+              Picked it somewhere without signal? Enter the exact spot where you found the mushroom.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+              <input
+                v-model="manualLat"
+                type="text"
+                inputmode="decimal"
+                placeholder="Latitude e.g. 14.5995"
+                aria-label="Latitude"
+                class="w-full py-2 px-3 rounded-lg border border-[#d1d5db] bg-white text-[12.5px] text-[#0f172a] placeholder:text-[#94a3b8] focus:outline-none focus:border-[#10b981] focus:ring-2 focus:ring-[#10b981]/20"
+                @paste="onCoordPaste"
+                @keyup.enter="applyManualCoordinates"
+              />
+              <input
+                v-model="manualLng"
+                type="text"
+                inputmode="decimal"
+                placeholder="Longitude e.g. 120.9842"
+                aria-label="Longitude"
+                class="w-full py-2 px-3 rounded-lg border border-[#d1d5db] bg-white text-[12.5px] text-[#0f172a] placeholder:text-[#94a3b8] focus:outline-none focus:border-[#10b981] focus:ring-2 focus:ring-[#10b981]/20"
+                @keyup.enter="applyManualCoordinates"
+              />
+              <button
+                type="button"
+                class="py-2 px-4 rounded-lg bg-[#059669] hover:bg-[#047857] text-white text-[12.5px] font-semibold border-none cursor-pointer transition-colors"
+                @click="applyManualCoordinates"
+              >
+                Pin on map
+              </button>
+            </div>
+            <p v-if="manualError" class="text-[11px] text-[#ef4444]">{{ manualError }}</p>
+            <p v-else class="text-[10.5px] text-[#64748b] leading-snug">
+              Decimal degrees (14.5995) or degrees-minutes-seconds (14°35'58"N) both work. You can paste "lat, lng" from Google Maps or your phone's GPS app into the first box. Use negative values for South/West.
+            </p>
+          </div>
+
           <div class="flex-1 rounded-[10px] overflow-hidden border border-[#e2e8f0] min-h-0">
             <iframe
               title="Mushroom location"
@@ -344,7 +416,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'user' })
+definePageMeta({ layout: 'user', middleware: 'auth' })
 
 const firstName        = ref('User')
 const isSubscribed     = ref(false)
@@ -485,6 +557,13 @@ const lastScanId = ref<number | null>(null)
 const isSavingLocation = ref(false)
 const locationSaved = ref(false)
 
+// 'gps' = device location right now, 'manual' = coordinates typed in by the user
+const locationMode = ref<'gps' | 'manual'>('gps')
+const manualLat = ref('')
+const manualLng = ref('')
+const manualError = ref<string | null>(null)
+const isResolvingName = ref(false)
+
 const isScanning = ref(false)
 const scanStatus = ref('')
 let scanIntervalId: ReturnType<typeof setInterval> | null = null
@@ -493,6 +572,98 @@ const SCAN_INTERVAL_MS = 1500
 const CONFIDENCE_THRESHOLD = 85 // auto-stop once this confident
 
 const config = useRuntimeConfig()
+
+// Reverse geocode coordinates to a readable place name (needs internet; returns null if unavailable)
+async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+    if (!res.ok) return null
+    const geoData = await res.json()
+    const addr = geoData.address || {}
+
+    // In OpenStreetMap (Philippines), barangay is mapped to quarter, suburb, neighbourhood, village, city_district, or hamlet
+    let barangay = addr.quarter || addr.suburb || addr.neighbourhood || addr.village || addr.city_district || addr.hamlet || ''
+    if (barangay && !/^brgy|^barangay/i.test(barangay)) {
+      barangay = `Brgy. ${barangay}`
+    }
+
+    const city = addr.city || addr.town || addr.municipality || addr.county || ''
+    const state = addr.state || addr.region || addr.province || ''
+    const country = addr.country || ''
+
+    return [barangay, city, state, country].filter(Boolean).join(', ') || geoData.display_name || null
+  } catch (e) {
+    console.warn('Reverse geocoding failed:', e)
+    return null
+  }
+}
+
+// ── Manual coordinates (pin the real pick location, e.g. mushroom found offline in the mountains) ──
+// Accepts decimal degrees (14.5995, -120.98) or degrees/minutes/seconds (14°35'58"N)
+function parseCoordinate(raw: string): number | null {
+  const s = raw.trim().toUpperCase().replace(/[°º'′’"″”]/g, ' ')
+  if (!s) return null
+  const hemi = /[NSEW]/.exec(s)?.[0]
+  const parts = s.replace(/[NSEW]/g, ' ').trim().split(/[\s,]+/).filter(Boolean)
+  if (parts.length === 0 || parts.length > 3) return null
+  const nums = parts.map(Number)
+  if (nums.some(n => !Number.isFinite(n))) return null
+  const [d, m = 0, sec = 0] = nums as [number, number?, number?]
+  if (parts.length > 1 && (m < 0 || m >= 60 || sec < 0 || sec >= 60)) return null
+  let value = Math.abs(d) + m / 60 + sec / 3600
+  if (d < 0 || hemi === 'S' || hemi === 'W') value = -value
+  return value
+}
+
+// Pasting "lat, lng" (e.g. copied from Google Maps) into the latitude box fills both fields
+function onCoordPaste(e: ClipboardEvent) {
+  const text = e.clipboardData?.getData('text') ?? ''
+  const m = text.match(/^\s*(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*$/)
+  if (m) {
+    e.preventDefault()
+    manualLat.value = m[1]!
+    manualLng.value = m[2]!
+  }
+}
+
+async function applyManualCoordinates() {
+  manualError.value = null
+  const lat = parseCoordinate(manualLat.value)
+  const lng = parseCoordinate(manualLng.value)
+  if (lat === null || lng === null) {
+    manualError.value = 'Enter valid numbers for both latitude and longitude.'
+    return
+  }
+  if (lat < -90 || lat > 90) {
+    manualError.value = 'Latitude must be between -90 and 90.'
+    return
+  }
+  if (lng < -180 || lng > 180) {
+    manualError.value = 'Longitude must be between -180 and 180.'
+    return
+  }
+
+  locationMode.value = 'manual'
+  geoError.value = null
+  userLat.value = Number(lat.toFixed(7))
+  userLng.value = Number(lng.toFixed(7))
+  locationSaved.value = false
+  locationName.value = null
+
+  // Try to name the place (works when you're back online at home; silently skipped otherwise)
+  isResolvingName.value = true
+  locationName.value = await reverseGeocode(userLat.value, userLng.value)
+  isResolvingName.value = false
+}
+
+function selectManualMode() {
+  locationMode.value = 'manual'
+  geoError.value = null
+  if (userLat.value !== null && !manualLat.value) {
+    manualLat.value = userLat.value.toFixed(6)
+    manualLng.value = userLng.value!.toFixed(6)
+  }
+}
 
 // ── Geolocation helpers ───────────────────────────────
 function fetchUserLocation(): Promise<void> {
@@ -505,35 +676,18 @@ function fetchUserLocation(): Promise<void> {
 
     isLocating.value = true
     geoError.value = null
+    locationMode.value = 'gps'
+    manualError.value = null
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         userLat.value = position.coords.latitude
         userLng.value = position.coords.longitude
         isLocating.value = false
+        locationSaved.value = false
 
         // Fetch location name via OpenStreetMap Nominatim reverse geocoding API
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLat.value}&lon=${userLng.value}&format=json`)
-          if (res.ok) {
-            const geoData = await res.json()
-            const addr = geoData.address || {}
-
-            // In OpenStreetMap (Philippines), barangay is mapped to quarter, suburb, neighbourhood, village, city_district, or hamlet
-            let barangay = addr.quarter || addr.suburb || addr.neighbourhood || addr.village || addr.city_district || addr.hamlet || ''
-            if (barangay && !/^brgy|^barangay/i.test(barangay)) {
-              barangay = `Brgy. ${barangay}`
-            }
-
-            const city = addr.city || addr.town || addr.municipality || addr.county || ''
-            const state = addr.state || addr.region || addr.province || ''
-            const country = addr.country || ''
-
-            locationName.value = [barangay, city, state, country].filter(Boolean).join(', ') || geoData.display_name || null
-          }
-        } catch (e) {
-          console.warn('Reverse geocoding failed:', e)
-        }
+        locationName.value = await reverseGeocode(userLat.value, userLng.value)
         resolve()
       },
       (err) => {
@@ -573,6 +727,18 @@ const mapEmbedUrl = computed(() => {
 
 // ── Save location to backend ──────────────────────────
 async function saveLocation() {
+  // In manual mode, make sure what's typed in the boxes is what gets saved
+  if (locationMode.value === 'manual' && manualLat.value.trim() && manualLng.value.trim()) {
+    const typedLat = parseCoordinate(manualLat.value)
+    const typedLng = parseCoordinate(manualLng.value)
+    const changed = typedLat === null || typedLng === null
+      || Number(typedLat.toFixed(7)) !== userLat.value || Number(typedLng.toFixed(7)) !== userLng.value
+    if (changed) {
+      await applyManualCoordinates()
+      if (manualError.value) return
+    }
+  }
+
   if (userLat.value === null || userLng.value === null || !lastScanId.value) return
 
   isSavingLocation.value = true
@@ -588,6 +754,7 @@ async function saveLocation() {
         latitude: userLat.value,
         longitude: userLng.value,
         location_name: locationName.value,
+        location_source: locationMode.value,
       },
     })
     locationSaved.value = true
@@ -761,18 +928,21 @@ async function analyzeImage() {
   lastScanId.value = null
   locationSaved.value = false
 
-  // Start fetching the user's GPS location in parallel with the scan
-  fetchUserLocation()
+  // Start fetching the user's GPS location in parallel with the scan.
+  // Skipped when the user manually pinned the real pick location (e.g. mushroom was
+  // picked in the mountains and is being scanned later at home).
+  if (!(locationMode.value === 'manual' && userLat.value !== null)) fetchUserLocation()
 
   try {
     const token = localStorage.getItem('token')
     const formData = new FormData()
     formData.append('image', selectedFile.value)
 
-    // Include GPS coordinates & location name if available
+    // Include coordinates & location name if available (GPS or manually pinned)
     if (userLat.value !== null && userLng.value !== null) {
       formData.append('latitude', String(userLat.value))
       formData.append('longitude', String(userLng.value))
+      formData.append('location_source', locationMode.value)
       if (locationName.value) {
         formData.append('location_name', locationName.value)
       }

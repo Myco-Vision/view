@@ -139,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: 'auth' })
 
 const config = useRuntimeConfig()
 const loading = ref(true)

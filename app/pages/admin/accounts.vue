@@ -254,8 +254,9 @@
 
 <script setup lang="ts">
 // Ensure this page uses the admin layout
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: 'auth' })
 
+const { success: toastSuccess, error: toastError } = useToast()
 const config = useRuntimeConfig()
 
 // State
@@ -421,16 +422,23 @@ async function saveAccount() {
 
 // Delete
 async function confirmDelete(user: any) {
-  if (confirm(`Are you sure you want to permanently delete the account for ${user.name}? This action cannot be undone.`)) {
-    try {
-      await $fetch(`${config.public.apiBase}/admin/accounts/${user.id}`, {
-        method: 'DELETE',
-        headers: getHeaders()
-      })
-      fetchAccounts(pagination.current_page)
-    } catch (err: any) {
-      alert(err?.data?.message || 'Failed to delete account.')
-    }
+  const { confirm } = useConfirm()
+  const ok = await confirm({
+    title: 'Permanently delete account?',
+    message: `The account for ${user.name} will be deleted. This cannot be undone.`,
+    tone: 'danger',
+    confirmText: 'Delete Account',
+  })
+  if (!ok) return
+  try {
+    await $fetch(`${config.public.apiBase}/admin/accounts/${user.id}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    })
+    toastSuccess(`Account for ${user.name} deleted.`)
+    fetchAccounts(pagination.current_page)
+  } catch (err: any) {
+    toastError(err?.data?.message || 'Failed to delete account.')
   }
 }
 
@@ -455,7 +463,7 @@ async function submitPasswordReset() {
       body: { password: resetPasswordVal.value }
     })
     isResetModalOpen.value = false
-    alert(`Password for ${form.name} has been reset successfully.`)
+    toastSuccess(`Password for ${form.name} has been reset successfully.`)
   } catch (err: any) {
     resetError.value = err?.data?.message || 'Failed to reset password.'
   } finally {

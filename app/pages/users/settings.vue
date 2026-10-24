@@ -189,7 +189,7 @@
             <span class="text-[16px]">⚠️</span> Danger Zone
           </p>
           <p class="text-[12.5px] text-[#7f1d1d] leading-[1.6]">Once you delete your account, all your scans, collection, and history will be permanently removed. This cannot be undone.</p>
-          <button class="py-2.5 px-[22px] rounded-[9px] bg-[#dc2626] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer self-start transition-colors duration-[0.18s] hover:bg-[#b91c1c]">Delete Account</button>
+          <button class="py-2.5 px-[22px] rounded-[9px] bg-[#dc2626] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer self-start transition-colors duration-[0.18s] hover:bg-[#b91c1c]" @click="deleteAccount">Delete Account</button>
         </div>
 
       </div>
@@ -278,7 +278,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'user' })
+definePageMeta({ layout: 'user', middleware: 'auth' })
 
 const config = useRuntimeConfig()
 
@@ -346,8 +346,32 @@ const storageUsed    = 120
 const storageTotal   = 500
 const storagePercent = Math.round((storageUsed / storageTotal) * 100)
 
-function clearCache() { alert('Cache cleared!') }
-function exportData() { alert('Exporting data…') }
+async function clearCache() {
+  const { confirm } = useConfirm()
+  const ok = await confirm({
+    title: 'Clear cache?',
+    message: 'Temporary scan images stored on this device will be removed. Your saved scans and history are not affected.',
+    tone: 'warning',
+    confirmText: 'Clear Cache',
+  })
+  if (ok) useToast().success('Cache cleared!')
+}
+
+function exportData() { useToast().info('Exporting data…') }
+
+async function deleteAccount() {
+  const { confirm } = useConfirm()
+  const ok = await confirm({
+    title: 'Delete your account?',
+    message: 'All your scans, collection, and history will be permanently removed. This cannot be undone.',
+    tone: 'danger',
+    confirmText: 'Delete My Account',
+    requireText: 'DELETE',
+  })
+  if (!ok) return
+  // TODO: no self-service delete endpoint exists on the backend yet
+  useToast().info('Account deletion is not available yet. Please contact support to delete your account.')
+}
 
 // ── Consent Toggle & Modal Handlers ──────────────────────────────────────────
 
