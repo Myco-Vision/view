@@ -47,7 +47,7 @@
           <option value="">All Roles</option>
           <option value="super_admin">Super Admin</option>
           <option value="admin">Admin</option>
-          <option value="user">User</option>
+          <option value="forager">Forager</option>
         </select>
         <button class="w-[38px] h-[38px] rounded-[10px] border border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-center text-[#64748b] transition-colors hover:bg-[#f1f5f9] hover:text-[#0f172a]" @click="fetchAccounts" title="Refresh">
           <svg class="w-[15px] h-[15px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
@@ -181,7 +181,7 @@
             <div class="flex flex-col gap-1.5">
               <label class="text-[13px] font-semibold text-[#334155]">Role <span class="text-red-500">*</span></label>
               <select v-model="form.role" class="py-[9px] px-3.5 border border-[#e2e8f0] rounded-[10px] text-[14px] font-sans text-[#0f172a] bg-white outline-none cursor-pointer focus:border-amber-500 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.1)]" :disabled="isEditing && isSelf(form)">
-                <option value="user">User</option>
+                <option value="forager">Forager</option>
                 <option value="admin">Admin</option>
                 <option v-if="!isEditing || form.role === 'super_admin'" value="super_admin">Super Admin</option>
               </select>
@@ -275,7 +275,7 @@ const isEditing = ref(false)
 const isSubmitting = ref(false)
 const formError = ref('')
 const form = reactive<any>({
-  id: null, name: '', first_name: '', last_name: '', username: '', email: '', role: 'user', password: '', contact_number: '', address: ''
+  id: null, name: '', first_name: '', last_name: '', username: '', email: '', role: 'forager', password: '', contact_number: '', address: ''
 })
 
 // Password Reset State
@@ -342,7 +342,7 @@ function calculateStats(data: any[], total: number) {
   // or ideally the API would return these aggregates. For this mockup, we'll just count what we see.
   stats.super_admins = data.filter(u => u.role === 'super_admin').length
   stats.admins = data.filter(u => u.role === 'admin').length
-  stats.users = data.filter(u => u.role === 'user').length
+  stats.users = data.filter(u => u.role === 'forager').length
 }
 
 function changePage(p: number) {
@@ -353,7 +353,7 @@ function changePage(p: number) {
 function openCreateModal() {
   isEditing.value = false
   formError.value = ''
-  Object.assign(form, { id: null, name: '', first_name: '', last_name: '', username: '', email: '', role: 'user', password: '', contact_number: '', address: '' })
+  Object.assign(form, { id: null, name: '', first_name: '', last_name: '', username: '', email: '', role: 'forager', password: '', contact_number: '', address: '' })
   isModalOpen.value = true
 }
 

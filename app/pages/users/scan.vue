@@ -254,6 +254,92 @@
         </div>
       </div>
     </Teleport>
+    <!-- ── DATA CONSENT MODAL (shows once after first scan) ── -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showConsentModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/65 backdrop-blur-sm p-4">
+          <Transition
+            enter-active-class="transition duration-300 ease-out"
+            enter-from-class="opacity-0 scale-95 translate-y-2"
+            enter-to-class="opacity-100 scale-100 translate-y-0"
+          >
+            <div v-if="showConsentModal" class="bg-white rounded-2xl max-w-[440px] w-full shadow-2xl border border-slate-200 overflow-hidden">
+
+              <!-- Gradient header -->
+              <div class="bg-gradient-to-br from-[#10b981] to-[#059669] p-6 flex flex-col items-center gap-3 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <span class="text-[38px] leading-none">🧠</span>
+                </div>
+                <div>
+                  <h3 class="text-[18px] font-bold text-white">Help Train Our AI</h3>
+                  <p class="text-[13px] text-emerald-100 mt-1">Make MycoVision smarter for everyone</p>
+                </div>
+              </div>
+
+              <!-- Body -->
+              <div class="p-6 flex flex-col gap-4">
+                <p class="text-[13.5px] text-[#334155] leading-relaxed">
+                  You just completed your first scan! 🎉
+                  <br><br>
+                  Would you like to <strong class="text-[#0f172a]">contribute your scan data</strong> to help improve the mushroom identification AI?
+                  Your images and classification results may be used to retrain the model and make it more accurate for all foragers.
+                </p>
+
+                <!-- What's shared bullets -->
+                <div class="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-4 flex flex-col gap-2.5">
+                  <p class="text-[12px] font-bold text-[#64748b] uppercase tracking-wide">What would be shared:</p>
+                  <div class="flex items-start gap-2.5 text-[13px] text-[#334155]">
+                    <span class="text-[#10b981] mt-0.5 shrink-0">✓</span>
+                    <span>Your mushroom scan <strong>images</strong></span>
+                  </div>
+                  <div class="flex items-start gap-2.5 text-[13px] text-[#334155]">
+                    <span class="text-[#10b981] mt-0.5 shrink-0">✓</span>
+                    <span>AI classification result (edible / poisonous)</span>
+                  </div>
+                  <div class="flex items-start gap-2.5 text-[13px] text-[#334155]">
+                    <span class="text-[#ef4444] mt-0.5 shrink-0">✗</span>
+                    <span class="text-[#64748b]">Your personal information is <strong class="text-[#0f172a]">never</strong> shared</span>
+                  </div>
+                </div>
+
+                <p class="text-[11.5px] text-[#94a3b8] text-center">
+                  You can change this preference anytime in your account settings.
+                </p>
+              </div>
+
+              <!-- Actions -->
+              <div class="px-6 pb-6 flex gap-3">
+                <button
+                  id="btn-consent-decline"
+                  :disabled="isSubmittingConsent"
+                  class="flex-1 py-2.5 rounded-xl border border-[#e2e8f0] bg-white text-[13.5px] font-semibold text-[#64748b] hover:bg-[#f8fafc] transition cursor-pointer disabled:opacity-50"
+                  @click="submitConsent(false)"
+                >
+                  No thanks
+                </button>
+                <button
+                  id="btn-consent-allow"
+                  :disabled="isSubmittingConsent"
+                  class="flex-1 py-2.5 rounded-xl bg-gradient-to-br from-[#10b981] to-[#059669] text-white text-[13.5px] font-bold hover:opacity-90 transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                  @click="submitConsent(true)"
+                >
+                  <span v-if="isSubmittingConsent" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  {{ isSubmittingConsent ? 'Saving…' : '🌿 Allow & Contribute' }}
+                </button>
+              </div>
+
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -268,6 +354,65 @@ const isSubscribed     = ref(false)
 const remainingScans   = ref<number | null>(null)
 const canScan          = ref(true)
 const showUpgradeModal = ref(false)
+
+// ── Data consent modal ────────────────────────────────
+const showConsentModal    = ref(false)
+const isSubmittingConsent = ref(false)
+
+/**
+ * Show the consent modal only if the user has NEVER explicitly answered.
+ *
+ * Root cause of the bug: the DB column `allow_data_training` defaults to FALSE,
+ * so every new user already has `allow_data_training = false` even before being
+ * asked. Checking that field therefore never triggers the modal.
+ *
+ * The real "never answered" signal is `data_training_consented_at` being null —
+ * that timestamp is only written when the user explicitly chooses Allow or Decline.
+ */
+function maybeShowConsentModal() {
+  // Already shown this session — skip
+  if (sessionStorage.getItem('consent_modal_shown')) return
+
+  const stored = localStorage.getItem('user')
+  if (!stored) return
+  try {
+    const u = JSON.parse(stored)
+    // data_training_consented_at is null / missing → never answered → show modal
+    if (!u.data_training_consented_at) {
+      showConsentModal.value = true
+      sessionStorage.setItem('consent_modal_shown', '1')
+    }
+  } catch {}
+}
+
+async function submitConsent(allow: boolean) {
+  isSubmittingConsent.value = true
+  try {
+    const token = localStorage.getItem('token')
+    const data = await $fetch<any>(`${config.public.apiBase}/user/consent`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: { allow_data_training: allow },
+    })
+    // Update the stored user so the modal never re-fires
+    const stored = localStorage.getItem('user')
+    if (stored) {
+      const u = JSON.parse(stored)
+      u.allow_data_training = allow
+      // Stamp consented_at so maybeShowConsentModal never fires again
+      u.data_training_consented_at = new Date().toISOString()
+      localStorage.setItem('user', JSON.stringify(u))
+    }
+  } catch (err) {
+    console.error('Failed to update consent:', err)
+  } finally {
+    isSubmittingConsent.value = false
+    showConsentModal.value = false
+  }
+}
 
 async function loadSubscriptionInfo() {
   const storedUser = localStorage.getItem('user')
@@ -555,6 +700,10 @@ async function captureFrameAndAnalyze() {
           console.error('Final save failed:', saveError)
           scanStatus.value = 'Could not save — keep scanning...'
         }
+        stopAutoScan()
+        closeCamera()
+        // Show consent modal once after the first successful scan
+        setTimeout(maybeShowConsentModal, 800)
       } else {
         scanStatus.value = `Low confidence (${confidence}%) — keep scanning...`
       }
@@ -697,6 +846,9 @@ async function analyzeImage() {
       descriptionRest: ' is the identified species based on your scan. More details will be populated here when the species database is fully linked.',
       reference: 'https://en.wikipedia.org/wiki/' + encodeURIComponent(data.result_name || 'Mushroom')
     }
+
+    // Show consent modal once after the first successful scan
+    setTimeout(maybeShowConsentModal, 800)
   } catch (error: any) {
     console.error('Scan upload failed:', error)
     if (error?.data?.error === 'SCAN_LIMIT_REACHED' || error?.status === 403 || error?.statusCode === 403) {

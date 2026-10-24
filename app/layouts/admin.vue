@@ -105,6 +105,18 @@
 
         <p v-if="!sidebarCollapsed || mobileOpen" class="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.8px] px-2 mt-3 mb-0.5 whitespace-nowrap">Management</p>
 
+        <NuxtLink v-if="isAdminOrAbove" to="/admin/subscriptions" :title="(sidebarCollapsed && !mobileOpen) ? 'Subscriptions' : ''" @click="mobileOpen = false"
+          class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
+          active-class="!bg-emerald-500/15 !text-emerald-500">
+          <span class="flex items-center justify-center shrink-0 w-5">
+            <svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+          </span>
+          <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Subscriptions</span></transition>
+        </NuxtLink>
+
         <NuxtLink v-if="isSuperAdmin" to="/admin/species" :title="(sidebarCollapsed && !mobileOpen) ? 'Species DB' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
@@ -142,6 +154,19 @@
             </svg>
           </span>
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Settings</span></transition>
+        </NuxtLink>
+
+        <NuxtLink v-if="isSuperAdmin" to="/admin/retrain" :title="(sidebarCollapsed && !mobileOpen) ? 'AI Retrain' : ''" @click="mobileOpen = false"
+          class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
+          active-class="!bg-emerald-500/15 !text-emerald-500">
+          <span class="flex items-center justify-center shrink-0 w-5">
+            <svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2z"/>
+              <path d="M12 12v10"/>
+              <path d="M8 16l4-4 4 4"/>
+            </svg>
+          </span>
+          <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">AI Retrain</span></transition>
         </NuxtLink>
 
         <!-- Super Admin Only -->
@@ -279,9 +304,11 @@ const pageMap: Record<string, string> = {
   '/admin/users':     'User Management',
   '/admin/scans':     'Scans Log',
   '/admin/species':   'Species Database',
+  '/admin/subscriptions': 'Subscriptions',
   '/admin/reports':   'Reports & Analytics',
   '/admin/settings':  'System Settings',
   '/admin/accounts':  'Account Management',
+  '/admin/retrain':   'AI Model Retraining',
 }
 const currentPageTitle = computed(() => pageMap[route.path] ?? 'Dashboard')
 
