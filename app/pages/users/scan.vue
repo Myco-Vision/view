@@ -45,18 +45,6 @@
           </NuxtLink>
         </div>
 
-        <!-- Camera Overlay Modal -->
-        <div v-if="isCameraOpen" class="absolute inset-0 bg-black z-50 flex flex-col">
-          <div class="relative w-full h-full flex flex-col">
-            <video ref="videoRef" autoplay playsinline class="flex-1 w-full object-cover bg-[#111]"></video>
-            <div class="absolute bottom-0 left-0 right-0 h-[80px] bg-black/60 flex items-center justify-between px-5 backdrop-blur-[5px]">
-              <button class="bg-transparent border-none text-white cursor-pointer text-[14px] font-medium font-sans" @click="closeCamera">Cancel</button>
-              <span class="text-white text-[13px] font-medium">{{ scanStatus }}</span>
-              <div style="width: 60px;"></div> <!-- Spacer -->
-            </div>
-          </div>
-        </div>
-
         <!-- Capture box -->
         <button class="flex-1 flex flex-col items-center justify-center gap-2.5 p-5 border-2 border-dashed border-[#b0cfb0] rounded-xl bg-[#f8fbf3] cursor-pointer transition-colors duration-[0.18s] hover:bg-[#ecf5e4] hover:border-[#10b981] font-sans text-center min-h-0" @click="openCamera">
           <span class="text-[#2d3a2d]">
@@ -206,6 +194,27 @@
       </div>
     </div>
 
+    <!-- ── FULLSCREEN CAMERA OVERLAY ───────────────────────
+         Teleported to <body> and position:fixed so it covers the whole
+         viewport instead of just the left panel. -->
+    <Teleport to="body">
+      <div v-if="isCameraOpen" class="fixed inset-0 z-[55] bg-black">
+        <video
+          ref="videoRef"
+          autoplay
+          playsinline
+          muted
+          class="absolute inset-0 w-full h-full object-cover bg-[#111]"
+        ></video>
+
+        <div class="absolute bottom-0 left-0 right-0 min-h-[80px] pb-[env(safe-area-inset-bottom)] bg-black/60 flex items-center justify-between px-5 backdrop-blur-[5px]">
+          <button class="bg-transparent border-none text-white cursor-pointer text-[14px] font-medium font-sans" @click="closeCamera">Cancel</button>
+          <span class="text-white text-[13px] font-medium">{{ scanStatus }}</span>
+          <div style="width: 60px;"></div> <!-- Spacer -->
+        </div>
+      </div>
+    </Teleport>
+
     <!-- ── UPGRADE TO PREMIUM MODAL ───────────────────────── -->
     <Teleport to="body">
       <div v-if="showUpgradeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
@@ -348,6 +357,33 @@ definePageMeta({ layout: 'user', middleware: 'auth' })
 
 const config = useRuntimeConfig()
 
+// Where to send the user when their token is rejected (adjust to your login page)
+const LOGIN_ROUTE = '/login'
+
+// ── Request headers ───────────────────────────────────
+// $fetch only adds `Accept: application/json` for plain-object bodies, so FormData
+// requests went out as `Accept: */*` and Laravel tried to redirect to route('login')
+// (→ 500 "Route [login] not defined"). Always send Accept explicitly.
+function authHeaders() {
+  return {
+    Accept: 'application/json',
+    Authorization: `Bearer ${localStorage.getItem('token')}`,
+  }
+}
+
+function getErrorStatus(error: any): number | undefined {
+  return error?.status ?? error?.statusCode ?? error?.response?.status
+}
+
+// Token rejected → stop everything, clear the dead session, go to login
+async function handleAuthExpired() {
+  stopAutoScan()
+  closeCamera()
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  await navigateTo(LOGIN_ROUTE)
+}
+
 // ── Subscription / quota state ────────────────────────
 const firstName        = ref('User')
 const isSubscribed     = ref(false)
@@ -362,12 +398,10 @@ const isSubmittingConsent = ref(false)
 /**
  * Show the consent modal only if the user has NEVER explicitly answered.
  *
- * Root cause of the bug: the DB column `allow_data_training` defaults to FALSE,
- * so every new user already has `allow_data_training = false` even before being
- * asked. Checking that field therefore never triggers the modal.
- *
- * The real "never answered" signal is `data_training_consented_at` being null —
- * that timestamp is only written when the user explicitly chooses Allow or Decline.
+ * The DB column `allow_data_training` defaults to FALSE, so checking it never
+ * triggers the modal. The real "never answered" signal is
+ * `data_training_consented_at` being null — it is only written when the user
+ * explicitly chooses Allow or Decline.
  */
 function maybeShowConsentModal() {
   // Already shown this session — skip
@@ -388,13 +422,9 @@ function maybeShowConsentModal() {
 async function submitConsent(allow: boolean) {
   isSubmittingConsent.value = true
   try {
-    const token = localStorage.getItem('token')
-    const data = await $fetch<any>(`${config.public.apiBase}/user/consent`, {
+    await $fetch<any>(`${config.public.apiBase}/user/consent`, {
       method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(),
       body: { allow_data_training: allow },
     })
     // Update the stored user so the modal never re-fires
@@ -406,8 +436,12 @@ async function submitConsent(allow: boolean) {
       u.data_training_consented_at = new Date().toISOString()
       localStorage.setItem('user', JSON.stringify(u))
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to update consent:', err)
+    if (getErrorStatus(err) === 401) {
+      await handleAuthExpired()
+      return
+    }
   } finally {
     isSubmittingConsent.value = false
     showConsentModal.value = false
@@ -426,11 +460,10 @@ async function loadSubscriptionInfo() {
     } catch (e) {}
   }
 
-  const token = localStorage.getItem('token')
-  if (token) {
+  if (localStorage.getItem('token')) {
     try {
       const data: any = await $fetch(`${config.public.apiBase}/subscription/status`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: authHeaders(),
       })
       isSubscribed.value = !!data.is_subscribed
       remainingScans.value = data.remaining_scans
@@ -443,7 +476,11 @@ async function loadSubscriptionInfo() {
         u.can_scan = data.can_scan
         localStorage.setItem('user', JSON.stringify(u))
       }
-    } catch (e) {}
+    } catch (e: any) {
+      console.warn('Failed to load subscription status:', e)
+      // A dead token means the cached badge above is stale → force re-login
+      if (getErrorStatus(e) === 401) await handleAuthExpired()
+    }
   }
 }
 
@@ -489,8 +526,10 @@ const isScanning = ref(false)
 const scanStatus = ref('')
 let scanIntervalId: ReturnType<typeof setInterval> | null = null
 let scanInFlight = false
+let consecutiveErrors = 0
 const SCAN_INTERVAL_MS = 1500
 const CONFIDENCE_THRESHOLD = 85 // auto-stop once this confident
+const MAX_CONSECUTIVE_ERRORS = 3 // give up after this many failures in a row
 
 // ── Geolocation state ─────────────────────────────────
 const userLat = ref<number | null>(null)
@@ -585,13 +624,9 @@ async function saveLocation() {
 
   isSavingLocation.value = true
   try {
-    const token = localStorage.getItem('token')
     await $fetch(`${config.public.apiBase}/scans/${lastScanId.value}/location`, {
       method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(),
       body: {
         latitude: userLat.value,
         longitude: userLng.value,
@@ -599,8 +634,12 @@ async function saveLocation() {
       },
     })
     locationSaved.value = true
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to save location:', error)
+    if (getErrorStatus(error) === 401) {
+      await handleAuthExpired()
+      return
+    }
     alert('Failed to save location. Please try again.')
   } finally {
     isSavingLocation.value = false
@@ -644,6 +683,7 @@ function closeCamera() {
 
 function startAutoScan() {
   if (scanIntervalId) return
+  consecutiveErrors = 0
   isScanning.value = true
   scanIntervalId = setInterval(captureFrameAndAnalyze, SCAN_INTERVAL_MS)
 }
@@ -676,13 +716,12 @@ async function captureFrameAndAnalyze() {
     const file = new File([blob], 'scan.jpg', { type: 'image/jpeg' })
 
     try {
-      const token = localStorage.getItem('token')
       const formData = new FormData()
       formData.append('image', file)
 
       const data = await $fetch<any>(`${config.public.apiBase}/scans/preview`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: authHeaders(),
         body: formData,
       })
 
@@ -693,13 +732,8 @@ async function captureFrameAndAnalyze() {
         scanStatus.value = 'No mushroom detected — keep scanning...'
       } else if (confidence >= CONFIDENCE_THRESHOLD) {
         scanStatus.value = 'Saving result...'
-        try {
-          await saveFinalScan(file)
-          closeCamera()
-        } catch (saveError) {
-          console.error('Final save failed:', saveError)
-          scanStatus.value = 'Could not save — keep scanning...'
-        }
+        // Errors here propagate to the outer catch (401/403/retry limit handled there)
+        await saveFinalScan(file)
         stopAutoScan()
         closeCamera()
         // Show consent modal once after the first successful scan
@@ -707,14 +741,35 @@ async function captureFrameAndAnalyze() {
       } else {
         scanStatus.value = `Low confidence (${confidence}%) — keep scanning...`
       }
+
+      // Whole round-trip succeeded → reset the failure counter
+      consecutiveErrors = 0
     } catch (error: any) {
       console.error('Auto-scan request failed:', error)
-      if (error?.data?.error === 'SCAN_LIMIT_REACHED' || error?.status === 403 || error?.statusCode === 403) {
+      const status = getErrorStatus(error)
+
+      // Token rejected → stop and send to login
+      if (status === 401) {
+        await handleAuthExpired()
+        return
+      }
+
+      // Free-tier limit reached
+      if (error?.data?.error === 'SCAN_LIMIT_REACHED' || status === 403) {
         stopAutoScan()
         closeCamera()
         canScan.value = false
         remainingScans.value = 0
         showUpgradeModal.value = true
+        return
+      }
+
+      // Anything else: retry a few times, then give up instead of looping forever
+      consecutiveErrors++
+      if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+        stopAutoScan()
+        closeCamera()
+        alert('Scanning failed repeatedly. Please try again later.')
         return
       }
       scanStatus.value = 'Scan error, retrying...'
@@ -725,7 +780,6 @@ async function captureFrameAndAnalyze() {
 }
 
 async function saveFinalScan(file: File) {
-  const token = localStorage.getItem('token')
   const formData = new FormData()
   formData.append('image', file)
 
@@ -740,7 +794,7 @@ async function saveFinalScan(file: File) {
 
   const data = await $fetch<any>(`${config.public.apiBase}/scans`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(),
     body: formData,
   })
 
@@ -811,7 +865,6 @@ async function analyzeImage() {
   await fetchUserLocation()
 
   try {
-    const token = localStorage.getItem('token')
     const formData = new FormData()
     formData.append('image', selectedFile.value)
 
@@ -827,7 +880,7 @@ async function analyzeImage() {
     // Send to backend
     const data = await $fetch<any>(`${config.public.apiBase}/scans`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: authHeaders(),
       body: formData,
     })
 
@@ -851,7 +904,10 @@ async function analyzeImage() {
     setTimeout(maybeShowConsentModal, 800)
   } catch (error: any) {
     console.error('Scan upload failed:', error)
-    if (error?.data?.error === 'SCAN_LIMIT_REACHED' || error?.status === 403 || error?.statusCode === 403) {
+    const status = getErrorStatus(error)
+    if (status === 401) {
+      await handleAuthExpired()
+    } else if (error?.data?.error === 'SCAN_LIMIT_REACHED' || status === 403) {
       canScan.value = false
       remainingScans.value = 0
       showUpgradeModal.value = true
