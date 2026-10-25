@@ -111,23 +111,6 @@
             </p>
           </div>
 
-          <!-- Quick Demo Fill -->
-          <div class="mb-5 p-2.5 rounded-xl bg-stone-950/60 border border-emerald-900/40 flex items-center justify-between gap-2">
-            <span class="text-[11px] text-slate-400 font-medium">⚡ Quick Demo:</span>
-            <div class="flex items-center gap-1.5">
-              <button
-                type="button"
-                @click="fillUser"
-                class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-900/50 hover:bg-emerald-800/60 text-emerald-200 border border-emerald-700/30 transition cursor-pointer"
-              >Fill User</button>
-              <button
-                type="button"
-                @click="fillAdmin"
-                class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-900/50 hover:bg-amber-800/60 text-amber-200 border border-amber-700/30 transition cursor-pointer"
-              >Fill Admin</button>
-            </div>
-          </div>
-
           <!-- Error Banner -->
           <div v-if="error" class="mb-4 flex items-start gap-2.5 p-3 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs">
             <svg class="w-4 h-4 shrink-0 text-red-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -309,20 +292,6 @@ function handleGoogleLogin() {
   })
   googleLoading.value = true
   tokenClient.requestAccessToken()
-}
-
-function fillUser() {
-  activeRole.value  = 'user'
-  form.email        = 'forager@example.com'
-  form.password     = 'password'
-  error.value       = ''
-}
-
-function fillAdmin() {
-  activeRole.value  = 'admin'
-  form.email        = 'superadmin@mycovision.com'
-  form.password     = 'SuperAdmin123!'
-  error.value       = ''
 }
 
 async function handleLogin() {

@@ -116,16 +116,6 @@
                 </svg>
               </button>
 
-              <a
-                href="#scanner-demo"
-                class="px-6 py-3.5 rounded-xl font-semibold text-sm bg-emerald-950/60 hover:bg-emerald-900/50 text-slate-200 border border-emerald-800/50 backdrop-blur-md transition cursor-pointer flex items-center gap-2"
-              >
-                <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                <span>View AI Demo</span>
-              </a>
             </div>
 
             <!-- Trust Metrics Bar -->
@@ -197,29 +187,6 @@
                 <p class="text-xs text-slate-300 mt-1">
                   {{ activeRole === 'user' ? 'Scan mushrooms, view history, and manage your subscription.' : 'Access dataset moderation, species taxonomy, and user metrics.' }}
                 </p>
-              </div>
-
-              <!-- Quick Demo Autofill Pills (Makes testing immediate and convenient!) -->
-              <div class="mb-5 p-2.5 rounded-xl bg-stone-950/60 border border-emerald-900/40 flex items-center justify-between gap-2">
-                <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
-                  <span>⚡ Quick Demo:</span>
-                </span>
-                <div class="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    @click="fillUserCredentials"
-                    class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-emerald-900/50 hover:bg-emerald-800/60 text-emerald-200 border border-emerald-700/30 transition cursor-pointer"
-                  >
-                    Fill User
-                  </button>
-                  <button
-                    type="button"
-                    @click="fillAdminCredentials"
-                    class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-amber-900/50 hover:bg-amber-800/60 text-amber-200 border border-amber-700/30 transition cursor-pointer"
-                  >
-                    Fill Admin
-                  </button>
-                </div>
               </div>
 
               <!-- Error Alert -->
@@ -307,6 +274,34 @@
                   <span>{{ isSubmitting ? 'Authenticating...' : (activeRole === 'user' ? 'Login as Forager' : 'Enter Admin Console') }}</span>
                 </button>
               </form>
+
+              <!-- Continue with Google (Forager only) -->
+              <div v-if="activeRole === 'user'" class="mt-4">
+                <div class="flex items-center gap-3">
+                  <div class="flex-1 h-px bg-emerald-900/50" />
+                  <span class="text-[11px] text-slate-500 font-medium">or</span>
+                  <div class="flex-1 h-px bg-emerald-900/50" />
+                </div>
+                <button
+                  id="landing-google-button"
+                  type="button"
+                  @click="handleGoogleLogin"
+                  :disabled="googleLoading || isSubmitting"
+                  class="mt-3 w-full py-2.5 px-4 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 border bg-[#0d1f19] hover:bg-emerald-950/80 border-emerald-700/50 hover:border-emerald-500/60 text-slate-200 hover:text-white hover:shadow-md hover:shadow-emerald-900/30"
+                >
+                  <svg v-if="googleLoading" class="w-4 h-4 animate-spin text-emerald-400" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  <svg v-else viewBox="0 0 24 24" class="w-4 h-4 shrink-0">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  <span>{{ googleLoading ? 'Signing in…' : 'Continue with Google' }}</span>
+                </button>
+              </div>
 
               <!-- Footer info & Register link -->
               <div class="mt-6 pt-5 border-t border-emerald-900/30 flex items-center justify-between text-xs text-slate-400">
@@ -815,27 +810,6 @@
             {{ activeRole === 'user' ? 'Enter your credentials to manage your scans and subscriptions.' : 'Enter administrative credentials to open the operations console.' }}
           </p>
 
-          <!-- Demo Fill Pills -->
-          <div class="mb-4 p-2 rounded-xl bg-stone-950/60 border border-emerald-900/40 flex items-center justify-between text-xs">
-            <span class="text-[11px] text-slate-400">Quick Autofill:</span>
-            <div class="flex items-center gap-1.5">
-              <button
-                type="button"
-                @click="fillUserCredentials"
-                class="px-2 py-0.5 rounded text-[11px] bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 border border-emerald-700/40 cursor-pointer"
-              >
-                User
-              </button>
-              <button
-                type="button"
-                @click="fillAdminCredentials"
-                class="px-2 py-0.5 rounded text-[11px] bg-amber-900/60 hover:bg-amber-800 text-amber-200 border border-amber-700/40 cursor-pointer"
-              >
-                Admin
-              </button>
-            </div>
-          </div>
-
           <!-- Error Alert -->
           <div v-if="loginError" class="mb-4 p-2.5 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs">
             {{ loginError }}
@@ -878,6 +852,34 @@
               <span>{{ isSubmitting ? 'Verifying...' : (activeRole === 'user' ? 'Login as Forager' : 'Enter Admin Console') }}</span>
             </button>
           </form>
+
+          <!-- Continue with Google (Forager only) -->
+          <div v-if="activeRole === 'user'" class="mt-4">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 h-px bg-emerald-900/50" />
+              <span class="text-[11px] text-slate-500 font-medium">or</span>
+              <div class="flex-1 h-px bg-emerald-900/50" />
+            </div>
+            <button
+              id="modal-google-button"
+              type="button"
+              @click="handleGoogleLogin"
+              :disabled="googleLoading || isSubmitting"
+              class="mt-3 w-full py-2.5 px-4 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 border bg-[#0d1f19] hover:bg-emerald-950/80 border-emerald-700/50 hover:border-emerald-500/60 text-slate-200 hover:text-white"
+            >
+              <svg v-if="googleLoading" class="w-4 h-4 animate-spin text-emerald-400" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" class="w-4 h-4 shrink-0">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              <span>{{ googleLoading ? 'Signing in…' : 'Continue with Google' }}</span>
+            </button>
+          </div>
 
           <p class="text-center text-xs text-slate-400 mt-4">
             No account yet?
@@ -935,18 +937,55 @@ function scrollToLogin() {
   }
 }
 
-function fillUserCredentials() {
-  activeRole.value = 'user'
-  loginForm.email = 'forager@example.com'
-  loginForm.password = 'password'
+// ── Continue with Google ──
+const googleLoading = ref(false)
+
+useHead({
+  script: [{ src: 'https://accounts.google.com/gsi/client', async: true, defer: true }],
+})
+
+function handleGoogleLogin() {
   loginError.value = ''
+  const gsi = (window as any).google
+  if (!gsi) {
+    loginError.value = 'Google Sign-In is not available. Please refresh and try again.'
+    return
+  }
+  const tokenClient = gsi.accounts.oauth2.initTokenClient({
+    client_id: config.public.googleClientId,
+    scope: 'email profile',
+    prompt: 'select_account',
+    callback: async (resp: any) => {
+      if (resp.error) {
+        loginError.value = 'Google sign-in was cancelled or failed.'
+        googleLoading.value = false
+        return
+      }
+      await processGoogleToken(resp.access_token)
+    },
+    error_callback: () => { googleLoading.value = false },
+  })
+  googleLoading.value = true
+  tokenClient.requestAccessToken()
 }
 
-function fillAdminCredentials() {
-  activeRole.value = 'admin'
-  loginForm.email = 'superadmin@mycovision.com'
-  loginForm.password = 'SuperAdmin123!'
-  loginError.value = ''
+async function processGoogleToken(accessToken: string) {
+  try {
+    const data = await $fetch<{ user: any; token: string }>(`${config.public.apiBase}/auth/google`, {
+      method: 'POST',
+      body: { access_token: accessToken },
+    })
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('user', JSON.stringify(data.user))
+    localStorage.setItem('role', data.user.role)
+    const isAdmin = data.user.role === 'admin' || data.user.role === 'super_admin'
+    // Full-page redirect: the GSI callback runs outside Vue's lifecycle
+    await navigateTo(isAdmin ? '/admin/dashboard' : '/users/scan', { external: true })
+  } catch (err: any) {
+    loginError.value = err?.data?.message || 'Google sign-in failed. Please try again.'
+  } finally {
+    googleLoading.value = false
+  }
 }
 
 async function handleLoginSubmit() {
