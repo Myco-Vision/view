@@ -218,6 +218,67 @@
               />
             </div>
 
+            <!-- Password (so you can also sign in with email + password) -->
+            <div class="flex flex-col gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-[0.75rem] font-semibold text-slate-300 tracking-wide">Password</label>
+                  <div class="relative">
+                    <input
+                      v-model="form.password"
+                      :type="showPassword ? 'text' : 'password'"
+                      placeholder="••••••••"
+                      class="w-full py-2.5 pl-3.5 pr-10 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
+                      :disabled="loading"
+                    />
+                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-300 transition cursor-pointer" @click="showPassword = !showPassword">
+                      <svg v-if="!showPassword" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-[0.75rem] font-semibold text-slate-300 tracking-wide">Confirm Password</label>
+                  <div class="relative">
+                    <input
+                      v-model="form.confirmPassword"
+                      :type="showConfirm ? 'text' : 'password'"
+                      placeholder="••••••••"
+                      class="w-full py-2.5 pl-3.5 pr-10 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
+                      :disabled="loading"
+                    />
+                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-300 transition cursor-pointer" @click="showConfirm = !showConfirm">
+                      <svg v-if="!showConfirm" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Password Requirements -->
+              <div class="p-3 rounded-xl bg-stone-950/70 border border-emerald-900/50 flex flex-col gap-2">
+                <p class="text-[0.68rem] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <svg class="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                  Password Requirements
+                </p>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <span class="flex items-center gap-1.5 text-[0.7rem] font-medium transition-colors" :class="pwRules.len ? 'text-emerald-400' : 'text-slate-500'">
+                    <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="pwRules.len ? 'bg-emerald-400' : 'bg-slate-600'" />At least 8 characters
+                  </span>
+                  <span class="flex items-center gap-1.5 text-[0.7rem] font-medium transition-colors" :class="pwRules.upper ? 'text-emerald-400' : 'text-slate-500'">
+                    <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="pwRules.upper ? 'bg-emerald-400' : 'bg-slate-600'" />One uppercase (A–Z)
+                  </span>
+                  <span class="flex items-center gap-1.5 text-[0.7rem] font-medium transition-colors" :class="pwRules.number ? 'text-emerald-400' : 'text-slate-500'">
+                    <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="pwRules.number ? 'bg-emerald-400' : 'bg-slate-600'" />One number (0–9)
+                  </span>
+                  <span class="flex items-center gap-1.5 text-[0.7rem] font-medium transition-colors" :class="pwRules.special ? 'text-emerald-400' : 'text-slate-500'">
+                    <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="pwRules.special ? 'bg-emerald-400' : 'bg-slate-600'" />One special (!@#$…)
+                  </span>
+                </div>
+              </div>
+              <p class="text-[0.68rem] text-slate-500 -mt-1">Set a password so you can also sign in with your email, not just Google.</p>
+            </div>
+
             <!-- Submit -->
             <button
               type="button"
@@ -278,7 +339,19 @@ onMounted(() => {
 const form = reactive({
   username: '',
   contact: '',
+  password: '',
+  confirmPassword: '',
 })
+
+const showPassword = ref(false)
+const showConfirm  = ref(false)
+
+const pwRules = computed(() => ({
+  len:     form.password.length >= 8,
+  upper:   /[A-Z]/.test(form.password),
+  number:  /[0-9]/.test(form.password),
+  special: /[^A-Za-z0-9]/.test(form.password),
+}))
 
 // ── Philippine Cascading Address ──
 const PSGC = 'https://psgc.cloud/api'
@@ -372,6 +445,26 @@ async function handleSubmit() {
     error.value = 'Please complete your address (Region, Province, City, and Barangay are required).'
     return
   }
+  if (!pwRules.value.len) {
+    error.value = 'Password must be at least 8 characters.'
+    return
+  }
+  if (!pwRules.value.upper) {
+    error.value = 'Password must contain at least one uppercase letter (A–Z).'
+    return
+  }
+  if (!pwRules.value.number) {
+    error.value = 'Password must contain at least one number (0–9).'
+    return
+  }
+  if (!pwRules.value.special) {
+    error.value = 'Password must contain at least one special character (e.g. !@#$%).'
+    return
+  }
+  if (form.password !== form.confirmPassword) {
+    error.value = 'Passwords do not match.'
+    return
+  }
 
   loading.value = true
   try {
@@ -380,9 +473,11 @@ async function handleSubmit() {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: {
-        username:       form.username.trim(),
-        contact_number: form.contact.trim(),
-        address:        fullAddress.value,
+        username:              form.username.trim(),
+        contact_number:        form.contact.trim(),
+        address:               fullAddress.value,
+        password:              form.password,
+        password_confirmation: form.confirmPassword,
       },
     })
 

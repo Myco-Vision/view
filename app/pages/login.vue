@@ -185,6 +185,11 @@
               </div>
             </div>
 
+            <!-- Forgot password link -->
+            <div class="flex justify-end -mt-1 mb-3">
+              <NuxtLink to="/forgot-password" class="text-[11px] text-emerald-400 hover:underline font-semibold">Forgot password?</NuxtLink>
+            </div>
+
             <!-- Submit Button -->
             <button
               type="submit"
