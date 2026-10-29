@@ -168,6 +168,11 @@
               </div>
             </div>
 
+            <!-- Forgot password link -->
+            <div class="flex justify-end -mt-1 mb-3">
+              <NuxtLink to="/forgot-password" class="text-[11px] text-emerald-400 hover:underline font-semibold">Forgot password?</NuxtLink>
+            </div>
+
             <!-- Submit Button -->
             <button
               type="submit"
@@ -333,13 +338,20 @@ async function processGoogleToken(accessToken: string) {
   googleLoading.value = true
   error.value = ''
   try {
-    const data = await $fetch<{ user: any; token: string }>(`${config.public.apiBase}/auth/google`, {
+    const data = await $fetch<{ user: any; token: string; needs_completion: boolean }>(`${config.public.apiBase}/auth/google`, {
       method: 'POST',
       body: { access_token: accessToken },
     })
     localStorage.setItem('token', data.token)
     localStorage.setItem('user', JSON.stringify(data.user))
     localStorage.setItem('role', data.user.role)
+
+    // Gate: force profile completion for new / incomplete Google accounts
+    if (data.needs_completion) {
+      await navigateTo('/complete-profile', { external: true })
+      return
+    }
+
     // Full-page redirect (not a client-side route change): the Google popup callback runs outside
     // Vue's lifecycle, so an SPA transition left the old page stuck under the new layout.
     const isAdmin = data.user.role === 'admin' || data.user.role === 'super_admin'

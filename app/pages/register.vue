@@ -137,6 +137,11 @@
                   class="w-full py-2.5 px-3.5 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
                   :disabled="loading"
                 />
+                <p v-if="form.email && emailHint.text" class="text-[0.65rem] font-medium flex items-center gap-1 mt-0.5" :class="emailHint.color">
+                  <svg v-if="emailStatus === 'checking'" class="w-3 h-3 animate-spin shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                  <span v-else class="w-1.5 h-1.5 rounded-full shrink-0" :class="emailHint.dot" />
+                  {{ emailHint.text }}
+                </p>
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-[0.75rem] font-semibold text-slate-300 tracking-wide">Contact No.</label>
@@ -147,16 +152,94 @@
                   class="w-full py-2.5 px-3.5 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
                   :disabled="loading"
                 />
+                <p v-if="form.contact" class="text-[0.65rem] font-medium flex items-center gap-1 mt-0.5" :class="phoneValid ? 'text-emerald-400' : 'text-red-400'">
+                  <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="phoneValid ? 'bg-emerald-400' : 'bg-red-400'" />
+                  {{ phoneValid ? 'Valid mobile number' : 'Use PH format: 0917 123 4567 or +63 917 123 4567' }}
+                </p>
               </div>
             </div>
 
-            <!-- Address -->
-            <div class="flex flex-col gap-1.5">
-              <label class="text-[0.75rem] font-semibold text-slate-300 tracking-wide">Complete Address</label>
+            <!-- Address (Cascading Philippine Location Dropdowns) -->
+            <div class="flex flex-col gap-2">
+              <label class="text-[0.75rem] font-semibold text-slate-300 tracking-wide">Address</label>
+
+              <!-- Region -->
+              <div class="relative">
+                <select
+                  v-model="addr.regionCode"
+                  @change="onRegionChange"
+                  :disabled="loading || addrLoading.regions"
+                  class="w-full py-2.5 px-3.5 pr-9 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-sm focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition appearance-none cursor-pointer disabled:opacity-60"
+                  :class="addr.regionCode ? 'text-white' : 'text-slate-500'"
+                >
+                  <option value="" disabled>{{ addrLoading.regions ? 'Loading regions…' : 'Select Region' }}</option>
+                  <option v-for="r in regions" :key="r.code" :value="r.code">{{ r.name }}</option>
+                </select>
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+                  <svg v-if="addrLoading.regions" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                  <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </span>
+              </div>
+
+              <!-- Province -->
+              <div class="relative">
+                <select
+                  v-model="addr.provinceCode"
+                  @change="onProvinceChange"
+                  :disabled="loading || !addr.regionCode || addrLoading.provinces"
+                  class="w-full py-2.5 px-3.5 pr-9 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-sm focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition appearance-none cursor-pointer disabled:opacity-60"
+                  :class="addr.provinceCode ? 'text-white' : 'text-slate-500'"
+                >
+                  <option value="" disabled>{{ addrLoading.provinces ? 'Loading provinces…' : (addr.regionCode ? 'Select Province' : 'Select a region first') }}</option>
+                  <option v-for="p in provinces" :key="p.code" :value="p.code">{{ p.name }}</option>
+                </select>
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+                  <svg v-if="addrLoading.provinces" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                  <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </span>
+              </div>
+
+              <!-- City / Municipality -->
+              <div class="relative">
+                <select
+                  v-model="addr.cityCode"
+                  @change="onCityChange"
+                  :disabled="loading || !addr.provinceCode || addrLoading.cities"
+                  class="w-full py-2.5 px-3.5 pr-9 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-sm focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition appearance-none cursor-pointer disabled:opacity-60"
+                  :class="addr.cityCode ? 'text-white' : 'text-slate-500'"
+                >
+                  <option value="" disabled>{{ addrLoading.cities ? 'Loading cities…' : (addr.provinceCode ? 'Select City / Municipality' : 'Select a province first') }}</option>
+                  <option v-for="c in cities" :key="c.code" :value="c.code">{{ c.name }}</option>
+                </select>
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+                  <svg v-if="addrLoading.cities" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                  <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </span>
+              </div>
+
+              <!-- Barangay -->
+              <div class="relative">
+                <select
+                  v-model="addr.barangayCode"
+                  @change="onBarangayChange"
+                  :disabled="loading || !addr.cityCode || addrLoading.barangays"
+                  class="w-full py-2.5 px-3.5 pr-9 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-sm focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition appearance-none cursor-pointer disabled:opacity-60"
+                  :class="addr.barangayCode ? 'text-white' : 'text-slate-500'"
+                >
+                  <option value="" disabled>{{ addrLoading.barangays ? 'Loading barangays…' : (addr.cityCode ? 'Select Barangay' : 'Select a city first') }}</option>
+                  <option v-for="b in barangays" :key="b.code" :value="b.code">{{ b.name }}</option>
+                </select>
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+                  <svg v-if="addrLoading.barangays" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                  <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </span>
+              </div>
+
+              <!-- Street / House No. -->
               <input
-                v-model="form.address"
+                v-model="addr.street"
                 type="text"
-                placeholder="123 Rizal Street, Barangay San Roque..."
+                placeholder="House No. / Street / Purok (optional)"
                 class="w-full py-2.5 px-3.5 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
                 :disabled="loading"
               />
@@ -643,6 +726,115 @@ function handleGoogleRegister() {
   tokenClient.requestAccessToken()
 }
 
+// ── Philippine Cascading Address ──
+const PSGC = 'https://psgc.cloud/api'
+
+const addr = reactive({
+  regionCode: '',
+  regionName: '',
+  provinceCode: '',
+  provinceName: '',
+  cityCode: '',
+  cityName: '',
+  barangayCode: '',
+  barangayName: '',
+  street: '',
+})
+
+const addrLoading = reactive({
+  regions: false,
+  provinces: false,
+  cities: false,
+  barangays: false,
+})
+
+const regions   = ref<{ code: string; name: string }[]>([])
+const provinces = ref<{ code: string; name: string }[]>([])
+const cities    = ref<{ code: string; name: string }[]>([])
+const barangays = ref<{ code: string; name: string }[]>([])
+
+async function loadRegions() {
+  addrLoading.regions = true
+  try {
+    const data = await $fetch<any[]>(`${PSGC}/regions`)
+    regions.value = data
+      .map((r: any) => ({ code: r.code, name: r.name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  } catch { regions.value = [] }
+  finally { addrLoading.regions = false }
+}
+
+async function onRegionChange() {
+  const r = regions.value.find(x => x.code === addr.regionCode)
+  addr.regionName   = r?.name ?? ''
+  addr.provinceCode = ''; addr.provinceName = ''
+  addr.cityCode     = ''; addr.cityName     = ''
+  addr.barangayCode = ''; addr.barangayName = ''
+  provinces.value = []; cities.value = []; barangays.value = []
+  if (!addr.regionCode) return
+  addrLoading.provinces = true
+  try {
+    const data = await $fetch<any[]>(`${PSGC}/regions/${addr.regionCode}/provinces`)
+    provinces.value = data
+      .map((p: any) => ({ code: p.code, name: p.name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  } catch { provinces.value = [] }
+  finally { addrLoading.provinces = false }
+}
+
+async function onProvinceChange() {
+  const p = provinces.value.find(x => x.code === addr.provinceCode)
+  addr.provinceName = p?.name ?? ''
+  addr.cityCode     = ''; addr.cityName     = ''
+  addr.barangayCode = ''; addr.barangayName = ''
+  cities.value = []; barangays.value = []
+  if (!addr.provinceCode) return
+  addrLoading.cities = true
+  try {
+    const data = await $fetch<any[]>(`${PSGC}/provinces/${addr.provinceCode}/cities-municipalities`)
+    cities.value = data
+      .map((c: any) => ({ code: c.code, name: c.name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  } catch { cities.value = [] }
+  finally { addrLoading.cities = false }
+}
+
+async function onCityChange() {
+  const c = cities.value.find(x => x.code === addr.cityCode)
+  addr.cityName     = c?.name ?? ''
+  addr.barangayCode = ''; addr.barangayName = ''
+  barangays.value = []
+  if (!addr.cityCode) return
+  addrLoading.barangays = true
+  try {
+    const data = await $fetch<any[]>(`${PSGC}/cities-municipalities/${addr.cityCode}/barangays`)
+    barangays.value = data
+      .map((b: any) => ({ code: b.code, name: b.name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  } catch { barangays.value = [] }
+  finally { addrLoading.barangays = false }
+}
+
+function onBarangayChange() {
+  const b = barangays.value.find(x => x.code === addr.barangayCode)
+  addr.barangayName = b?.name ?? ''
+}
+
+// Build the full address string from dropdown selections
+const fullAddress = computed(() => {
+  const parts = [
+    addr.street,
+    addr.barangayName,
+    addr.cityName,
+    addr.provinceName,
+    addr.regionName,
+  ].filter(Boolean)
+  return parts.join(', ')
+})
+
+// Load regions on mount
+onMounted(loadRegions)
+
 const form = reactive({
   firstName: '',
   lastName: '',
@@ -651,13 +843,75 @@ const form = reactive({
   password: '',
   confirmPassword: '',
   contact: '',
-  address: '',
+  get address() { return fullAddress.value },
 })
+
+// ── Email & phone format validation ──
+const emailValid = computed(() =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
+)
+
+// Email availability — debounced live check against the backend
+const emailStatus = ref<'empty' | 'invalid' | 'checking' | 'available' | 'taken'>('empty')
+let emailCheckTimer: ReturnType<typeof setTimeout> | null = null
+
+const emailHint = computed(() => {
+  switch (emailStatus.value) {
+    case 'invalid':   return { text: 'Enter a valid email (name@example.com)', color: 'text-red-400',     dot: 'bg-red-400' }
+    case 'checking':  return { text: 'Checking availability…',                   color: 'text-amber-400',   dot: 'bg-amber-400' }
+    case 'available': return { text: 'Email is available',                       color: 'text-emerald-400',  dot: 'bg-emerald-400' }
+    case 'taken':     return { text: 'This email is already registered',         color: 'text-red-400',     dot: 'bg-red-400' }
+    default:          return { text: '', color: '', dot: '' }
+  }
+})
+
+watch(() => form.email, (val) => {
+  if (emailCheckTimer) { clearTimeout(emailCheckTimer); emailCheckTimer = null }
+  const v = (val || '').trim()
+  if (!v) { emailStatus.value = 'empty'; return }
+  if (!emailValid.value) { emailStatus.value = 'invalid'; return }
+  emailStatus.value = 'checking'
+  emailCheckTimer = setTimeout(async () => {
+    try {
+      const res = await $fetch<{ available: boolean }>(`${config.public.apiBase}/register/check-email`, {
+        params: { email: v },
+      })
+      emailStatus.value = res.available ? 'available' : 'taken'
+    } catch {
+      // Network/validation hiccup — don't block the user; submit-time validation still enforces uniqueness
+      emailStatus.value = 'available'
+    }
+  }, 500)
+})
+
+function normalizePhone(input: string): string {
+  return (input || '').replace(/[\s\-()]/g, '')
+}
+
+const phoneValid = computed(() =>
+  /^(\+63|0)9\d{9}$/.test(normalizePhone(form.contact))
+)
 
 function goNext() {
   error.value = ''
-  if (!form.firstName || !form.lastName || !form.username || !form.email || !form.contact || !form.address || !form.password || !form.confirmPassword) {
+  if (!form.firstName || !form.lastName || !form.username || !form.email || !form.contact || !form.password || !form.confirmPassword) {
     error.value = 'Please fill out all required fields.'
+    return
+  }
+  if (emailStatus.value === 'invalid') {
+    error.value = 'Please enter a valid email address (e.g. name@example.com).'
+    return
+  }
+  if (emailStatus.value === 'taken') {
+    error.value = 'This email is already registered. Please use a different email.'
+    return
+  }
+  if (!phoneValid.value) {
+    error.value = 'Please enter a valid Philippine mobile number (e.g. 0917 123 4567 or +63 917 123 4567).'
+    return
+  }
+  if (!addr.regionCode || !addr.provinceCode || !addr.cityCode || !addr.barangayCode) {
+    error.value = 'Please complete your address (Region, Province, City, and Barangay are required).'
     return
   }
   if (form.password.length < 8) {
@@ -731,13 +985,20 @@ async function processGoogleToken(accessToken: string) {
   googleLoading.value = true
   error.value = ''
   try {
-    const data = await $fetch<{ user: any; token: string }>(`${config.public.apiBase}/auth/google`, {
+    const data = await $fetch<{ user: any; token: string; needs_completion: boolean }>(`${config.public.apiBase}/auth/google`, {
       method: 'POST',
       body: { access_token: accessToken },
     })
     localStorage.setItem('token', data.token)
     localStorage.setItem('user', JSON.stringify(data.user))
     localStorage.setItem('role', data.user.role)
+
+    // Gate: force profile completion for new / incomplete Google accounts
+    if (data.needs_completion) {
+      await navigateTo('/complete-profile', { external: true })
+      return
+    }
+
     // Full-page redirect (not a client-side route change): the Google popup callback runs outside
     // Vue's lifecycle, so an SPA transition left the old page stuck under the new layout.
     const isAdmin = data.user.role === 'admin' || data.user.role === 'super_admin'

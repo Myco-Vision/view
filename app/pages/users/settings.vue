@@ -86,7 +86,7 @@
             <span class="text-[16px]">🔐</span> Account
           </p>
           <div class="flex flex-col gap-2">
-            <button class="flex items-center gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] text-left hover:bg-[#f8fafc]">
+            <button class="flex items-center gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] text-left hover:bg-[#f8fafc]" @click="openChangePassword">
               <span class="text-[16px]">🔑</span>
               <span>Change Password</span>
             </button>
@@ -275,6 +275,73 @@
       </div>
     </div>
   </Teleport>
+
+  <!-- Change Password Modal -->
+  <Teleport to="body">
+    <div
+      v-if="showPasswordModal"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+      @click.self="closePasswordModal"
+    >
+      <div class="bg-white rounded-2xl w-[460px] max-w-full shadow-2xl overflow-hidden border border-[#e2e8f0]">
+        <!-- Header -->
+        <div class="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-full bg-[#d1fae5] text-[#059669] flex items-center justify-center font-bold text-lg">🔑</div>
+            <div>
+              <h3 class="text-[16px] font-bold text-[#0f172a]">Change Password</h3>
+              <p class="text-[12px] text-[#64748b]">Update your account password</p>
+            </div>
+          </div>
+          <button class="text-[#94a3b8] hover:text-[#0f172a] text-xl font-bold bg-transparent border-none cursor-pointer" @click="closePasswordModal">✕</button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-5 flex flex-col gap-3.5">
+          <div v-if="passwordError" class="flex items-start gap-2 p-3 rounded-lg bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] text-[12.5px]">
+            <span>⚠️</span><span>{{ passwordError }}</span>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#0f172a]">Current Password</label>
+            <div class="relative">
+              <input v-model="pwForm.current" :type="showPw.current ? 'text' : 'password'" placeholder="••••••••" class="w-full py-2.5 pl-3.5 pr-10 rounded-lg border border-[#e2e8f0] bg-white text-[13px] text-[#0f172a] outline-none focus:border-[#10b981]" />
+              <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] cursor-pointer" @click="showPw.current = !showPw.current">{{ showPw.current ? '🙈' : '👁️' }}</button>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#0f172a]">New Password</label>
+            <div class="relative">
+              <input v-model="pwForm.password" :type="showPw.password ? 'text' : 'password'" placeholder="••••••••" class="w-full py-2.5 pl-3.5 pr-10 rounded-lg border border-[#e2e8f0] bg-white text-[13px] text-[#0f172a] outline-none focus:border-[#10b981]" />
+              <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] cursor-pointer" @click="showPw.password = !showPw.password">{{ showPw.password ? '🙈' : '👁️' }}</button>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#0f172a]">Confirm New Password</label>
+            <div class="relative">
+              <input v-model="pwForm.confirm" :type="showPw.confirm ? 'text' : 'password'" placeholder="••••••••" class="w-full py-2.5 pl-3.5 pr-10 rounded-lg border border-[#e2e8f0] bg-white text-[13px] text-[#0f172a] outline-none focus:border-[#10b981]" />
+              <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] cursor-pointer" @click="showPw.confirm = !showPw.confirm">{{ showPw.confirm ? '🙈' : '👁️' }}</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5 p-3 rounded-lg bg-[#f8fafc] border border-[#e2e8f0]">
+            <span class="flex items-center gap-1.5 text-[11.5px]" :class="pwRules.len ? 'text-[#059669]' : 'text-[#94a3b8]'"><span :class="pwRules.len ? 'text-[#059669]' : 'text-[#cbd5e1]'">●</span>8+ characters</span>
+            <span class="flex items-center gap-1.5 text-[11.5px]" :class="pwRules.upper ? 'text-[#059669]' : 'text-[#94a3b8]'"><span :class="pwRules.upper ? 'text-[#059669]' : 'text-[#cbd5e1]'">●</span>Uppercase A–Z</span>
+            <span class="flex items-center gap-1.5 text-[11.5px]" :class="pwRules.number ? 'text-[#059669]' : 'text-[#94a3b8]'"><span :class="pwRules.number ? 'text-[#059669]' : 'text-[#cbd5e1]'">●</span>Number 0–9</span>
+            <span class="flex items-center gap-1.5 text-[11.5px]" :class="pwRules.special ? 'text-[#059669]' : 'text-[#94a3b8]'"><span :class="pwRules.special ? 'text-[#059669]' : 'text-[#cbd5e1]'">●</span>Special char</span>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-[#f1f5f9] bg-[#f8fafc] flex items-center justify-end gap-2.5">
+          <button class="py-2 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium text-[#475569] hover:bg-[#f1f5f9] cursor-pointer" @click="closePasswordModal">Cancel</button>
+          <button class="py-2 px-5 rounded-lg bg-gradient-to-r from-[#10b981] to-[#059669] text-white text-[13px] font-semibold cursor-pointer shadow-sm hover:opacity-90 disabled:opacity-50" :disabled="changingPassword" @click="submitChangePassword">{{ changingPassword ? 'Saving...' : 'Update Password' }}</button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -299,31 +366,127 @@ const privacy = reactive({
   shareData: false,
 })
 
-onMounted(() => {
+// ── Change Password ──
+const showPasswordModal = ref(false)
+const changingPassword  = ref(false)
+const passwordError      = ref('')
+const pwForm = reactive({ current: '', password: '', confirm: '' })
+const showPw = reactive({ current: false, password: false, confirm: false })
+
+const pwRules = computed(() => ({
+  len:     pwForm.password.length >= 8,
+  upper:   /[A-Z]/.test(pwForm.password),
+  number:  /[0-9]/.test(pwForm.password),
+  special: /[^A-Za-z0-9]/.test(pwForm.password),
+}))
+
+function openChangePassword() {
+  passwordError.value = ''
+  pwForm.current = ''
+  pwForm.password = ''
+  pwForm.confirm = ''
+  showPw.current = false
+  showPw.password = false
+  showPw.confirm = false
+  showPasswordModal.value = true
+}
+
+function closePasswordModal() {
+  showPasswordModal.value = false
+}
+
+async function submitChangePassword() {
+  passwordError.value = ''
+  if (!pwForm.current) {
+    passwordError.value = 'Enter your current password.'
+    return
+  }
+  if (!pwRules.value.len) {
+    passwordError.value = 'New password must be at least 8 characters.'
+    return
+  }
+  if (!pwRules.value.upper) {
+    passwordError.value = 'New password must contain an uppercase letter (A–Z).'
+    return
+  }
+  if (!pwRules.value.number) {
+    passwordError.value = 'New password must contain a number (0–9).'
+    return
+  }
+  if (!pwRules.value.special) {
+    passwordError.value = 'New password must contain a special character (e.g. !@#$%).'
+    return
+  }
+  if (pwForm.password !== pwForm.confirm) {
+    passwordError.value = 'New passwords do not match.'
+    return
+  }
+
+  changingPassword.value = true
+  try {
+    const token = localStorage.getItem('token')
+    await $fetch(`${config.public.apiBase}/change-password`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: {
+        current_password: pwForm.current,
+        password: pwForm.password,
+        password_confirmation: pwForm.confirm,
+      },
+    })
+    useToast().success('Password updated successfully.')
+    closePasswordModal()
+  } catch (err: any) {
+    passwordError.value =
+      err?.data?.errors?.current_password?.[0] ||
+      err?.data?.errors?.password?.[0] ||
+      err?.data?.message ||
+      'Failed to update password.'
+  } finally {
+    changingPassword.value = false
+  }
+}
+
+function applyUser(user: any) {
+  userProfile.name = user.name || user.username || 'User'
+  userProfile.email = user.email || 'No email'
+  privacy.shareData = Boolean(user.allow_data_training)
+  userProfile.initials = userProfile.name
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+  if (user.created_at) {
+    userProfile.joined = new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  }
+  if (user.profile_photo) {
+    userProfile.photo = `${config.public.apiBase.replace('/api', '')}/storage/${user.profile_photo}`
+  }
+}
+
+onMounted(async () => {
+  // 1) Render instantly from cached user
   const storedUser = localStorage.getItem('user')
-  if (storedUser) {
-    const user = JSON.parse(storedUser)
-    userProfile.name = user.name || user.username || 'User'
-    userProfile.email = user.email || 'No email'
-    
-    // Set initial consent toggle state from DB/localStorage
-    privacy.shareData = Boolean(user.allow_data_training)
+  if (storedUser) applyUser(JSON.parse(storedUser))
 
-    // Initials
-    userProfile.initials = userProfile.name
-      .split(' ')
-      .map((n: string) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
+  // 2) Load persisted toggles (prefs/quick are defined below; this runs after setup)
+  const savedPrefs = localStorage.getItem('mv_settings_prefs')
+  if (savedPrefs) Object.assign(prefs, JSON.parse(savedPrefs))
+  const savedQuick = localStorage.getItem('mv_settings_quick')
+  if (savedQuick) Object.assign(quick, JSON.parse(savedQuick))
 
-    // Joined date
-    if (user.created_at) {
-      userProfile.joined = new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-    }
-
-    if (user.profile_photo) {
-      userProfile.photo = `${config.public.apiBase.replace('/api', '')}/storage/${user.profile_photo}`
+  // 3) Refresh profile from the backend so it's never stale
+  const token = localStorage.getItem('token')
+  if (token) {
+    try {
+      const user = await $fetch(`${config.public.apiBase}/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      applyUser(user)
+      localStorage.setItem('user', JSON.stringify(user))
+    } catch {
+      // keep cached user if the request fails
     }
   }
 })
@@ -341,6 +504,10 @@ const quick = reactive({
   darkMode:      false,
   location:      true,
 })
+
+// Persist toggles so they survive reloads (client-side only)
+watch(prefs, (v) => localStorage.setItem('mv_settings_prefs', JSON.stringify(v)), { deep: true })
+watch(quick, (v) => localStorage.setItem('mv_settings_quick', JSON.stringify(v)), { deep: true })
 
 const storageUsed    = 120
 const storageTotal   = 500
