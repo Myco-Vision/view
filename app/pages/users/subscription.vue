@@ -448,6 +448,120 @@
       </div>
     </div>
 
+    <!-- ── REFUNDS ─────────────────────────────────────────── -->
+    <section id="refunds" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm scroll-mt-6" aria-labelledby="refunds-title">
+      <div class="flex items-start justify-between gap-3 flex-wrap mb-4">
+        <div>
+          <h3 id="refunds-title" class="text-sm font-bold text-slate-900">Refunds</h3>
+          <p class="text-xs text-slate-500 mt-0.5">
+            {{ refundPolicy.guarantee_days }}-day money-back guarantee on your first Premium purchase.
+          </p>
+        </div>
+        <NuxtLink to="/refund-policy" target="_blank" id="view-refund-policy" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800 underline underline-offset-2">Read the full refund policy</NuxtLink>
+      </div>
+
+      <p v-if="refundsLoading" class="text-xs text-slate-400 animate-pulse">Loading your payments…</p>
+
+      <template v-else>
+        <!-- Refundable payments -->
+        <div v-if="refundSubs.length" class="space-y-3">
+          <div v-for="s in refundSubs" :key="s.id" class="rounded-xl border border-slate-200 p-4">
+            <div class="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <p class="text-sm font-bold text-slate-900 capitalize">Premium {{ s.plan }} · ₱{{ Number(s.price).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">Paid {{ formatDate(s.starts_at) }} · {{ formatPaymentMethod(s.payment_method) }}</p>
+              </div>
+              <button
+                :id="`request-refund-${s.id}`"
+                :disabled="s.has_open_request"
+                class="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                @click="openRefundModal(s)"
+              >{{ s.has_open_request ? 'Request in progress' : 'Request Refund' }}</button>
+            </div>
+
+            <div class="mt-3 flex flex-wrap gap-2">
+              <span v-if="s.eligibility.guarantee_eligible" class="chip bg-emerald-50 text-emerald-700 border-emerald-200">
+                ✓ {{ refundPolicy.guarantee_days }}-day guarantee: {{ Math.max(0, refundPolicy.guarantee_days - (s.eligibility.days_since_purchase ?? 0)) }} day(s) left
+              </span>
+              <span v-if="s.eligibility.annual_prorated_eligible" class="chip bg-blue-50 text-blue-700 border-blue-200">
+                Prorated refund available (about ₱{{ s.eligibility.options.annual_prorated?.amount }})
+              </span>
+              <span class="chip bg-slate-50 text-slate-600 border-slate-200">
+                {{ s.eligibility.premium_scans_used }} of {{ s.eligibility.scan_cap }} scans used
+              </span>
+            </div>
+            <ul v-if="s.eligibility.notes?.length" class="mt-2.5 text-[11px] text-slate-500 list-disc pl-4 space-y-0.5">
+              <li v-for="n in s.eligibility.notes" :key="n">{{ n }}</li>
+            </ul>
+          </div>
+        </div>
+        <p v-else class="text-xs text-slate-500">
+          You have no refundable payments. Complimentary plans and payments that were already refunded are not eligible.
+        </p>
+
+        <!-- Request history -->
+        <div v-if="refundRequests.length" class="mt-5">
+          <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Your refund requests</h4>
+          <ul class="divide-y divide-slate-100">
+            <li v-for="r in refundRequests" :key="r.id" class="py-3 flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs font-semibold text-slate-800">
+                  {{ reasonLabel(r.reason_type) }}
+                  <span class="font-normal text-slate-400">· {{ formatDate(r.created_at) }}</span>
+                </p>
+                <p class="text-[11px] text-slate-500 mt-0.5">
+                  <template v-if="r.status === 'refunded'">Refunded ₱{{ Number(r.approved_amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</template>
+                  <template v-else-if="r.status === 'processing'">Approved ₱{{ Number(r.approved_amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}. Waiting for PayMongo (5–10 business days for e-wallets).</template>
+                  <template v-else-if="r.status === 'pending'">Under review. We reply within 3 business days.</template>
+                  <template v-else-if="r.status === 'failed'">The payment gateway could not complete this refund. Contact {{ refundPolicy.support_email }}.</template>
+                </p>
+                <p v-if="r.admin_note && ['rejected', 'refunded'].includes(r.status)" class="text-[11px] text-slate-600 mt-1 italic">“{{ r.admin_note }}”</p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="chip uppercase tracking-wide font-bold" :class="refundStatusClass(r.status)">{{ r.status }}</span>
+                <button
+                  v-if="r.status === 'pending'"
+                  :id="`withdraw-refund-${r.id}`"
+                  class="text-[11px] font-semibold text-slate-500 hover:text-red-600 underline underline-offset-2 bg-transparent border-none cursor-pointer"
+                  @click="withdrawRefund(r)"
+                >Withdraw</button>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </template>
+    </section>
+
+    <!-- ── REFUND REQUEST MODAL ────────────────────────────── -->
+    <AppModal v-model="refundModalOpen" title="Request a refund" :subtitle="refundTarget ? `Premium ${refundTarget.plan} · ₱${refundTarget.price}` : ''" :persistent="refundSubmitting">
+      <div v-if="refundTarget" class="space-y-4 pb-2">
+        <div>
+          <label for="refund-reason-type" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Reason</label>
+          <select id="refund-reason-type" v-model="refundForm.reason_type" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:border-emerald-500">
+            <option v-for="(opt, key) in refundTarget.eligibility.options" :key="key" :value="key">{{ reasonLabel(String(key)) }}</option>
+          </select>
+          <p v-if="selectedRefundOption" class="text-[11px] text-slate-500 mt-1.5">
+            <template v-if="selectedRefundOption.amount > 0">Suggested refund: <strong class="text-slate-800">₱{{ Number(selectedRefundOption.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</strong> ({{ selectedRefundOption.type }})</template>
+            <template v-else>Reviewed case by case. An admin will decide the amount.</template>
+            <template v-if="!selectedRefundOption.auto_eligible"> · Needs admin confirmation.</template>
+          </p>
+        </div>
+        <div>
+          <label for="refund-reason" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Tell us what happened</label>
+          <textarea id="refund-reason" v-model="refundForm.reason" rows="4" maxlength="2000" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:border-emerald-500 resize-none" placeholder="Include payment date and any details that help us review (min. 10 characters)" />
+          <p class="text-[11px] text-slate-400 mt-1 text-right">{{ refundForm.reason.length }}/2000</p>
+        </div>
+        <p v-if="refundError" class="text-xs text-red-600" role="alert">{{ refundError }}</p>
+        <p class="text-[11px] text-slate-500">Approved refunds go back to your original payment method. A full refund ends Premium immediately. See the <NuxtLink to="/refund-policy" target="_blank" class="underline text-emerald-700">refund policy</NuxtLink>.</p>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="px-4 py-2 rounded-lg text-sm font-semibold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-50" :disabled="refundSubmitting" @click="refundModalOpen = false">Cancel</button>
+          <button id="submit-refund" type="button" class="px-4 py-2 rounded-lg text-sm font-semibold border-none text-white bg-gradient-to-br from-emerald-500 to-emerald-600 cursor-pointer disabled:opacity-50" :disabled="refundSubmitting || refundForm.reason.trim().length < 10" @click="submitRefund">{{ refundSubmitting ? 'Submitting…' : 'Submit Request' }}</button>
+        </div>
+      </template>
+    </AppModal>
+
     <!-- ── FAQ SECTION ─────────────────────────────────── -->
     <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
       <h3 class="text-base font-bold text-slate-900 mb-4">Frequently Asked Questions</h3>
@@ -474,6 +588,12 @@
           <h4 class="font-bold text-slate-800 text-sm">Can I cancel my subscription at any time?</h4>
           <p class="mt-1 leading-relaxed">
             Yes! You can cancel auto-renewal with one click at any time. You will continue to have full unlimited scan access until your current billing period ends.
+          </p>
+        </div>
+        <div>
+          <h4 class="font-bold text-slate-800 text-sm">Can I get a refund?</h4>
+          <p class="mt-1 leading-relaxed">
+            Yes, if you ask within {{ refundPolicy.guarantee_days }} days of your first Premium payment and have used no more than {{ refundPolicy.scan_cap }} premium scans. Other cases (duplicate charges, service outages, annual plans within {{ refundPolicy.annual_days }} days) are reviewed individually. See the <NuxtLink to="/refund-policy" target="_blank" class="underline text-emerald-700">refund policy</NuxtLink>.
           </p>
         </div>
       </div>
@@ -820,8 +940,120 @@ async function confirmCancelSubscription() {
   }
 }
 
+// ── Refunds ───────────────────────────────────────────────────────────────
+const toast = useToast()
+
+const refundsLoading  = ref(true)
+const refundSubs      = ref<any[]>([])
+const refundRequests  = ref<any[]>([])
+const refundPolicy    = ref({ guarantee_days: 7, scan_cap: 20, annual_days: 30, annual_fee: 100, support_email: 'support@mycovision.app' })
+
+const refundModalOpen  = ref(false)
+const refundTarget     = ref<any>(null)
+const refundSubmitting = ref(false)
+const refundError      = ref('')
+const refundForm       = reactive({ reason_type: '', reason: '' })
+
+const REASON_LABELS: Record<string, string> = {
+  first_time_guarantee: '7-day money-back guarantee',
+  duplicate_charge:     'Duplicate or accidental charge',
+  service_failure:      'Service failure (Premium unavailable)',
+  charged_after_cancel: 'Charged after cancelling',
+  annual_prorated:      'Annual plan, prorated refund',
+  other:                'Other (reviewed case by case)',
+}
+const reasonLabel = (k: string) => REASON_LABELS[k] ?? k
+
+function refundStatusClass(status: string) {
+  return ({
+    pending:    'bg-amber-50 text-amber-700 border-amber-200',
+    processing: 'bg-blue-50 text-blue-700 border-blue-200',
+    refunded:   'bg-emerald-50 text-emerald-700 border-emerald-200',
+    rejected:   'bg-red-50 text-red-700 border-red-200',
+    failed:     'bg-red-50 text-red-700 border-red-200',
+    withdrawn:  'bg-slate-100 text-slate-500 border-slate-200',
+  } as Record<string, string>)[status] ?? 'bg-slate-100 text-slate-500 border-slate-200'
+}
+
+const selectedRefundOption = computed(() => refundTarget.value?.eligibility?.options?.[refundForm.reason_type] ?? null)
+
+function refundErrMsg(e: any) {
+  const d = e?.data
+  return d?.errors ? (Object.values(d.errors).flat() as string[]).join(' ') : d?.message || 'Something went wrong. Please try again.'
+}
+
+async function fetchRefunds() {
+  const token = localStorage.getItem('token')
+  if (!token) return
+  try {
+    const data: any = await $fetch(`${config.public.apiBase}/refunds`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    })
+    refundSubs.value     = data.subscriptions ?? []
+    refundRequests.value = data.requests ?? []
+    if (data.policy) refundPolicy.value = data.policy
+  } catch (err) {
+    console.error('Failed to load refunds:', err)
+  } finally {
+    refundsLoading.value = false
+  }
+}
+
+function openRefundModal(sub: any) {
+  refundTarget.value = sub
+  // Prefer the guarantee when it applies, otherwise the first available option
+  const keys = Object.keys(sub.eligibility.options)
+  refundForm.reason_type = sub.eligibility.guarantee_eligible ? 'first_time_guarantee' : (keys[0] ?? '')
+  refundForm.reason = ''
+  refundError.value = ''
+  refundModalOpen.value = true
+}
+
+async function submitRefund() {
+  if (!refundTarget.value || refundSubmitting.value) return
+  refundSubmitting.value = true
+  refundError.value = ''
+  try {
+    const res: any = await $fetch(`${config.public.apiBase}/refunds`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, Accept: 'application/json' },
+      body: { subscription_id: refundTarget.value.id, reason_type: refundForm.reason_type, reason: refundForm.reason.trim() },
+    })
+    refundModalOpen.value = false
+    toast.success(res.message || 'Refund request submitted.')
+    await fetchRefunds()
+  } catch (e: any) {
+    refundError.value = refundErrMsg(e)
+  } finally {
+    refundSubmitting.value = false
+  }
+}
+
+async function withdrawRefund(r: any) {
+  const { confirm } = useConfirm()
+  const ok = await confirm({
+    title: 'Withdraw refund request?',
+    message: 'Your request will be closed. You can submit a new one later if you are still eligible.',
+    tone: 'warning',
+    confirmText: 'Withdraw',
+    cancelText: 'Keep Request',
+  })
+  if (!ok) return
+  try {
+    const res: any = await $fetch(`${config.public.apiBase}/refunds/${r.id}/cancel`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, Accept: 'application/json' },
+    })
+    toast.success(res.message || 'Refund request withdrawn.')
+    await fetchRefunds()
+  } catch (e: any) {
+    toast.error(refundErrMsg(e))
+  }
+}
+
 onMounted(async () => {
   await fetchSubscriptionStatus()
+  fetchRefunds()
 
   // Handle PayMongo return query params
   const statusParam    = route.query.status as string
@@ -830,6 +1062,7 @@ onMounted(async () => {
 
   if (statusParam === 'success') {
     await verifyReturnedPayment(sessionIdParam || '', planParam || '')
+    fetchRefunds()
   } else if (statusParam === 'cancelled') {
     alertTitle.value = 'Payment Cancelled'
     alertMessage.value = 'PayMongo checkout was cancelled. Your account was not charged.'
@@ -838,3 +1071,7 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.chip { @apply inline-flex items-center px-2 py-0.5 rounded-full border text-[10.5px] font-semibold; }
+</style>

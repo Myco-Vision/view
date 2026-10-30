@@ -754,6 +754,7 @@
         <div class="flex items-center gap-6 text-xs">
           <NuxtLink to="/login" class="hover:text-emerald-400 transition">Login Page</NuxtLink>
           <NuxtLink to="/register" class="hover:text-emerald-400 transition">Register</NuxtLink>
+          <NuxtLink to="/refund-policy" class="hover:text-emerald-400 transition">Refund Policy</NuxtLink>
           <button @click="openLoginModal('admin')" class="hover:text-amber-400 transition cursor-pointer">Admin Access</button>
         </div>
 
