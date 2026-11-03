@@ -22,7 +22,11 @@
       style="padding: 18px 12px; gap: 4px;"
     >
       <!-- Brand -->
-      <div class="flex items-center gap-2.5 pb-[18px] border-b border-white/[0.08] mb-1 relative" style="padding: 4px 4px 18px;">
+      <div
+        class="flex items-center gap-2.5 pb-[18px] border-b border-white/[0.08] mb-1 relative"
+        :class="sidebarCollapsed ? 'lg:flex-col lg:gap-2' : ''"
+        style="padding: 4px 4px 18px;"
+      >
         <div class="w-9 h-9 rounded-[10px] bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(16,185,129,0.35)]">
           <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -168,22 +172,6 @@
           </span>
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">AI Retrain</span></transition>
         </NuxtLink>
-
-        <!-- Super Admin Only -->
-        <template v-if="userRole === 'super_admin'">
-          <p v-if="!sidebarCollapsed || mobileOpen" class="text-[10px] font-semibold text-amber-500 uppercase tracking-[0.8px] px-2 mt-3 mb-0.5 whitespace-nowrap">Super Admin</p>
-
-          <NuxtLink to="/admin/accounts" :title="(sidebarCollapsed && !mobileOpen) ? 'Account Management' : ''" @click="mobileOpen = false"
-            class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-amber-500/[0.08] hover:text-amber-300"
-            active-class="!bg-amber-500/15 !text-amber-500">
-            <span class="flex items-center justify-center shrink-0 w-5">
-              <svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </span>
-            <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Account Management</span></transition>
-          </NuxtLink>
-        </template>
       </nav>
 
       <!-- Footer -->
