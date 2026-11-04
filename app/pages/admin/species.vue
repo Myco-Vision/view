@@ -354,7 +354,7 @@ function filterSpecies() { page.value = 1 }
 function getImageUrl(path?: string) {
   if (!path) return 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=150&q=80'
   if (path.startsWith('http')) return path
-  return `${config.public.apiBase.replace('/api', '')}/storage/${path}`
+  return `${config.public.apiBase.replace(/\/api$/, '')}/storage/${path}`
 }
 
 function formatDate(dateStr?: string) {

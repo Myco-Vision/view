@@ -170,7 +170,7 @@ async function refreshUserSubscription() {
     try {
       const user = JSON.parse(storedUser)
       userName.value = user.name || user.username || 'User'
-      userAvatar.value = user.profile_photo ? `${config.public.apiBase.replace('/api', '')}/storage/${user.profile_photo}` : ''
+      userAvatar.value = user.profile_photo ? `${config.public.apiBase.replace(/\/api$/, '')}/storage/${user.profile_photo}` : ''
       if (typeof user.is_subscribed !== 'undefined') {
         isSubscribed.value = !!user.is_subscribed
       }

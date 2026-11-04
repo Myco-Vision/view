@@ -461,7 +461,7 @@ function applyUser(user: any) {
     userProfile.joined = new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }
   if (user.profile_photo) {
-    userProfile.photo = `${config.public.apiBase.replace('/api', '')}/storage/${user.profile_photo}`
+    userProfile.photo = `${config.public.apiBase.replace(/\/api$/, '')}/storage/${user.profile_photo}`
   }
 }
 
