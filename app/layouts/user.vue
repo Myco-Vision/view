@@ -17,7 +17,7 @@
 
     <!-- ── Sidebar ── -->
     <aside
-      class="w-[230px] min-w-[230px] relative z-40 flex flex-col pt-5 pb-4 px-3 gap-1
+      class="w-[230px] min-w-[230px] z-40 flex flex-col pt-5 pb-4 px-3 gap-1
              bg-[#081712]/95 border-r border-emerald-900/40 backdrop-blur-xl
              fixed inset-y-0 left-0 transition-transform duration-300
              lg:static lg:translate-x-0"
