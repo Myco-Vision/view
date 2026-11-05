@@ -8,21 +8,23 @@
       <div class="flex flex-col gap-3.5">
 
         <!-- Profile Card -->
-        <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">
-          <div class="flex items-center gap-3.5">
-            <div class="relative shrink-0">
-              <div class="w-[54px] h-[54px] rounded-full bg-[#10b981] text-white text-[18px] font-bold flex items-center justify-center overflow-hidden">
-                <img v-if="userProfile.photo" :src="userProfile.photo" alt="Avatar" class="w-full h-full object-cover" />
-                <span v-else>{{ userProfile.initials }}</span>
+        <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-4 sm:p-5 flex flex-col gap-3.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="relative shrink-0">
+                <div class="w-[50px] h-[50px] sm:w-[54px] sm:h-[54px] rounded-full bg-[#10b981] text-white text-[18px] font-bold flex items-center justify-center overflow-hidden">
+                  <img v-if="userProfile.photo" :src="userProfile.photo" alt="Avatar" class="w-full h-full object-cover" />
+                  <span v-else>{{ userProfile.initials }}</span>
+                </div>
+                <button class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-white border border-[#e2e8f0] text-[10px] cursor-pointer flex items-center justify-center" title="Change photo">✏️</button>
               </div>
-              <button class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-white border border-[#e2e8f0] text-[10px] cursor-pointer flex items-center justify-center" title="Change photo">✏️</button>
+              <div class="flex-1 min-w-0">
+                <p class="text-[14.5px] sm:text-[15px] font-semibold text-[#0f172a] truncate">{{ userProfile.name }}</p>
+                <p class="text-[12px] sm:text-[12.5px] text-[#64748b] truncate mt-0.5">{{ userProfile.email }}</p>
+                <p class="text-[11px] sm:text-[11.5px] text-[#64748b] mt-0.5">Member since {{ userProfile.joined }}</p>
+              </div>
             </div>
-            <div class="flex-1">
-              <p class="text-[15px] font-semibold text-[#0f172a]">{{ userProfile.name }}</p>
-              <p class="text-[12.5px] text-[#64748b] mt-0.5">{{ userProfile.email }}</p>
-              <p class="text-[11.5px] text-[#64748b] mt-0.5">Member since {{ userProfile.joined }}</p>
-            </div>
-            <button class="py-[7px] px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer whitespace-nowrap transition-colors duration-[0.18s] shrink-0 hover:bg-[#f8fafc]">Edit Profile</button>
+            <button class="py-[7px] px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer whitespace-nowrap transition-colors duration-[0.18s] shrink-0 self-start sm:self-auto hover:bg-[#f8fafc]">Edit Profile</button>
           </div>
         </div>
 

@@ -51,14 +51,14 @@
     </div>
 
     <!-- Two-column card -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden flex-1">
+    <div class="grid grid-cols-1 lg:grid-cols-2 bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden flex-1 shadow-sm">
 
       <!-- ── LEFT: Bento scan area ─────────────────────── -->
-      <div class="p-6 py-6 px-[22px] flex flex-col gap-3 overflow-hidden border-r border-[#e2e8f0]">
+      <div class="p-4 sm:p-6 flex flex-col gap-3 overflow-hidden border-b lg:border-b-0 lg:border-r border-[#e2e8f0]">
         <h2 class="text-[15px] font-semibold text-[#0f172a] text-center mb-0.5">Scan Mushroom</h2>
 
         <!-- Scan Result tile (shows preview once an image is chosen) -->
-        <div class="flex-1 min-h-[200px] relative rounded-[20px] border border-[#b0cfb0] bg-[#f8fbf3] overflow-hidden flex items-center justify-center">
+        <div class="flex-1 min-h-[220px] sm:min-h-[260px] relative rounded-[20px] border border-[#b0cfb0] bg-[#f8fbf3] overflow-hidden flex items-center justify-center">
           <div v-if="!previewUrl" class="flex flex-col items-center justify-center gap-2 p-6 text-center">
             <svg class="w-[64px] h-[64px] text-[#b0cfb0]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
@@ -125,7 +125,7 @@
       </div>
 
       <!-- ── RIGHT: Result Panel ───────── -->
-      <div v-if="result" class="p-6 py-6 px-[22px] flex flex-col gap-3 overflow-y-auto">
+      <div v-if="result" class="p-4 sm:p-6 flex flex-col gap-3 overflow-y-auto">
 
         <!-- Info card -->
         <div class="py-3.5 px-4 border border-[#e2e8f0] rounded-xl bg-[#fafdfa] flex flex-col gap-1.5">
