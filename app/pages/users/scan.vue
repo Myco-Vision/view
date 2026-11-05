@@ -251,7 +251,7 @@
             </p>
           </div>
 
-          <div class="flex-1 rounded-[10px] overflow-hidden border border-[#e2e8f0] min-h-0">
+          <div class="w-full h-[240px] sm:h-[280px] rounded-[10px] overflow-hidden border border-[#e2e8f0] shrink-0">
             <iframe
               title="Mushroom location"
               :src="mapEmbedUrl"
