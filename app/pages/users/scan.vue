@@ -3,19 +3,19 @@
 
     <!-- Welcome Header & Quota Badge -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <h1 class="text-[22px] font-normal text-[#0f172a]">Welcome, <strong class="font-bold">{{ firstName }}!</strong></h1>
+      <h1 class="text-xl sm:text-[22px] font-normal text-slate-100">Welcome, <strong class="font-bold text-white">{{ firstName }}!</strong></h1>
 
       <!-- Scan Quota Badge -->
       <div class="flex items-center gap-2">
-        <div v-if="isSubscribed" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/25 text-xs font-bold">
+        <div v-if="isSubscribed" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           <span>Unlimited Scans (PRO)</span>
         </div>
         <div v-else class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold"
-          :class="remainingScans === 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-slate-100 border-slate-200 text-slate-700'"
+          :class="remainingScans === 0 ? 'bg-red-950/60 border-red-500/40 text-red-300' : 'bg-emerald-950/60 border-emerald-800/50 text-emerald-300'"
         >
-          <span>Free Tier: <strong>{{ remainingScans !== null ? remainingScans : 3 }} / 3</strong> scans left</span>
-          <NuxtLink to="/users/subscription" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 underline ml-0.5">
+          <span>Free Tier: <strong class="text-white">{{ remainingScans !== null ? remainingScans : 3 }} / 3</strong> scans left</span>
+          <NuxtLink to="/users/subscription" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 underline ml-0.5">
             Upgrade
           </NuxtLink>
         </div>
@@ -269,7 +269,7 @@
       </div>
 
       <!-- Empty state when no result -->
-      <div v-else class="flex items-center justify-center bg-[#f8fafc] p-6 lg:col-start-2">
+      <div v-else class="hidden lg:flex items-center justify-center bg-[#f8fafc] p-6 lg:col-start-2">
         <div class="text-center max-w-[260px] flex flex-col items-center gap-3">
           <div class="text-[56px] opacity-50 grayscale-[0.8]">🍄</div>
           <h3 class="text-[18px] font-semibold text-[#475569]">Ready to Analyze</h3>
