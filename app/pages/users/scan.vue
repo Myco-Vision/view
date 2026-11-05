@@ -2,41 +2,45 @@
   <div class="flex flex-col gap-[18px] h-full">
 
     <!-- Welcome Header & Quota Badge -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <h1 class="text-xl sm:text-[22px] font-normal text-slate-100">Welcome, <strong class="font-bold text-white">{{ firstName }}!</strong></h1>
+    <ClientOnly>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 class="text-xl sm:text-[22px] font-normal text-slate-100">Welcome, <strong class="font-bold text-white">{{ firstName }}!</strong></h1>
 
-      <!-- Scan Quota Badge -->
-      <div class="flex items-center gap-2">
-        <div v-if="isSubscribed" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <span>Unlimited Scans (PRO)</span>
-        </div>
-        <div v-else class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold"
-          :class="remainingScans === 0 ? 'bg-red-950/60 border-red-500/40 text-red-300' : 'bg-emerald-950/60 border-emerald-800/50 text-emerald-300'"
-        >
-          <span>Free Tier: <strong class="text-white">{{ remainingScans !== null ? remainingScans : 3 }} / 3</strong> scans left</span>
-          <NuxtLink to="/users/subscription" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 underline ml-0.5">
-            Upgrade
-          </NuxtLink>
+        <!-- Scan Quota Badge -->
+        <div class="flex items-center gap-2">
+          <div v-if="isSubscribed" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <span>Unlimited Scans (PRO)</span>
+          </div>
+          <div v-else class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold"
+            :class="remainingScans === 0 ? 'bg-red-950/60 border-red-500/40 text-red-300' : 'bg-emerald-950/60 border-emerald-800/50 text-emerald-300'"
+          >
+            <span>Free Tier: <strong class="text-white">{{ remainingScans !== null ? remainingScans : 3 }} / 3</strong> scans left</span>
+            <NuxtLink to="/users/subscription" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 underline ml-0.5">
+              Upgrade
+            </NuxtLink>
+          </div>
         </div>
       </div>
-    </div>
+    </ClientOnly>
 
     <!-- Quota exhausted callout -->
-    <div v-if="!canScan && !isSubscribed" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col gap-2">
-      <div class="flex items-start gap-2">
-        <span class="text-base shrink-0">⚠️</span>
-        <div>
-          <p class="font-bold">Free Scan Limit Reached (3 of 3 used)</p>
-          <p class="text-[11.5px] mt-0.5 text-amber-800 leading-relaxed">
-            You've used all 3 free scans. All your saved scans remain permanently accessible! Subscribe for only ₱149/mo to continue identifying mushrooms.
-          </p>
+    <ClientOnly>
+      <div v-if="!canScan && !isSubscribed" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col gap-2">
+        <div class="flex items-start gap-2">
+          <span class="text-base shrink-0">⚠️</span>
+          <div>
+            <p class="font-bold">Free Scan Limit Reached (3 of 3 used)</p>
+            <p class="text-[11.5px] mt-0.5 text-amber-800 leading-relaxed">
+              You've used all 3 free scans. All your saved scans remain permanently accessible! Subscribe for only ₱149/mo to continue identifying mushrooms.
+            </p>
+          </div>
         </div>
+        <NuxtLink to="/users/subscription" class="self-start py-1.5 px-3 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition no-underline">
+          Upgrade to Premium →
+        </NuxtLink>
       </div>
-      <NuxtLink to="/users/subscription" class="self-start py-1.5 px-3 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition no-underline">
-        Upgrade to Premium →
-      </NuxtLink>
-    </div>
+    </ClientOnly>
 
     <!-- Camera Overlay (full screen) -->
     <div v-if="isCameraOpen" class="fixed inset-0 bg-black z-50 flex flex-col">
