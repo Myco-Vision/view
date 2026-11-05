@@ -95,7 +95,6 @@
 
         <!-- Actions -->
         <div class="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f1f5f9]">
-        <div class="flex items-center gap-2 shrink-0">
           <!-- Favorite Heart Button -->
           <button 
             class="w-[34px] h-[34px] rounded-lg border flex items-center justify-center cursor-pointer transition-all duration-[0.18s]"
