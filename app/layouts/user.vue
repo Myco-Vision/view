@@ -17,11 +17,11 @@
 
     <!-- ── Sidebar ── -->
     <aside
-      class="w-[230px] min-w-[230px] z-40 flex flex-col pt-5 pb-4 px-3 gap-1
+      class="z-40 flex flex-col pt-5 pb-4 px-3 gap-1
              bg-[#081712]/95 border-r border-emerald-900/40 backdrop-blur-xl
              fixed inset-y-0 left-0 transition-transform duration-300
-             lg:static lg:translate-x-0"
-      :class="mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+             lg:static lg:translate-x-0 lg:w-[230px] lg:min-w-[230px]"
+      :class="mobileOpen ? 'translate-x-0 w-[230px]' : '-translate-x-full w-0 lg:w-[230px] pointer-events-none lg:pointer-events-auto'"
     >
       <!-- Brand -->
       <div class="flex items-center gap-2.5 px-2 pb-4 border-b border-emerald-900/40 mb-2">

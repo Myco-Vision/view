@@ -128,7 +128,7 @@
             </tr>
             <tr v-for="scan in filteredCandidates" :key="scan.id" class="hover:bg-[#f8fafc] group">
               <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
-                <img :src="getImageUrl(scan.image_path)" class="w-11 h-11 rounded-lg object-cover border border-[#e2e8f0]" />
+                <img :src="getImageUrl(scan.image_url || scan.image_path)" class="w-11 h-11 rounded-lg object-cover border border-[#e2e8f0]" />
               </td>
               <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
                 <p class="font-semibold text-[#0f172a] text-[13.5px]">{{ scan.result_name }}</p>
@@ -173,8 +173,8 @@
         </div>
         <div class="p-[22px] flex flex-col gap-4">
           <div v-if="formError" class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[13px] font-medium">{{ formError }}</div>
-          <div v-if="form.image_path" class="flex items-center gap-3 p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl">
-            <img :src="getImageUrl(form.image_path)" class="w-14 h-14 rounded-lg object-cover border" />
+          <div v-if="form.image_path || form.image_url" class="flex items-center gap-3 p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl">
+            <img :src="getImageUrl(form.image_url || form.image_path)" class="w-14 h-14 rounded-lg object-cover border" />
             <div>
               <p class="text-[12px] font-bold text-[#0f172a]">Candidate Photo Attached</p>
               <p class="text-[11.5px] text-[#64748b]">This photo will be saved as the reference image for this DB species.</p>
@@ -257,6 +257,7 @@ interface Species {
   habitat?: string
   description?: string
   image_path?: string
+  image_url?: string
   created_at?: string
 }
 
@@ -268,6 +269,7 @@ interface ScanCandidate {
   latitude?: number
   longitude?: number
   image_path: string
+  image_url?: string
   created_at: string
   user?: { id: number; name: string; email: string }
 }
@@ -281,7 +283,8 @@ const form = reactive({
   classification: '',
   habitat: '',
   description: '',
-  image_path: ''
+  image_path: '',
+  image_url: ''
 })
 
 const getHeaders = () => {
@@ -353,8 +356,8 @@ function filterSpecies() { page.value = 1 }
 
 function getImageUrl(path?: string) {
   if (!path) return 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=150&q=80'
-  if (path.startsWith('http')) return path
-  return `${config.public.apiBase.replace(/\/api$/, '')}/storage/${path}`
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  return `${config.public.apiBase.replace(/\/api$/, '')}/storage/${path.replace(/^\/+/, '')}`
 }
 
 function formatDate(dateStr?: string) {
@@ -366,7 +369,7 @@ function openAdd() {
   editingId.value = null
   promoteScanId.value = null
   formError.value = ''
-  Object.assign(form, { name: '', scientific_name: '', classification: '', habitat: '', description: '', image_path: '' })
+  Object.assign(form, { name: '', scientific_name: '', classification: '', habitat: '', description: '', image_path: '', image_url: '' })
   showModal.value = true
 }
 
@@ -380,7 +383,8 @@ function openEdit(sp: Species) {
     classification: sp.classification,
     habitat: sp.habitat || '',
     description: sp.description || '',
-    image_path: sp.image_path || ''
+    image_path: sp.image_path || '',
+    image_url: sp.image_url || ''
   })
   showModal.value = true
 }
@@ -395,7 +399,8 @@ function openPromoteModal(scan: ScanCandidate) {
     classification: scan.result_classification,
     habitat: scan.latitude && scan.longitude ? `Coords: ${scan.latitude}, ${scan.longitude}` : 'User Scan Submission',
     description: `Promoted from user scan #${scan.id} (Scanned by ${scan.user?.name || 'User'}).`,
-    image_path: scan.image_path
+    image_path: scan.image_path,
+    image_url: scan.image_url || ''
   })
   showModal.value = true
 }
