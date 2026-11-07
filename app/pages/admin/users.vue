@@ -487,6 +487,36 @@ function formatDate(dateStr: string) {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
+<<<<<<< HEAD
+=======
+
+function toggleAll(e: Event) {
+  // stub: select all checkboxes
+}
+
+function openUser(user: any) { selectedUser.value = user }
+
+async function deleteUser(user: any) {
+  const { confirm } = useConfirm()
+  const ok = await confirm({
+    title: 'Delete this user?',
+    message: `${user.name} and all of their scans will be permanently deleted. This cannot be undone.`,
+    tone: 'danger',
+    confirmText: 'Delete User',
+  })
+  if (!ok) return
+  try {
+    await $fetch(`${config.public.apiBase}/admin/users/${user.id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    })
+    toastSuccess(`User ${user.name} deleted successfully.`)
+    fetchUsers(pagination.current_page)
+  } catch (err: any) {
+    toastError(err?.data?.message || 'Failed to delete user.')
+  }
+}
+>>>>>>> origin/main
 </script>
 
 <style scoped>

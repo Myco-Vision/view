@@ -340,7 +340,7 @@ async function fetchCollection() {
           confidence: scan.confidence_level || 0,
           location: scan.location_name || (scan.latitude && scan.longitude ? `${scan.latitude}, ${scan.longitude}` : 'Unknown Location'),
           date: new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          image: scan.image_path ? `${config.public.apiBase.replace('/api', '')}/storage/${scan.image_path}` : 'https://placehold.co/400x400/e8f0e8/a3a3a3?text=No+Image'
+          image: scan.image_url || (scan.image_path ? `${config.public.apiBase.replace(/\/api$/, '')}/storage/${scan.image_path}` : 'https://placehold.co/400x400/e8f0e8/a3a3a3?text=No+Image')
         }
       })
   } catch (error) {
@@ -349,7 +349,15 @@ async function fetchCollection() {
 }
 
 async function deleteItem(item: Mushroom) {
-  if (!confirm(`Remove "${item.name}" from your collection?`)) return
+  const { confirm } = useConfirm()
+  const toast = useToast()
+  const ok = await confirm({
+    title: 'Remove from collection?',
+    message: `"${item.name}" will be permanently deleted, including its scan record.`,
+    tone: 'danger',
+    confirmText: 'Remove',
+  })
+  if (!ok) return
   try {
     const token = localStorage.getItem('token')
     await $fetch(`${config.public.apiBase}/scans/${item.id}`, {
@@ -357,8 +365,9 @@ async function deleteItem(item: Mushroom) {
       headers: { Authorization: `Bearer ${token}` }
     })
     collection.value = collection.value.filter(m => m.id !== item.id)
+    toast.success('Removed from your collection.')
   } catch (error) {
-    alert('Failed to delete item.')
+    toast.error('Failed to delete item.')
   }
 }
 

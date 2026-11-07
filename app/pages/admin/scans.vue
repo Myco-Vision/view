@@ -126,7 +126,16 @@
           <p class="text-[15px] font-bold text-[#0f172a]">Scan Detail — #{{ selectedScan.id }}</p>
           <button class="bg-transparent border-none cursor-pointer text-[16px] text-[#94a3b8] hover:text-[#ef4444]" @click="selectedScan = null">✕</button>
         </div>
-        <div class="p-[22px]">
+        <div class="p-[22px] flex flex-col gap-4">
+          <!-- Scan Image Preview if available -->
+          <div v-if="selectedScan.image_url || selectedScan.image_path" class="w-full h-48 rounded-xl overflow-hidden bg-[#f1f5f9] border border-[#e2e8f0]">
+            <img 
+              :src="getImageUrl(selectedScan.image_url || selectedScan.image_path)" 
+              alt="Scan image" 
+              class="w-full h-full object-cover" 
+            />
+          </div>
+
           <div class="grid grid-cols-2 gap-3">
             <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">User</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedScan.user?.name || 'Unknown' }}</p></div>
             <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Date</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ formatDate(selectedScan.created_at) }}</p></div>
@@ -235,7 +244,13 @@ function clsBadge(cls: string) {
 
 function confColor(v: number) { return v >= 80 ? '#10b981' : v >= 60 ? '#f59e0b' : '#ef4444' }
 
-function formatDate(dateStr?: string) {
+function getImageUrl(path?: string) {
+  if (!path) return 'https://placehold.co/400x300/f1f5f9/94a3b8?text=No+Image'
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  return `${config.public.apiBase.replace(/\/api$/, '')}/storage/${path.replace(/^\/+/, '')}`
+}
+
+function formatDate(dateStr: string) {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })
 }

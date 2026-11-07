@@ -131,7 +131,7 @@
             <template v-else>
               <tr v-for="scan in filteredCandidates" :key="scan.id" class="hover:bg-[#f8fafc] group">
                 <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
-                  <img :src="getImageUrl(scan.image_path)" class="w-11 h-11 rounded-lg object-cover border border-[#e2e8f0]" alt="Scan" />
+                  <img :src="getImageUrl(scan.image_url || scan.image_path)" class="w-11 h-11 rounded-lg object-cover border border-[#e2e8f0]" alt="Scan" />
                 </td>
                 <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
                   <p class="font-semibold text-[#0f172a] text-[13.5px]">{{ scan.result_name }}</p>
@@ -177,8 +177,8 @@
         </div>
         <div class="p-[22px] flex flex-col gap-4">
           <div v-if="formError" class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[13px] font-medium">{{ formError }}</div>
-          <div v-if="form.image_path" class="flex items-center gap-3 p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl">
-            <img :src="getImageUrl(form.image_path)" class="w-14 h-14 rounded-lg object-cover border" alt="Reference" />
+          <div v-if="form.image_path || form.image_url" class="flex items-center gap-3 p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl">
+            <img :src="getImageUrl(form.image_url || form.image_path)" class="w-14 h-14 rounded-lg object-cover border" alt="Reference" />
             <div>
               <p class="text-[12px] font-bold text-[#0f172a]">Candidate Photo Attached</p>
               <p class="text-[11.5px] text-[#64748b]">This photo will be saved as the reference image for this DB species.</p>
@@ -239,6 +239,9 @@ definePageMeta({
 })
 
 const config = useRuntimeConfig()
+// Composables must be called synchronously in setup (before any await)
+const toast = useToast()
+const { confirm } = useConfirm()
 
 const activeTab = ref<'verified' | 'candidates'>('verified')
 const isSaving = ref(false)
@@ -262,6 +265,7 @@ interface Species {
   habitat?: string
   description?: string
   image_path?: string
+  image_url?: string
   created_at?: string
 }
 
@@ -273,6 +277,7 @@ interface ScanCandidate {
   latitude?: number
   longitude?: number
   image_path: string
+  image_url?: string
   created_at: string
   user?: { id: number; name: string; email: string }
 }
@@ -286,7 +291,8 @@ const form = reactive({
   classification: '',
   habitat: '',
   description: '',
-  image_path: ''
+  image_path: '',
+  image_url: ''
 })
 
 const getHeaders = () => {
@@ -367,8 +373,8 @@ function filterSpecies() { page.value = 1 }
 
 function getImageUrl(path?: string) {
   if (!path) return 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=150&q=80'
-  if (path.startsWith('http')) return path
-  return `${config.public.apiBase.replace(/\/api\/?$/, '')}/storage/${path}`
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  return `${config.public.apiBase.replace(/\/api\/?$/, '')}/storage/${path.replace(/^\/+/, '')}`
 }
 
 function formatDate(dateStr?: string) {
@@ -380,7 +386,7 @@ function openAdd() {
   editingId.value = null
   promoteScanId.value = null
   formError.value = ''
-  Object.assign(form, { name: '', scientific_name: '', classification: '', habitat: '', description: '', image_path: '' })
+  Object.assign(form, { name: '', scientific_name: '', classification: '', habitat: '', description: '', image_path: '', image_url: '' })
   showModal.value = true
 }
 
@@ -394,7 +400,8 @@ function openEdit(sp: Species) {
     classification: sp.classification,
     habitat: sp.habitat || '',
     description: sp.description || '',
-    image_path: sp.image_path || ''
+    image_path: sp.image_path || '',
+    image_url: sp.image_url || ''
   })
   showModal.value = true
 }
@@ -410,7 +417,8 @@ function openPromoteModal(scan: ScanCandidate) {
     classification: scan.result_classification,
     habitat: '',
     description: '',
-    image_path: scan.image_path
+    image_path: scan.image_path,
+    image_url: scan.image_url || ''
   })
   showModal.value = true
 }
@@ -421,14 +429,28 @@ async function saveSpecies() {
     return
   }
   formError.value = ''
+
+  // Promoting a user scan into the official DB is hard to undo — confirm first
+  if (promoteScanId.value) {
+    const ok = await confirm({
+      title: 'Add to Species DB?',
+      message: `"${form.name}" will be added to the official species database as a ${form.classification || 'new'} species.`,
+      tone: 'info',
+      confirmText: 'Add to DB',
+    })
+    if (!ok) return
+  }
+
   isSaving.value = true
 
-  // Capture before closeModal() resets it
+  // Capture before closeModal() resets them
   const promotedScanId = promoteScanId.value
+  const wasEditing = !!editingId.value
+  const editId = editingId.value
 
   try {
-    if (editingId.value) {
-      await $fetch(`${config.public.apiBase}/admin/species/${editingId.value}`, {
+    if (editId) {
+      await $fetch(`${config.public.apiBase}/admin/species/${editId}`, {
         method: 'PUT',
         headers: getHeaders(),
         body: form
@@ -445,7 +467,9 @@ async function saveSpecies() {
     if (promotedScanId) {
       // Remove the promoted scan so it can't be promoted twice
       candidateScans.value = candidateScans.value.filter(c => c.id !== promotedScanId)
-      alert('Candidate scan successfully promoted & saved to Species DB!')
+      toast.success('Candidate scan successfully promoted & saved to Species DB!')
+    } else {
+      toast.success(wasEditing ? 'Species updated.' : 'Species added.')
     }
   } catch (err: any) {
     formError.value = err?.data?.message || 'Failed to save species.'
@@ -462,15 +486,22 @@ function closeModal() {
 }
 
 async function deleteSpecies(sp: Species) {
-  if (!confirm(`Delete "${sp.name}" from database?`)) return
+  const ok = await confirm({
+    title: 'Delete species?',
+    message: `"${sp.name}" will be permanently removed from the species database.`,
+    tone: 'danger',
+    confirmText: 'Delete',
+  })
+  if (!ok) return
   try {
     await $fetch(`${config.public.apiBase}/admin/species/${sp.id}`, {
       method: 'DELETE',
       headers: getHeaders()
     })
     fetchVerifiedSpecies()
+    toast.success('Species deleted.')
   } catch (err: any) {
-    alert(err?.data?.message || 'Failed to delete species.')
+    toast.error(err?.data?.message || 'Failed to delete species.')
   }
 }
 
@@ -483,6 +514,7 @@ function exportCurrentFormPdf() {
     habitat: form.habitat,
     description: form.description,
     image_path: form.image_path,
+    image_url: form.image_url,
   })
 }
 
@@ -499,9 +531,10 @@ function exportSpeciesPdf(sp: Species) {
   const badgeBg = isEdible ? '#d1fae5' : (isPoisonous ? '#fee2e2' : '#fef3c7')
   const badgeColor = isEdible ? '#065f46' : (isPoisonous ? '#991b1b' : '#92400e')
 
-  const imgHtml = sp.image_path ? `
+  const imgSrc = sp.image_url || sp.image_path
+  const imgHtml = imgSrc ? `
     <div style="text-align: center; margin-top: 25px;">
-      <img src="${esc(getImageUrl(sp.image_path))}" style="max-width: 100%; max-height: 280px; border-radius: 12px; border: 1px solid #cbd5e1; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.08);" alt="${esc(sp.name)}" />
+      <img src="${esc(getImageUrl(imgSrc))}" style="max-width: 100%; max-height: 280px; border-radius: 12px; border: 1px solid #cbd5e1; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.08);" alt="${esc(sp.name)}" />
     </div>
   ` : ''
 

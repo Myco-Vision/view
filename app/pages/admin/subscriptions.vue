@@ -12,6 +12,18 @@
       </div>
     </div>
 
+    <!-- View switcher -->
+    <div class="flex gap-1 bg-white border border-[#e2e8f0] rounded-[10px] p-1 w-fit" role="tablist">
+      <button id="view-subscriptions" role="tab" :aria-selected="view === 'subscriptions'" class="py-1.5 px-4 rounded-[7px] border-none text-[13px] font-semibold cursor-pointer transition-colors"
+        :class="view === 'subscriptions' ? 'bg-emerald-500/15 text-emerald-600' : 'bg-transparent text-[#64748b] hover:bg-[#f1f5f9]'" @click="view = 'subscriptions'">Subscriptions</button>
+      <button id="view-refunds" role="tab" :aria-selected="view === 'refunds'" class="py-1.5 px-4 rounded-[7px] border-none text-[13px] font-semibold cursor-pointer transition-colors inline-flex items-center gap-2"
+        :class="view === 'refunds' ? 'bg-emerald-500/15 text-emerald-600' : 'bg-transparent text-[#64748b] hover:bg-[#f1f5f9]'" @click="view = 'refunds'">
+        Refunds
+        <span v-if="refundStats.pending" class="min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10.5px] font-bold inline-flex items-center justify-center">{{ refundStats.pending }}</span>
+      </button>
+    </div>
+
+    <template v-if="view === 'subscriptions'">
     <!-- Stats -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
       <div v-for="card in statCards" :key="card.label" class="bg-white border border-[#e2e8f0] rounded-[14px] p-4 transition-shadow hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)]">
@@ -98,6 +110,7 @@
                   <button class="act-btn hover:!bg-emerald-50 hover:!border-emerald-200" title="Extend" @click="openAction('extend', s)">⏩</button>
                   <button v-if="isLive(s) && s.state !== 'cancelling'" class="act-btn hover:!bg-amber-50 hover:!border-amber-200" title="Cancel at period end" @click="openAction('cancel', s)">⏸</button>
                   <button v-if="isLive(s)" class="act-btn hover:!bg-[#fee2e2] hover:!border-[#fecaca]" title="Revoke now" @click="openAction('revoke', s)">⛔</button>
+                  <button v-if="isRefundable(s)" :id="`refund-sub-${s.id}`" class="act-btn hover:!bg-violet-50 hover:!border-violet-200" title="Open a refund request" @click="openCreateRefund(s)">💸</button>
                 </div>
               </td>
             </tr>
@@ -131,6 +144,80 @@
         </li>
       </ul>
     </div>
+
+    </template>
+
+    <!-- ── Refunds queue ── -->
+    <template v-else>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div v-for="card in refundCards" :key="card.label" class="bg-white border border-[#e2e8f0] rounded-[14px] p-4">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px]">{{ card.label }}</p>
+            <span class="w-8 h-8 rounded-lg flex items-center justify-center text-[15px]" :class="card.tone">{{ card.icon }}</span>
+          </div>
+          <p class="text-[22px] font-bold text-[#0f172a]">{{ card.value }}</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex gap-1 bg-white border border-[#e2e8f0] rounded-[10px] p-1 overflow-x-auto">
+          <button v-for="t in refundTabs" :key="t.value" :id="`refund-tab-${t.value || 'all'}`"
+            class="py-1.5 px-3 rounded-[7px] border-none text-[12.5px] font-semibold cursor-pointer whitespace-nowrap transition-colors"
+            :class="refundStatusFilter === t.value ? 'bg-emerald-500/15 text-emerald-600' : 'bg-transparent text-[#64748b] hover:bg-[#f1f5f9]'"
+            @click="refundStatusFilter = t.value; fetchRefunds()">{{ t.label }}</button>
+        </div>
+        <input id="refund-search" v-model="refundSearch" @input="debouncedRefunds" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] text-[#0f172a] bg-white outline-none w-full sm:w-[240px] focus:border-[#10b981]" placeholder="Search user name or email…" />
+      </div>
+
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr>
+                <th v-for="h in ['User', 'Payment', 'Reason', 'Requested', 'Status', 'Submitted', 'Actions']" :key="h"
+                  class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc] whitespace-nowrap">{{ h }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="refundsLoading"><td colspan="7" class="py-8 text-center text-[#94a3b8] text-[13.5px] animate-pulse">Loading refund requests…</td></tr>
+              <tr v-else-if="refunds.length === 0"><td colspan="7" class="py-10 text-center text-[#94a3b8] text-[14px]">No refund requests match these filters.</td></tr>
+              <tr v-else v-for="r in refunds" :key="r.id" class="hover:bg-[#f8fafc] border-b border-[#f8fafc] last:border-none">
+                <td class="py-3 px-3.5">
+                  <p class="font-semibold text-[#0f172a] text-[13.5px]">{{ r.user?.name ?? 'Deleted user' }}</p>
+                  <p class="text-[11.5px] text-[#94a3b8]">{{ r.user?.email }}</p>
+                </td>
+                <td class="py-3 px-3.5 text-[12px] text-[#475569]">
+                  <p class="capitalize font-semibold">{{ r.subscription?.plan }}</p>
+                  <p class="text-[11px] text-[#94a3b8]">{{ peso(r.subscription?.price) }}</p>
+                </td>
+                <td class="py-3 px-3.5 text-[12.5px] text-[#334155] max-w-[220px]">
+                  <p class="font-semibold">{{ reasonLabel(r.reason_type) }}</p>
+                  <p class="text-[11.5px] text-[#94a3b8] truncate" :title="r.reason">{{ r.reason }}</p>
+                </td>
+                <td class="py-3 px-3.5 text-[13px] font-semibold text-[#0f172a] whitespace-nowrap">{{ r.requested_amount > 0 ? peso(r.requested_amount) : 'TBD' }}</td>
+                <td class="py-3 px-3.5">
+                  <span class="py-[3px] px-[10px] rounded-[20px] text-[11.5px] font-semibold capitalize" :class="refundStatusStyle(r.status)">{{ r.status }}</span>
+                </td>
+                <td class="py-3 px-3.5 text-[12px] text-[#475569] whitespace-nowrap">{{ fmtDateTime(r.created_at) }}</td>
+                <td class="py-3 px-3.5">
+                  <button :id="`review-refund-${r.id}`" class="py-1.5 px-3 rounded-lg border text-[12px] font-semibold cursor-pointer transition-colors"
+                    :class="r.status === 'pending' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'border-[#e2e8f0] bg-white text-[#475569] hover:bg-[#f1f5f9]'"
+                    @click="openReview(r)">{{ r.status === 'pending' ? 'Review' : 'View' }}</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
+          <span class="text-[12.5px] text-[#64748b]">{{ refundPagination.total }} request(s)</span>
+          <div class="flex items-center gap-2.5">
+            <button class="pg-btn" :disabled="refundPagination.current_page <= 1" @click="fetchRefunds(refundPagination.current_page - 1)">‹</button>
+            <span class="text-[12.5px] text-[#475569]">Page {{ refundPagination.current_page }} of {{ refundPagination.last_page }}</span>
+            <button class="pg-btn" :disabled="refundPagination.current_page >= refundPagination.last_page" @click="fetchRefunds(refundPagination.current_page + 1)">›</button>
+          </div>
+        </div>
+      </div>
+    </template>
 
     <!-- Grant modal -->
     <div v-if="grantOpen" class="modal-backdrop" @click.self="grantOpen = false">
@@ -242,6 +329,104 @@
       </div>
     </div>
 
+    <!-- Create refund request (admin on behalf of user) -->
+    <div v-if="createRefund.sub" class="modal-backdrop" @click.self="createRefund.sub = null">
+      <div class="modal-card">
+        <div class="modal-head"><p class="text-[15px] font-bold text-[#0f172a]">Open Refund Request</p><button class="modal-x" @click="createRefund.sub = null">✕</button></div>
+        <div class="p-[22px] flex flex-col gap-4">
+          <div class="p-3 rounded-lg bg-[#f8fafc] text-[12.5px] text-[#475569]">
+            <b class="text-[#0f172a]">{{ createRefund.sub.user?.name }}</b> · <span class="capitalize">{{ createRefund.sub.plan }}</span> · {{ peso(createRefund.sub.price) }}
+          </div>
+          <div>
+            <label class="field-label" for="create-refund-type">Reason</label>
+            <select id="create-refund-type" v-model="createRefund.reason_type" class="field-input">
+              <option v-for="(label, key) in REASON_LABELS" :key="key" :value="key">{{ label }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="create-refund-reason">Details</label>
+            <textarea id="create-refund-reason" v-model="createRefund.reason" rows="3" class="field-input resize-none" placeholder="What the user reported (min. 10 characters)" />
+          </div>
+          <p class="text-[11.5px] text-[#94a3b8]">This creates a pending request. A super admin still has to approve it before any money moves.</p>
+          <p v-if="formError" class="text-[12.5px] text-red-500">{{ formError }}</p>
+          <button id="submit-create-refund" class="py-2.5 rounded-lg border-none bg-gradient-to-br from-violet-500 to-violet-600 text-white text-[13.5px] font-semibold cursor-pointer disabled:opacity-50" :disabled="busy || createRefund.reason.trim().length < 10" @click="submitCreateRefund">{{ busy ? 'Creating…' : 'Create Request' }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review refund modal -->
+    <div v-if="review.r" class="modal-backdrop" @click.self="review.r = null">
+      <div class="modal-card !w-[540px]">
+        <div class="modal-head">
+          <div>
+            <p class="text-[15px] font-bold text-[#0f172a]">Refund Request #{{ review.r.id }}</p>
+            <span class="inline-block mt-1 py-[2px] px-2 rounded-[20px] text-[11px] font-semibold capitalize" :class="refundStatusStyle(review.r.status)">{{ review.r.status }}</span>
+          </div>
+          <button class="modal-x" @click="review.r = null">✕</button>
+        </div>
+        <div class="p-[22px] flex flex-col gap-4">
+          <div class="p-3 rounded-lg bg-[#f8fafc] text-[12.5px] text-[#475569] leading-relaxed">
+            <b class="text-[#0f172a]">{{ review.r.user?.name }}</b> ({{ review.r.user?.email }})<br />
+            <span class="capitalize">{{ review.r.subscription?.plan }}</span> · paid {{ peso(review.r.subscription?.price) }} on {{ fmtDate(review.r.subscription?.starts_at) }} · {{ (review.r.subscription?.payment_method || '—').replace('_', ' ') }}
+          </div>
+
+          <div>
+            <p class="field-label">{{ reasonLabel(review.r.reason_type) }}</p>
+            <p class="text-[13.5px] text-[#334155] whitespace-pre-line">{{ review.r.reason }}</p>
+          </div>
+
+          <!-- Server-side policy snapshot taken when the request was made -->
+          <div v-if="review.r.eligibility">
+            <p class="field-label">Policy check (at submit time)</p>
+            <ul class="grid grid-cols-2 gap-2 text-[12.5px]">
+              <li v-for="c in eligibilityChecks" :key="c.label" class="flex items-center gap-2 p-2 rounded-lg border" :class="c.ok ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800'">
+                <span>{{ c.ok ? '✓' : '!' }}</span><span>{{ c.label }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Decision (pending only) -->
+          <template v-if="review.r.status === 'pending'">
+            <div v-if="canApprove" class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="field-label" for="refund-amount">Refund amount (₱)</label>
+                <input id="refund-amount" v-model.number="review.amount" type="number" min="1" :max="review.r.subscription?.price" step="0.01" class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="refund-type">Type</label>
+                <select id="refund-type" v-model="review.type" class="field-input"><option value="full">Full</option><option value="prorated">Prorated</option></select>
+              </div>
+            </div>
+            <p v-else class="p-3 rounded-lg bg-amber-50 border border-amber-200 text-[12.5px] text-amber-800">Only a super admin can approve refunds. You can still reject this request.</p>
+
+            <div>
+              <label class="field-label" for="refund-note">Note {{ review.confirmReject ? '(required to reject, shown to the user)' : '(optional)' }}</label>
+              <input id="refund-note" v-model="review.note" class="field-input" placeholder="Decision note" />
+            </div>
+            <p v-if="formError" class="text-[12.5px] text-red-500">{{ formError }}</p>
+
+            <div v-if="review.confirmApprove" class="p-3 rounded-lg bg-red-50 border border-red-200 text-[12.5px] text-red-800">
+              This sends <b>{{ peso(review.amount) }}</b> back to the customer through PayMongo and ends their Premium access. It cannot be undone.
+            </div>
+            <div class="flex gap-2.5">
+              <button id="reject-refund" class="flex-1 py-2.5 rounded-lg border border-red-200 bg-white text-red-600 text-[13.5px] font-semibold cursor-pointer hover:bg-red-50 disabled:opacity-50" :disabled="busy" @click="decide('reject')">{{ review.confirmReject ? 'Confirm Reject' : 'Reject' }}</button>
+              <button v-if="canApprove" id="approve-refund" class="flex-1 py-2.5 rounded-lg border-none text-white text-[13.5px] font-semibold cursor-pointer disabled:opacity-50" :class="review.confirmApprove ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-emerald-500 to-emerald-600'" :disabled="busy || !(review.amount > 0)" @click="decide('approve')">{{ busy ? 'Working…' : review.confirmApprove ? 'Yes, Issue Refund' : 'Approve & Refund' }}</button>
+            </div>
+          </template>
+
+          <!-- Outcome (already decided) -->
+          <template v-else>
+            <div class="text-[12.5px] text-[#475569] space-y-1">
+              <p v-if="review.r.approved_amount">Approved amount: <b class="text-[#0f172a]">{{ peso(review.r.approved_amount) }}</b> ({{ review.r.refund_type }})</p>
+              <p v-if="review.r.reviewer">Reviewed by <b class="text-[#0f172a]">{{ review.r.reviewer.name }}</b> · {{ fmtDateTime(review.r.reviewed_at) }}</p>
+              <p v-if="review.r.paymongo_refund_id">PayMongo refund: <code class="text-[11.5px]">{{ review.r.paymongo_refund_id }}</code></p>
+              <p v-if="review.r.admin_note" class="italic whitespace-pre-line">“{{ review.r.admin_note }}”</p>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast -->
     <transition name="toast">
       <div v-if="toast" class="fixed bottom-6 right-6 z-[200] py-3 px-4 rounded-xl bg-[#0f172a] text-white text-[13px] shadow-[0_10px_30px_rgba(0,0,0,0.25)]">{{ toast }}</div>
@@ -313,7 +498,7 @@ async function fetchSubs(page = 1) {
 }
 async function fetchStats() { try { stats.value = await api('/stats') } catch (e) { console.error(e) } }
 async function fetchEvents() { try { events.value = (await api('/events?per_page=15')).data } catch (e) { console.error(e) } }
-function refreshAll() { fetchSubs(pagination.current_page); fetchStats(); fetchEvents() }
+function refreshAll() { fetchSubs(pagination.current_page); fetchStats(); fetchEvents(); fetchRefunds(refundPagination.current_page); fetchRefundStats() }
 onMounted(refreshAll)
 
 function notify(msg: string) { toast.value = msg; setTimeout(() => (toast.value = ''), 2800) }
@@ -393,6 +578,159 @@ async function openHistory(user: any) {
 }
 
 // ── Helpers ──────────────────────────
+// ── Refunds ────────────────────────────────────
+const view = ref<'subscriptions' | 'refunds'>('subscriptions')
+const isSuperAdmin = ref(false)
+onMounted(() => { isSuperAdmin.value = localStorage.getItem('role') === 'super_admin' })
+
+const rapi = (path: string, opts: any = {}) =>
+  $fetch<any>(`${config.public.apiBase}/admin/refunds${path}`, {
+    ...opts,
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, Accept: 'application/json' },
+  })
+
+const REASON_LABELS: Record<string, string> = {
+  first_time_guarantee: '7-day money-back guarantee',
+  duplicate_charge:     'Duplicate or accidental charge',
+  service_failure:      'Service failure',
+  charged_after_cancel: 'Charged after cancelling',
+  annual_prorated:      'Annual plan, prorated',
+  other:                'Other',
+}
+const reasonLabel = (k: string) => REASON_LABELS[k] ?? k
+
+const refunds = ref<any[]>([])
+const refundsLoading = ref(true)
+const refundStats = ref<any>({})
+const refundSearch = ref('')
+const refundStatusFilter = ref('')
+const refundPagination = reactive({ current_page: 1, last_page: 1, total: 0 })
+const refundTabs = [
+  { value: '', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'refunded', label: 'Refunded' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'failed', label: 'Failed' },
+]
+const refundCards = computed(() => [
+  { label: 'Pending Review', value: refundStats.value.pending ?? 0, icon: '⏳', tone: 'bg-amber-50 text-amber-600' },
+  { label: 'Processing', value: refundStats.value.processing ?? 0, icon: '🔄', tone: 'bg-blue-50 text-blue-600' },
+  { label: 'Refunded', value: refundStats.value.refunded ?? 0, icon: '✅', tone: 'bg-emerald-50 text-emerald-600' },
+  { label: 'Total Refunded', value: peso(refundStats.value.total_refunded), icon: '💸', tone: 'bg-violet-50 text-violet-600' },
+])
+
+let refundTimer: any
+function debouncedRefunds() { clearTimeout(refundTimer); refundTimer = setTimeout(() => fetchRefunds(), 300) }
+
+async function fetchRefunds(page = 1) {
+  refundsLoading.value = true
+  try {
+    const q = new URLSearchParams({ page: String(page) })
+    if (refundSearch.value) q.set('search', refundSearch.value)
+    if (refundStatusFilter.value) q.set('status', refundStatusFilter.value)
+    const res = await rapi(`?${q}`)
+    refunds.value = res.data
+    Object.assign(refundPagination, { current_page: res.current_page, last_page: res.last_page, total: res.total })
+  } catch (e) {
+    console.error('Failed to load refunds', e)
+  } finally {
+    refundsLoading.value = false
+  }
+}
+async function fetchRefundStats() { try { refundStats.value = await rapi('/stats') } catch (e) { console.error(e) } }
+
+function refundStatusStyle(status: string) {
+  return ({
+    pending:    'bg-amber-50 text-amber-700',
+    processing: 'bg-blue-50 text-blue-700',
+    refunded:   'bg-emerald-50 text-emerald-700',
+    rejected:   'bg-red-50 text-red-700',
+    failed:     'bg-red-50 text-red-700',
+    withdrawn:  'bg-slate-100 text-slate-600',
+  } as Record<string, string>)[status] ?? 'bg-slate-100 text-slate-600'
+}
+
+// Paid through the gateway and not already refunded (admin grants / complimentary / pending never qualify)
+const isRefundable = (s: any) =>
+  !!s.paymongo_payment_id
+  && s.payment_method !== 'admin_grant'
+  && !['refunded', 'partially_refunded', 'complimentary'].includes(s.payment_status ?? '')
+  && Number(s.price) > 0
+  && s.state !== 'pending'
+
+// Admin opens a request on a user's behalf
+const createRefund = reactive<any>({ sub: null, reason_type: 'other', reason: '' })
+function openCreateRefund(sub: any) {
+  Object.assign(createRefund, { sub, reason_type: 'other', reason: '' })
+  formError.value = ''
+}
+async function submitCreateRefund() {
+  busy.value = true; formError.value = ''
+  try {
+    const res = await api(`/${createRefund.sub.id}/refund`, { method: 'POST', body: { reason_type: createRefund.reason_type, reason: createRefund.reason.trim() } })
+    createRefund.sub = null
+    notify(res.message)
+    view.value = 'refunds'
+    await Promise.all([fetchRefunds(), fetchRefundStats(), fetchEvents()])
+    openReview(res.request)
+  } catch (e) { formError.value = errMsg(e) } finally { busy.value = false }
+}
+
+// Review a request: approve (super admin only) or reject
+const review = reactive<any>({ r: null, amount: 0, type: 'full', note: '', confirmApprove: false, confirmReject: false })
+const canApprove = computed(() => isSuperAdmin.value)
+function openReview(r: any) {
+  Object.assign(review, {
+    r,
+    amount: r.requested_amount > 0 ? r.requested_amount : (r.subscription?.price ?? 0),
+    type: r.refund_type ?? 'full',
+    note: '',
+    confirmApprove: false,
+    confirmReject: false,
+  })
+  formError.value = ''
+}
+const eligibilityChecks = computed(() => {
+  const e = review.r?.eligibility
+  if (!e) return []
+  return [
+    { ok: e.days_since_purchase !== null && e.days_since_purchase < 7, label: `${e.days_since_purchase ?? '?'} day(s) since purchase` },
+    { ok: !!e.is_first_purchase, label: e.is_first_purchase ? 'First Premium purchase' : 'Not the first purchase' },
+    { ok: e.premium_scans_used <= e.scan_cap, label: `${e.premium_scans_used} of ${e.scan_cap} scans used` },
+    { ok: !e.prior_guarantee_used, label: e.prior_guarantee_used ? 'Guarantee already used' : 'No earlier guarantee refund' },
+  ]
+})
+
+// Two-step: the first click arms the action (shows what will happen), the second performs it
+async function decide(kind: 'approve' | 'reject') {
+  formError.value = ''
+  if (kind === 'approve') {
+    review.confirmReject = false
+    if (!review.confirmApprove) { review.confirmApprove = true; return }
+  } else {
+    review.confirmApprove = false
+    if (!review.confirmReject) { review.confirmReject = true; return }
+    if (review.note.trim().length < 5) { formError.value = 'Add a short note (at least 5 characters). The user will see it.'; return }
+  }
+
+  busy.value = true
+  try {
+    const body = kind === 'approve'
+      ? { amount: review.amount, refund_type: review.type, note: review.note || null }
+      : { note: review.note.trim() }
+    const res = await rapi(`/${review.r.id}/${kind}`, { method: 'POST', body })
+    review.r = null
+    notify(res.message)
+  } catch (e) {
+    formError.value = errMsg(e)
+  } finally {
+    busy.value = false
+    // A gateway failure still changes the request (to 'failed'), so always resync
+    fetchRefunds(refundPagination.current_page); fetchRefundStats(); fetchSubs(pagination.current_page); fetchEvents()
+  }
+}
+
 const isLive = (s: any) => ['active', 'expiring', 'cancelling'].includes(s.state)
 const initials = (n?: string) => (n ? n.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2) : '?')
 const peso = (v: any) => `₱${Number(v ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -420,6 +758,10 @@ function eventStyle(a: string) {
     auto_renew_on:  { label: 'Auto-renew turned on', icon: '🔁', cls: 'bg-emerald-50' },
     auto_renew_off: { label: 'Auto-renew turned off', icon: '⏹', cls: 'bg-slate-100' },
     synced:         { label: 'Synced with gateway', icon: '🔄', cls: 'bg-slate-100' },
+    refund_requested: { label: 'Refund requested', icon: '💸', cls: 'bg-violet-50' },
+    refunded:         { label: 'Refund issued', icon: '✅', cls: 'bg-emerald-50' },
+    refund_rejected:  { label: 'Refund rejected', icon: '🚫', cls: 'bg-red-50' },
+    refund_failed:    { label: 'Refund failed at gateway', icon: '⚠️', cls: 'bg-red-50' },
   }
   return map[a] ?? { label: a, icon: '•', cls: 'bg-slate-100' }
 }
