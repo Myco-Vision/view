@@ -94,6 +94,9 @@
           <button class="absolute top-2 right-2 bg-black/50 text-white border-none rounded-md py-[3px] px-2.5 text-[12px] cursor-pointer font-sans" @click="clearImage">✕ Remove</button>
         </div>
 
+        <!-- Not-a-mushroom message -->
+        <p v-if="uploadError" class="text-[12.5px] text-red-600 text-center">{{ uploadError }}</p>
+
         <!-- Upload button -->
         <button class="flex items-center justify-center gap-2 p-[13px] rounded-[10px] bg-[#7a956a] text-white border-none text-[14px] font-semibold font-sans cursor-pointer mt-auto transition-colors duration-[0.18s] disabled:opacity-55 disabled:cursor-not-allowed hover:not-disabled:bg-[#5c7a52]" @click="analyzeImage" :disabled="isAnalyzing || !selectedFile">
           <span v-if="isAnalyzing" class="w-[15px] h-[15px] border-2 border-white/35 border-t-white rounded-full animate-spin" />
@@ -207,10 +210,34 @@
           class="absolute inset-0 w-full h-full object-cover bg-[#111]"
         ></video>
 
-        <div class="absolute bottom-0 left-0 right-0 min-h-[80px] pb-[env(safe-area-inset-bottom)] bg-black/60 flex items-center justify-between px-5 backdrop-blur-[5px]">
-          <button class="bg-transparent border-none text-white cursor-pointer text-[14px] font-medium font-sans" @click="closeCamera">Cancel</button>
-          <span class="text-white text-[13px] font-medium">{{ scanStatus }}</span>
-          <div style="width: 60px;"></div> <!-- Spacer -->
+        <!-- Status pill -->
+        <div v-if="scanStatus" class="absolute left-0 right-0 bottom-[120px] flex justify-center px-4 pointer-events-none">
+          <span
+            class="px-4 py-2 rounded-full text-[13px] font-medium text-white backdrop-blur-sm"
+            :class="scanStatusType === 'error' ? 'bg-red-600/85' : 'bg-black/60'"
+          >{{ scanStatus }}</span>
+        </div>
+
+        <!-- Bottom bar: Cancel | Shutter | spacer -->
+        <div class="absolute bottom-0 left-0 right-0 min-h-[100px] pb-[env(safe-area-inset-bottom)] bg-black/60 flex items-center justify-between px-5 backdrop-blur-[5px]">
+          <button
+            class="bg-transparent border-none text-white cursor-pointer text-[14px] font-medium font-sans w-[60px] text-left"
+            :disabled="isCapturing"
+            @click="closeCamera"
+          >Cancel</button>
+
+          <!-- Shutter -->
+          <button
+            class="w-[68px] h-[68px] rounded-full border-4 border-white bg-white/20 flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="isCapturing"
+            aria-label="Capture"
+            @click="captureAndAnalyze"
+          >
+            <span v-if="isCapturing" class="w-6 h-6 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            <span v-else class="w-[52px] h-[52px] rounded-full bg-white" />
+          </button>
+
+          <div class="w-[60px]"></div> <!-- Spacer keeps shutter centered -->
         </div>
       </div>
     </Teleport>
@@ -377,7 +404,6 @@ function getErrorStatus(error: any): number | undefined {
 
 // Token rejected → stop everything, clear the dead session, go to login
 async function handleAuthExpired() {
-  stopAutoScan()
   closeCamera()
   localStorage.removeItem('token')
   localStorage.removeItem('user')
@@ -516,20 +542,21 @@ const isDragging   = ref(false)
 const isAnalyzing  = ref(false)
 const selectedFile = ref<File | null>(null)
 const result       = ref<any>(null)
+const uploadError  = ref<string | null>(null)
 
-// ── Camera / auto-scan state ──────────────────────────
+// ── Camera / manual capture state ─────────────────────
 const isCameraOpen = ref(false)
 const videoRef = ref<HTMLVideoElement | null>(null)
 let mediaStream: MediaStream | null = null
 
-const isScanning = ref(false)
+const isCapturing = ref(false)
 const scanStatus = ref('')
-let scanIntervalId: ReturnType<typeof setInterval> | null = null
-let scanInFlight = false
-let consecutiveErrors = 0
-const SCAN_INTERVAL_MS = 1500
-const CONFIDENCE_THRESHOLD = 85 // auto-stop once this confident
-const MAX_CONSECUTIVE_ERRORS = 3 // give up after this many failures in a row
+const scanStatusType = ref<'info' | 'error'>('info')
+
+function setStatus(msg: string, type: 'info' | 'error' = 'info') {
+  scanStatus.value = msg
+  scanStatusType.value = type
+}
 
 // ── Geolocation state ─────────────────────────────────
 const userLat = ref<number | null>(null)
@@ -656,15 +683,13 @@ async function openCamera() {
     })
     mediaStream = stream
     isCameraOpen.value = true
+    setStatus('')
 
     // Start fetching GPS in parallel so camera scans get a location too
     fetchUserLocation()
 
     nextTick(() => {
-      if (videoRef.value) {
-        videoRef.value.srcObject = stream
-        startAutoScan()
-      }
+      if (videoRef.value) videoRef.value.srcObject = stream
     })
   } catch (error) {
     console.error('Error accessing camera:', error)
@@ -673,110 +698,95 @@ async function openCamera() {
 }
 
 function closeCamera() {
-  stopAutoScan()
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop())
     mediaStream = null
   }
   isCameraOpen.value = false
+  isCapturing.value = false
+  setStatus('')
 }
 
-function startAutoScan() {
-  if (scanIntervalId) return
-  consecutiveErrors = 0
-  isScanning.value = true
-  scanIntervalId = setInterval(captureFrameAndAnalyze, SCAN_INTERVAL_MS)
-}
-
-function stopAutoScan() {
-  if (scanIntervalId) {
-    clearInterval(scanIntervalId)
-    scanIntervalId = null
-  }
-  isScanning.value = false
-  scanStatus.value = ''
-}
-
-async function captureFrameAndAnalyze() {
-  // Skip if video isn't ready yet (videoWidth is 0 until the first frame)
-  if (!videoRef.value || !videoRef.value.videoWidth || scanInFlight) return
-  scanInFlight = true
-  scanStatus.value = 'Scanning...'
-
-  const video = videoRef.value
+function grabFrame(video: HTMLVideoElement): Promise<Blob | null> {
   const canvas = document.createElement('canvas')
   canvas.width = video.videoWidth
   canvas.height = video.videoHeight
   const ctx = canvas.getContext('2d')
-  if (!ctx) { scanInFlight = false; return }
+  if (!ctx) return Promise.resolve(null)
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85))
+}
 
-  canvas.toBlob(async (blob) => {
-    if (!blob) { scanInFlight = false; return }
+// Shutter button: grab one frame → preview check → save only if it's a mushroom
+async function captureAndAnalyze() {
+  if (isCapturing.value) return
+
+  const video = videoRef.value
+  if (!video || !video.videoWidth) {
+    setStatus('Camera not ready yet', 'error')
+    return
+  }
+
+  isCapturing.value = true
+  setStatus('Checking...')
+
+  try {
+    const blob = await grabFrame(video)
+    if (!blob) throw new Error('Failed to capture frame')
     const file = new File([blob], 'scan.jpg', { type: 'image/jpeg' })
 
-    try {
-      const formData = new FormData()
-      formData.append('image', file)
+    const formData = new FormData()
+    formData.append('image', file)
 
-      const data = await $fetch<any>(`${config.public.apiBase}/scans/preview`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: formData,
-      })
+    // Preview = classification only, does not use up a scan
+    const preview = await $fetch<any>(`${config.public.apiBase}/scans/preview`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: formData,
+    })
 
-      const rawClass = data.result_classification || 'unknown'
-      const confidence = data.confidence_level || 0
+    // User hit Cancel while the request was in flight — don't save or spend quota
+    if (!isCameraOpen.value) return
 
-      if (rawClass === 'not_mushroom') {
-        scanStatus.value = 'No mushroom detected — keep scanning...'
-      } else if (confidence >= CONFIDENCE_THRESHOLD) {
-        scanStatus.value = 'Saving result...'
-        // Errors here propagate to the outer catch (401/403/retry limit handled there)
-        await saveFinalScan(file)
-        stopAutoScan()
-        closeCamera()
-        // Show consent modal once after the first successful scan
-        setTimeout(maybeShowConsentModal, 800)
-      } else {
-        scanStatus.value = `Low confidence (${confidence}%) — keep scanning...`
-      }
-
-      // Whole round-trip succeeded → reset the failure counter
-      consecutiveErrors = 0
-    } catch (error: any) {
-      console.error('Auto-scan request failed:', error)
-      const status = getErrorStatus(error)
-
-      // Token rejected → stop and send to login
-      if (status === 401) {
-        await handleAuthExpired()
-        return
-      }
-
-      // Free-tier limit reached
-      if (error?.data?.error === 'SCAN_LIMIT_REACHED' || status === 403) {
-        stopAutoScan()
-        closeCamera()
-        canScan.value = false
-        remainingScans.value = 0
-        showUpgradeModal.value = true
-        return
-      }
-
-      // Anything else: retry a few times, then give up instead of looping forever
-      consecutiveErrors++
-      if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-        stopAutoScan()
-        closeCamera()
-        alert('Scanning failed repeatedly. Please try again later.')
-        return
-      }
-      scanStatus.value = 'Scan error, retrying...'
-    } finally {
-      scanInFlight = false
+    if (preview.result_classification === 'not_mushroom') {
+      setStatus('No mushroom detected. Adjust and tap capture again.', 'error')
+      return
     }
-  }, 'image/jpeg', 0.85)
+
+    setStatus('Saving result...')
+    await saveFinalScan(file)
+    closeCamera()
+    // Show consent modal once after the first successful scan
+    setTimeout(maybeShowConsentModal, 800)
+  } catch (error: any) {
+    console.error('Capture failed:', error)
+    const status = getErrorStatus(error)
+
+    // Token rejected → stop and send to login
+    if (status === 401) {
+      await handleAuthExpired()
+      return
+    }
+
+    // Backend rejected it (re-check at save time) → nothing saved, let them retry
+    if (error?.data?.error === 'NOT_MUSHROOM') {
+      setStatus('No mushroom detected. Adjust and tap capture again.', 'error')
+      return
+    }
+
+    // Free-tier limit reached
+    if (error?.data?.error === 'SCAN_LIMIT_REACHED' || status === 403) {
+      closeCamera()
+      canScan.value = false
+      remainingScans.value = 0
+      showUpgradeModal.value = true
+      return
+    }
+
+    setStatus('Something went wrong. Tap capture to try again.', 'error')
+  } finally {
+    isCapturing.value = false
+  }
 }
 
 async function saveFinalScan(file: File) {
@@ -825,6 +835,7 @@ function handleFileChange(e: Event) {
   }
   const file = (e.target as HTMLInputElement).files?.[0]
   if (file) {
+    uploadError.value = null
     selectedFile.value = file
     loadPreview(file)
   }
@@ -834,6 +845,7 @@ function handleDrop(e: DragEvent) {
   if (!checkScanEligibility()) return
   const file = e.dataTransfer?.files?.[0]
   if (file) {
+    uploadError.value = null
     selectedFile.value = file
     loadPreview(file)
   }
@@ -847,6 +859,7 @@ function clearImage() {
   previewUrl.value = null
   selectedFile.value = null
   result.value = null
+  uploadError.value = null
   lastScanId.value = null
   locationSaved.value = false
   if (fileInput.value) fileInput.value.value = ''
@@ -858,6 +871,7 @@ async function analyzeImage() {
 
   isAnalyzing.value = true
   result.value = null
+  uploadError.value = null
   lastScanId.value = null
   locationSaved.value = false
 
@@ -907,6 +921,9 @@ async function analyzeImage() {
     const status = getErrorStatus(error)
     if (status === 401) {
       await handleAuthExpired()
+    } else if (error?.data?.error === 'NOT_MUSHROOM') {
+      // Backend rejected it before saving: nothing stored, no quota used
+      uploadError.value = 'No mushroom detected. Please upload a clearer picture of a mushroom.'
     } else if (error?.data?.error === 'SCAN_LIMIT_REACHED' || status === 403) {
       canScan.value = false
       remainingScans.value = 0
