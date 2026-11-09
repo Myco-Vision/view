@@ -26,7 +26,7 @@
 
       <div>
         <h3 class="text-base font-bold" :class="variant === 'dark' ? 'text-white' : 'text-slate-900'">{{ opts.title }}</h3>
-        <p v-if="opts.message" class="text-[13px] mt-1.5 leading-relaxed" :class="variant === 'dark' ? 'text-slate-400' : 'text-slate-500'">{{ opts.message }}</p>
+        <p v-if="opts.message" class="text-[13px] mt-1.5 leading-relaxed" :class="variant === 'dark' ? 'text-slate-400' : 'text-slate-500'"><template v-for="(part, i) in messageParts" :key="i"><strong v-if="part.bold" class="font-bold" :class="variant === 'dark' ? 'text-slate-200' : 'text-slate-800'">{{ part.text }}</strong><template v-else>{{ part.text }}</template></template></p>
       </div>
 
       <!-- Type-to-confirm (for destructive actions) -->
@@ -83,6 +83,18 @@ withDefaults(defineProps<{ variant?: 'light' | 'dark' }>(), { variant: 'light' }
 const { state, accept, cancel } = useConfirm()
 const opts = computed(() => state.options.value)
 const tone = computed(() => opts.value.tone ?? 'danger')
+// Split the message so emphasis renders bold (plain text nodes only, no v-html)
+const messageParts = computed(() => {
+  const msg = opts.value.message ?? ''
+  const em = opts.value.emphasis
+  if (!em || !msg.includes(em)) return [{ text: msg, bold: false }]
+  const [before, ...rest] = msg.split(em)
+  return [
+    { text: before, bold: false },
+    { text: em, bold: true },
+    { text: rest.join(em), bold: false },
+  ]
+})
 const typed = ref('')
 
 const toneStyles = computed(() => ({

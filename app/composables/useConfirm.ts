@@ -8,6 +8,8 @@ export type ConfirmTone = 'danger' | 'warning' | 'info' | 'success'
 export interface ConfirmOptions {
   title: string
   message?: string
+  /** Optional phrase inside message to render in bold */
+  emphasis?: string
   tone?: ConfirmTone
   confirmText?: string
   cancelText?: string

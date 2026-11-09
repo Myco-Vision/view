@@ -1,4 +1,5 @@
 <template>
+<div>
   <div class="flex flex-col gap-[18px]">
     <h1 class="text-[22px] font-bold text-[#0f172a]">Settings</h1>
 
@@ -16,7 +17,8 @@
                   <img v-if="userProfile.photo" :src="userProfile.photo" alt="Avatar" class="w-full h-full object-cover" />
                   <span v-else>{{ userProfile.initials }}</span>
                 </div>
-                <button class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-white border border-[#e2e8f0] text-[10px] cursor-pointer flex items-center justify-center" title="Change photo">✏️</button>
+                <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarSelected" />
+                <button type="button" :disabled="uploadingAvatar" @click="avatarInput?.click()" class="absolute -bottom-0.5 -right-0.5 disabled:opacity-50 w-7 h-7 rounded-full bg-white border border-[#e2e8f0] shadow-sm cursor-pointer flex hover:bg-[#f8fafc] items-center justify-center" title="Change photo"><svg class="w-3.5 h-3.5 text-[#475569]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.768-6.768a2.5 2.5 0 113.536 3.536L12.536 16.536 8 18l1-5z"/></svg></button>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-[14.5px] sm:text-[15px] font-semibold text-[#0f172a] truncate">{{ userProfile.name }}</p>
@@ -24,7 +26,7 @@
                 <p class="text-[11px] sm:text-[11.5px] text-[#64748b] mt-0.5">Member since {{ userProfile.joined }}</p>
               </div>
             </div>
-            <button class="py-[7px] px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer whitespace-nowrap transition-colors duration-[0.18s] shrink-0 self-start sm:self-auto hover:bg-[#f8fafc]">Edit Profile</button>
+            <button class="py-[7px] px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer whitespace-nowrap transition-colors duration-[0.18s] shrink-0 self-start sm:self-auto hover:bg-[#f8fafc]" @click="openEditProfile">Edit Profile</button>
           </div>
         </div>
 
@@ -199,6 +201,137 @@
   </div>
 
   <!-- 🟢 PLACE TELEPORT HERE (INSIDE TEMPLATE) -->
+  <!-- Edit Profile Modal -->
+  <Teleport to="body">
+    <div
+      v-if="showEditProfile"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+      @click.self="closeEditProfile"
+    >
+      <div class="bg-white rounded-2xl w-[480px] max-w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-[#e2e8f0]">
+        <!-- Header -->
+        <div class="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]">
+          <div>
+            <h3 class="text-[16px] font-bold text-[#0f172a]">Edit Profile</h3>
+            <p class="text-[12px] text-[#64748b]">Update your personal details</p>
+          </div>
+          <button type="button" class="text-[#94a3b8] hover:text-[#0f172a] text-xl font-bold bg-transparent border-none cursor-pointer" aria-label="Close" @click="closeEditProfile">&times;</button>
+        </div>
+
+        <!-- Body -->
+        <form class="p-5 flex flex-col gap-3.5 overflow-y-auto" @submit.prevent="submitEditProfile">
+          <div v-if="editError" class="flex items-start gap-2 p-3 rounded-lg bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] text-[12.5px]">
+            <span>{{ editError }}</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#0f172a]">First Name</label>
+              <input v-model="editForm.first_name" type="text" maxlength="255" class="w-full py-2.5 px-3.5 rounded-lg border bg-white text-[13px] text-[#0f172a] outline-none focus:border-[#10b981]" :class="editFieldErrors.first_name ? 'border-[#fca5a5]' : 'border-[#e2e8f0]'" />
+              <p v-if="editFieldErrors.first_name" class="text-[11.5px] text-[#dc2626]">{{ editFieldErrors.first_name }}</p>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#0f172a]">Last Name</label>
+              <input v-model="editForm.last_name" type="text" maxlength="255" class="w-full py-2.5 px-3.5 rounded-lg border bg-white text-[13px] text-[#0f172a] outline-none focus:border-[#10b981]" :class="editFieldErrors.last_name ? 'border-[#fca5a5]' : 'border-[#e2e8f0]'" />
+              <p v-if="editFieldErrors.last_name" class="text-[11.5px] text-[#dc2626]">{{ editFieldErrors.last_name }}</p>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#0f172a]">Username</label>
+            <input v-model="editForm.username" type="text" maxlength="255" class="w-full py-2.5 px-3.5 rounded-lg border bg-white text-[13px] text-[#0f172a] outline-none focus:border-[#10b981]" :class="editFieldErrors.username ? 'border-[#fca5a5]' : 'border-[#e2e8f0]'" />
+            <p v-if="editFieldErrors.username" class="text-[11.5px] text-[#dc2626]">{{ editFieldErrors.username }}</p>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#0f172a]">Contact Number</label>
+            <input v-model="editForm.contact_number" type="tel" maxlength="20" placeholder="0917 123 4567" class="w-full py-2.5 px-3.5 rounded-lg border bg-white text-[13px] text-[#0f172a] outline-none focus:border-[#10b981]" :class="editFieldErrors.contact_number ? 'border-[#fca5a5]' : 'border-[#e2e8f0]'" />
+            <p v-if="editFieldErrors.contact_number" class="text-[11.5px] text-[#dc2626]">{{ editFieldErrors.contact_number }}</p>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#0f172a]">Address</label>
+            <textarea v-model="editForm.address" name="mv-street-address" autocomplete="off" placeholder="Street, Barangay, City, Province, Region" rows="2" maxlength="500" class="w-full py-2.5 px-3.5 rounded-lg border bg-white text-[13px] text-[#0f172a] outline-none focus:border-[#10b981] resize-none" :class="editFieldErrors.address ? 'border-[#fca5a5]' : 'border-[#e2e8f0]'"></textarea>
+            <p v-if="editFieldErrors.address" class="text-[11.5px] text-[#dc2626]">{{ editFieldErrors.address }}</p>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#0f172a]">Email</label>
+            <input :value="userProfile.email" type="email" disabled class="w-full py-2.5 px-3.5 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] text-[13px] text-[#94a3b8] cursor-not-allowed" />
+          </div>
+
+          <!-- Footer -->
+          <div class="pt-3 border-t border-[#f1f5f9] flex items-center justify-end gap-2.5">
+            <button type="button" class="py-2 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium text-[#475569] hover:bg-[#f1f5f9] cursor-pointer" :disabled="savingProfile" @click="closeEditProfile">Cancel</button>
+            <button type="submit" class="py-2 px-5 rounded-lg bg-gradient-to-r from-[#10b981] to-[#059669] text-white text-[13px] font-semibold cursor-pointer shadow-sm hover:opacity-90 disabled:opacity-50" :disabled="savingProfile">{{ savingProfile ? 'Saving...' : 'Save Changes' }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </Teleport>
+
+  <!-- Adjust Avatar Modal -->
+  <Teleport to="body">
+    <div
+      v-if="showCrop"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+      @click.self="closeCrop"
+    >
+      <div class="bg-white rounded-2xl w-[400px] max-w-full shadow-2xl overflow-hidden border border-[#e2e8f0]">
+        <div class="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]">
+          <div>
+            <h3 class="text-[16px] font-bold text-[#0f172a]">Adjust Photo</h3>
+            <p class="text-[12px] text-[#64748b]">Drag to reposition, use the slider to zoom</p>
+          </div>
+          <button type="button" class="text-[#94a3b8] hover:text-[#0f172a] text-xl font-bold bg-transparent border-none cursor-pointer" aria-label="Close" @click="closeCrop">&times;</button>
+        </div>
+
+        <div class="p-5 flex flex-col items-center gap-4">
+          <div
+            class="relative overflow-hidden rounded-full bg-[#f1f5f9] border-2 border-[#10b981] touch-none select-none cursor-grab active:cursor-grabbing"
+            :style="{ width: CROP_VIEW + 'px', height: CROP_VIEW + 'px' }"
+            @pointerdown="onCropPointerDown"
+            @pointermove="onCropPointerMove"
+            @pointerup="onCropPointerUp"
+            @pointercancel="onCropPointerUp"
+            @wheel.prevent="onCropWheel"
+          >
+            <img :src="cropSrc" alt="Crop preview" draggable="false" class="absolute max-w-none pointer-events-none" :style="cropImgStyle" />
+          </div>
+
+          <div class="w-full flex items-center gap-3">
+            <span class="text-[12px] text-[#64748b]">-</span>
+            <input v-model.number="cropZoom" type="range" min="1" max="3" step="0.01" class="flex-1 accent-[#10b981]" aria-label="Zoom" />
+            <span class="text-[12px] text-[#64748b]">+</span>
+          </div>
+        </div>
+
+        <div class="p-4 border-t border-[#f1f5f9] bg-[#f8fafc] flex items-center justify-end gap-2.5">
+          <button type="button" class="py-2 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium text-[#475569] hover:bg-[#f1f5f9] cursor-pointer" :disabled="uploadingAvatar" @click="closeCrop">Cancel</button>
+          <button type="button" class="py-2 px-5 rounded-lg bg-gradient-to-r from-[#10b981] to-[#059669] text-white text-[13px] font-semibold cursor-pointer shadow-sm hover:opacity-90 disabled:opacity-50" :disabled="uploadingAvatar" @click="saveCroppedAvatar">{{ uploadingAvatar ? 'Uploading...' : 'Save Photo' }}</button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
+
+  <!-- Delete account: password verification -->
+  <AppModal v-model="showDeleteModal" title="Confirm your password" subtitle="Enter your current password to permanently delete your account." size="sm" :persistent="isDeleting">
+    <form class="flex flex-col gap-3 py-2" @submit.prevent="submitDeleteAccount">
+      <input
+        v-model="deletePassword"
+        type="password"
+        autocomplete="current-password"
+        placeholder="Current password"
+        class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm outline-none focus:border-red-500"
+      />
+      <p v-if="deleteError" class="text-xs text-red-600">{{ deleteError }}</p>
+      <div class="flex justify-end gap-2 pt-1">
+        <button type="button" :disabled="isDeleting" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm border-none cursor-pointer" @click="showDeleteModal = false">Cancel</button>
+        <button type="submit" :disabled="isDeleting" class="px-4 py-2 rounded-lg bg-[#dc2626] text-white text-sm font-semibold border-none cursor-pointer disabled:opacity-60">{{ isDeleting ? 'Deleting…' : 'Delete Account' }}</button>
+      </div>
+    </form>
+  </AppModal>
+
   <Teleport to="body">
     <div 
       v-if="showConsentModal" 
@@ -344,6 +477,7 @@
       </div>
     </div>
   </Teleport>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -449,7 +583,211 @@ async function submitChangePassword() {
   }
 }
 
+// ── Edit Profile & Avatar ───────────────────────────────────────────────────
+const currentUser = ref<any>({})
+const showEditProfile = ref(false)
+const savingProfile = ref(false)
+const editError = ref('')
+const editForm = reactive({ first_name: '', last_name: '', username: '', contact_number: '', address: '' })
+const editFieldErrors = reactive<Record<string, string>>({})
+
+function authHeaders() {
+  const token = localStorage.getItem('token') || useCookie('token').value
+  return { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+}
+
+function photoUrl(path: string) {
+  if (/^https?:\/\//i.test(path)) return path // e.g. Google avatar
+  return `${config.public.apiBase.replace(/\/api$/, '')}/storage/${path}`
+}
+
+function syncStoredUser(user: any) {
+  localStorage.setItem('user', JSON.stringify(user))
+  applyUser(user)
+  window.dispatchEvent(new Event('user-updated')) // refresh the sidebar
+}
+
+function openEditProfile() {
+  const u = currentUser.value || {}
+  const parts = (u.name || '').split(' ')
+  editForm.first_name = u.first_name || parts[0] || ''
+  editForm.last_name = u.last_name || parts.slice(1).join(' ') || ''
+  editForm.username = u.username || ''
+  editForm.contact_number = u.contact_number || ''
+  // Guard against bad data: an address that is really an email is cleared so the user re-enters it
+  editForm.address = u.address && !u.address.includes('@') ? u.address : ''
+  editError.value = ''
+  Object.keys(editFieldErrors).forEach((k) => delete editFieldErrors[k])
+  showEditProfile.value = true
+}
+
+function closeEditProfile() {
+  if (savingProfile.value) return
+  showEditProfile.value = false
+}
+
+async function submitEditProfile() {
+  editError.value = ''
+  Object.keys(editFieldErrors).forEach((k) => delete editFieldErrors[k])
+  savingProfile.value = true
+  try {
+    const res: any = await $fetch(`${config.public.apiBase}/user/profile`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: { ...editForm },
+    })
+    syncStoredUser(res.user)
+    showEditProfile.value = false
+    useToast().success('Profile updated!')
+  } catch (err: any) {
+    const errors = err?.data?.errors
+    if (errors) {
+      for (const [field, msgs] of Object.entries(errors)) editFieldErrors[field] = (msgs as string[])[0]
+    } else {
+      editError.value = err?.data?.message || 'Failed to update profile. Please try again.'
+    }
+  } finally {
+    savingProfile.value = false
+  }
+}
+
+const avatarInput = ref<HTMLInputElement | null>(null)
+const uploadingAvatar = ref(false)
+
+// Avatar cropper: pick a file, pan/zoom inside a circular viewport, then upload the cropped square
+const CROP_VIEW = 240 // viewport size in px
+const CROP_OUT = 512  // exported image size in px
+const showCrop = ref(false)
+const cropSrc = ref('')
+const cropNat = reactive({ w: 0, h: 0 })
+const cropZoom = ref(1)
+const cropOffset = reactive({ x: 0, y: 0 })
+let cropImg: HTMLImageElement | null = null
+let dragStart: { px: number; py: number; ox: number; oy: number } | null = null
+
+const cropScale = computed(() =>
+  cropNat.w && cropNat.h ? (CROP_VIEW / Math.min(cropNat.w, cropNat.h)) * cropZoom.value : 1,
+)
+const cropImgStyle = computed(() => {
+  const w = cropNat.w * cropScale.value
+  const h = cropNat.h * cropScale.value
+  return {
+    width: `${w}px`,
+    height: `${h}px`,
+    left: `${CROP_VIEW / 2 - w / 2 + cropOffset.x}px`,
+    top: `${CROP_VIEW / 2 - h / 2 + cropOffset.y}px`,
+  }
+})
+
+function clampCropOffset() {
+  const maxX = Math.max(0, (cropNat.w * cropScale.value - CROP_VIEW) / 2)
+  const maxY = Math.max(0, (cropNat.h * cropScale.value - CROP_VIEW) / 2)
+  cropOffset.x = Math.min(maxX, Math.max(-maxX, cropOffset.x))
+  cropOffset.y = Math.min(maxY, Math.max(-maxY, cropOffset.y))
+}
+watch(cropZoom, clampCropOffset)
+
+function onCropPointerDown(e: PointerEvent) {
+  dragStart = { px: e.clientX, py: e.clientY, ox: cropOffset.x, oy: cropOffset.y }
+  ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+}
+function onCropPointerMove(e: PointerEvent) {
+  if (!dragStart) return
+  cropOffset.x = dragStart.ox + (e.clientX - dragStart.px)
+  cropOffset.y = dragStart.oy + (e.clientY - dragStart.py)
+  clampCropOffset()
+}
+function onCropPointerUp() { dragStart = null }
+function onCropWheel(e: WheelEvent) {
+  cropZoom.value = Math.min(3, Math.max(1, cropZoom.value - e.deltaY * 0.002))
+}
+
+function closeCrop() {
+  if (uploadingAvatar.value) return
+  showCrop.value = false
+  if (cropSrc.value) URL.revokeObjectURL(cropSrc.value)
+  cropSrc.value = ''
+  cropImg = null
+}
+
+function onAvatarSelected(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = '' // allow re-selecting the same file
+  if (!file) return
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    useToast().error('Please choose a JPG, PNG or WebP image.')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    useToast().error('Image must be 5MB or smaller.')
+    return
+  }
+  const url = URL.createObjectURL(file)
+  const img = new Image()
+  img.onload = () => {
+    cropImg = img
+    cropNat.w = img.naturalWidth
+    cropNat.h = img.naturalHeight
+    cropZoom.value = 1
+    cropOffset.x = 0
+    cropOffset.y = 0
+    cropSrc.value = url
+    showCrop.value = true
+  }
+  img.onerror = () => {
+    URL.revokeObjectURL(url)
+    useToast().error('That image could not be read.')
+  }
+  img.src = url
+}
+
+async function saveCroppedAvatar() {
+  if (!cropImg) return
+  const canvas = document.createElement('canvas')
+  canvas.width = CROP_OUT
+  canvas.height = CROP_OUT
+  const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, CROP_OUT, CROP_OUT)
+  const ratio = CROP_OUT / CROP_VIEW
+  const w = cropNat.w * cropScale.value
+  const h = cropNat.h * cropScale.value
+  ctx.drawImage(
+    cropImg,
+    (CROP_VIEW / 2 - w / 2 + cropOffset.x) * ratio,
+    (CROP_VIEW / 2 - h / 2 + cropOffset.y) * ratio,
+    w * ratio,
+    h * ratio,
+  )
+  const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9))
+  if (!blob) {
+    useToast().error('Could not process the image.')
+    return
+  }
+
+  uploadingAvatar.value = true
+  try {
+    const body = new FormData()
+    body.append('avatar', blob, 'avatar.jpg')
+    const res: any = await $fetch(`${config.public.apiBase}/user/avatar`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body,
+    })
+    syncStoredUser(res.user)
+    uploadingAvatar.value = false
+    closeCrop()
+    useToast().success('Profile photo updated!')
+  } catch (err: any) {
+    useToast().error(err?.data?.errors?.avatar?.[0] || err?.data?.message || 'Failed to upload photo.')
+  } finally {
+    uploadingAvatar.value = false
+  }
+}
+
 function applyUser(user: any) {
+  currentUser.value = user
   userProfile.name = user.name || user.username || 'User'
   userProfile.email = user.email || 'No email'
   privacy.shareData = Boolean(user.allow_data_training)
@@ -463,7 +801,7 @@ function applyUser(user: any) {
     userProfile.joined = new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }
   if (user.profile_photo) {
-    userProfile.photo = `${config.public.apiBase.replace(/\/api$/, '')}/storage/${user.profile_photo}`
+    userProfile.photo = photoUrl(user.profile_photo)
   }
 }
 
@@ -530,16 +868,77 @@ function exportData() { useToast().info('Exporting data…') }
 
 async function deleteAccount() {
   const { confirm } = useConfirm()
+
+  // Check the live subscription state (cached user may be stale) so we can warn about it
+  let subscribed = false
+  let tier = ''
+  try {
+    const token = localStorage.getItem('token') || useCookie('token').value
+    const config = useRuntimeConfig()
+    const me: any = await $fetch(`${config.public.apiBase}/me`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    })
+    subscribed = !!me.is_subscribed && !['admin', 'free'].includes(me.subscription_tier)
+    tier = me.subscription_tier || ''
+  } catch {
+    const cached = JSON.parse(localStorage.getItem('user') || '{}')
+    subscribed = !!cached.is_subscribed && !['admin', 'free'].includes(cached.subscription_tier)
+    tier = cached.subscription_tier || ''
+  }
+
+  const baseMsg = 'All your scans, collection, and history will be permanently removed. This cannot be undone.'
+  const subWarning = subscribed
+    ? ' Your Premium plan will end immediately and is Not Refundable.'
+    : ''
   const ok = await confirm({
     title: 'Delete your account?',
-    message: 'All your scans, collection, and history will be permanently removed. This cannot be undone.',
+    message: baseMsg + subWarning,
+    emphasis: subscribed ? 'Not Refundable' : undefined,
     tone: 'danger',
     confirmText: 'Delete My Account',
     requireText: 'DELETE',
   })
   if (!ok) return
-  // TODO: no self-service delete endpoint exists on the backend yet
-  useToast().info('Account deletion is not available yet. Please contact support to delete your account.')
+  deletePassword.value = ''
+  deleteError.value = ''
+  showDeleteModal.value = true
+}
+
+const showDeleteModal = ref(false)
+const deletePassword = ref('')
+const deleteError = ref('')
+const isDeleting = ref(false)
+
+async function submitDeleteAccount() {
+  if (!deletePassword.value) {
+    deleteError.value = 'Please enter your current password.'
+    return
+  }
+  const token = localStorage.getItem('token') || useCookie('token').value
+  if (!token) {
+    deleteError.value = 'No authentication token found. Please log in again.'
+    return
+  }
+  const config = useRuntimeConfig()
+  isDeleting.value = true
+  deleteError.value = ''
+  try {
+    await $fetch(`${config.public.apiBase}/user`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      body: { password: deletePassword.value },
+    })
+    localStorage.clear()
+    useCookie('token').value = null
+    showDeleteModal.value = false
+    useToast().success('Your account has been deleted.')
+    await navigateTo('/login')
+  } catch (err: any) {
+    deleteError.value =
+      err?.data?.errors?.password?.[0] || err?.data?.message || 'Failed to delete account. Please try again.'
+  } finally {
+    isDeleting.value = false
+  }
 }
 
 // ── Consent Toggle & Modal Handlers ──────────────────────────────────────────

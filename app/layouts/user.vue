@@ -109,7 +109,7 @@
       <div class="flex flex-col gap-1.5 pt-3 border-t border-emerald-900/40 mt-1">
         <!-- User info -->
         <div class="flex items-center gap-2.5 py-2 px-2.5 rounded-xl bg-emerald-950/40 border border-emerald-900/30">
-          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center text-xs font-bold overflow-hidden shrink-0 shadow-md">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center text-sm font-bold overflow-hidden shrink-0 shadow-md">
             <img v-if="userAvatar" :src="userAvatar" alt="User avatar" class="w-full h-full object-cover" />
             <span v-else>{{ userInitials }}</span>
           </div>
@@ -164,13 +164,29 @@ const userAvatar     = ref('')
 const isSubscribed   = ref(false)
 const remainingScans = ref<number | null>(null)
 
+function photoUrl(path: string) {
+  if (/^https?:\/\//i.test(path)) return path // e.g. Google avatar
+  return `${config.public.apiBase.replace(/\/api$/, '')}/storage/${path}`
+}
+
+// Re-read the cached user (called when the profile/avatar is edited elsewhere)
+function syncUserFromStorage() {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    userName.value = user.name || user.username || 'User'
+    userAvatar.value = user.profile_photo ? photoUrl(user.profile_photo) : ''
+  } catch (e) {
+    console.error(e)
+  }
+}
+
 async function refreshUserSubscription() {
   const storedUser = localStorage.getItem('user')
   if (storedUser) {
     try {
       const user = JSON.parse(storedUser)
       userName.value = user.name || user.username || 'User'
-      userAvatar.value = user.profile_photo ? `${config.public.apiBase.replace(/\/api$/, '')}/storage/${user.profile_photo}` : ''
+      userAvatar.value = user.profile_photo ? photoUrl(user.profile_photo) : ''
       if (typeof user.is_subscribed !== 'undefined') {
         isSubscribed.value = !!user.is_subscribed
       }
@@ -191,8 +207,9 @@ async function refreshUserSubscription() {
       isSubscribed.value = !!data.is_subscribed
       remainingScans.value = data.remaining_scans
 
-      if (storedUser) {
-        const u = JSON.parse(storedUser)
+      const latest = localStorage.getItem('user')
+      if (latest) {
+        const u = JSON.parse(latest)
         u.is_subscribed = data.is_subscribed
         u.remaining_scans = data.remaining_scans
         u.subscription_tier = data.subscription_tier
@@ -207,10 +224,12 @@ async function refreshUserSubscription() {
 onMounted(() => {
   refreshUserSubscription()
   window.addEventListener('subscription-updated', refreshUserSubscription)
+  window.addEventListener('user-updated', syncUserFromStorage)
 })
 
 onUnmounted(() => {
   window.removeEventListener('subscription-updated', refreshUserSubscription)
+  window.removeEventListener('user-updated', syncUserFromStorage)
 })
 
 const userInitials = computed(() => {
