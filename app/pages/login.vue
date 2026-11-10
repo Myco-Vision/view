@@ -170,7 +170,7 @@
 
             <!-- Forgot password link -->
             <div class="flex justify-end -mt-1 mb-3">
-              <NuxtLink to="/forgot-password" class="text-[11px] text-emerald-400 hover:underline font-semibold">Forgot password?</NuxtLink>
+              <NuxtLink to="/forgot-password" class="text-[12.5px] text-emerald-400 hover:text-emerald-300 hover:underline font-semibold transition-colors">Forgot password?</NuxtLink>
             </div>
 
             <!-- Submit Button -->
