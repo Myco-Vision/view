@@ -223,13 +223,74 @@
           </nav>
         </div>
         <div class="flex items-center gap-3">
-          <button class="w-9 h-9 rounded-lg bg-transparent border border-slate-200 cursor-pointer flex items-center justify-center text-slate-500 relative transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900">
-            <svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-            <span class="absolute top-[7px] right-[7px] w-[7px] h-[7px] rounded-full bg-red-500 border-[1.5px] border-white"></span>
-          </button>
+          <div ref="notifContainer" class="relative">
+            <button
+              type="button"
+              @click="toggleNotifications"
+              aria-label="Admin notifications"
+              :aria-expanded="notifOpen"
+              class="w-9 h-9 rounded-lg bg-transparent border border-slate-200 cursor-pointer flex items-center justify-center text-slate-500 relative transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900"
+            >
+              <svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              <span
+                v-if="notifications.length > 0"
+                class="absolute top-[7px] right-[7px] w-[7px] h-[7px] rounded-full bg-red-500 border-[1.5px] border-white"
+              ></span>
+            </button>
+
+            <!-- Notifications Dropdown -->
+            <div
+              v-if="notifOpen"
+              class="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden"
+            >
+              <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/80">
+                <div class="flex items-center gap-2">
+                  <span class="text-[13px] font-bold text-slate-900">Alerts</span>
+                  <span
+                    v-if="notifications.length > 0"
+                    class="px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-50 text-red-600"
+                  >{{ notifications.length }}</span>
+                </div>
+                <button
+                  type="button"
+                  @click="fetchNotifications"
+                  :disabled="notifLoading"
+                  class="text-[11.5px] font-medium text-emerald-600 hover:text-emerald-700 bg-transparent border-none cursor-pointer disabled:opacity-50"
+                >
+                  {{ notifLoading ? 'Checking…' : 'Refresh' }}
+                </button>
+              </div>
+
+              <div v-if="notifLoading && notifications.length === 0" class="px-4 py-6 text-center text-[12.5px] text-slate-400">
+                Checking alerts…
+              </div>
+              <div v-else-if="notifications.length === 0" class="px-4 py-6 text-center">
+                <p class="text-[13px] font-semibold text-slate-700">All caught up</p>
+                <p class="text-[12px] text-slate-400 mt-0.5">No pending refunds or alerts right now.</p>
+              </div>
+              <div v-else class="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                <button
+                  v-for="item in notifications"
+                  :key="item.key"
+                  type="button"
+                  @click="openNotification(item)"
+                  class="w-full text-left px-4 py-3 flex items-start justify-between gap-3 bg-white hover:bg-slate-50 transition-colors border-none cursor-pointer"
+                >
+                  <div class="min-w-0">
+                    <p class="text-[13px] font-semibold text-slate-900 leading-snug">{{ item.title }}</p>
+                    <p class="text-[11.5px] text-slate-500 mt-0.5">{{ item.subtitle }}</p>
+                  </div>
+                  <span
+                    class="shrink-0 px-2 py-0.5 rounded-full text-[11.5px] font-bold"
+                    :class="toneBadgeClass(item.tone)"
+                  >{{ item.count }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
           <div class="flex items-center gap-2 py-[5px] px-3 pl-[5px] rounded-[20px] border border-slate-200 bg-slate-50 cursor-pointer transition-colors duration-200 hover:bg-slate-100">
             <div class="w-[26px] h-[26px] rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">{{ adminInitials }}</div>
             <span class="text-[13px] font-medium text-slate-900 hidden sm:inline">{{ adminName }}</span>
@@ -253,6 +314,68 @@ const mobileOpen = ref(false)
 const adminName = ref('')
 const userRole = ref('')
 
+interface AdminNotificationItem {
+  key: string
+  title: string
+  subtitle: string
+  count: number
+  tone: string
+  route: string
+}
+
+const notifContainer = ref<HTMLElement | null>(null)
+const notifOpen = ref(false)
+const notifLoading = ref(false)
+const notifications = ref<AdminNotificationItem[]>([])
+
+async function fetchNotifications() {
+  const token = localStorage.getItem('token')
+  if (!token) return
+  notifLoading.value = true
+  try {
+    const res = await $fetch<{ items: AdminNotificationItem[] }>(`${config.public.apiBase}/admin/notifications`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    })
+    notifications.value = Array.isArray(res?.items) ? res.items : []
+  } catch {
+    // Silent fail on background alert badge poll
+  } finally {
+    notifLoading.value = false
+  }
+}
+
+function toggleNotifications() {
+  notifOpen.value = !notifOpen.value
+  if (notifOpen.value) fetchNotifications()
+}
+
+async function openNotification(item: AdminNotificationItem) {
+  notifOpen.value = false
+  await navigateTo(item.route)
+}
+
+function toneBadgeClass(tone: string) {
+  const map: Record<string, string> = {
+    amber: 'bg-amber-100 text-amber-800',
+    red: 'bg-red-100 text-red-700',
+    emerald: 'bg-emerald-100 text-emerald-700',
+    blue: 'bg-blue-100 text-blue-700',
+  }
+  return map[tone] ?? 'bg-slate-100 text-slate-700'
+}
+
+function handleDocumentClick(e: MouseEvent) {
+  if (notifOpen.value && notifContainer.value && !notifContainer.value.contains(e.target as Node)) {
+    notifOpen.value = false
+  }
+}
+
+function handleDocumentKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && notifOpen.value) {
+    notifOpen.value = false
+  }
+}
+
 onMounted(() => {
   try {
     const storedUser = localStorage.getItem('user')
@@ -266,6 +389,15 @@ onMounted(() => {
   } catch {
     userRole.value = localStorage.getItem('role') || ''
   }
+
+  fetchNotifications()
+  document.addEventListener('click', handleDocumentClick)
+  document.addEventListener('keydown', handleDocumentKeydown)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick)
+  document.removeEventListener('keydown', handleDocumentKeydown)
 })
 
 const isSuperAdmin = computed(() => userRole.value === 'super_admin')
@@ -292,6 +424,10 @@ const adminInitials = computed(() => {
 
 // Derive current page title from route
 const route = useRoute()
+watch(() => route.path, () => {
+  notifOpen.value = false
+  fetchNotifications()
+})
 const pageMap: Record<string, string> = {
   '/admin/dashboard': 'Dashboard',
   '/admin/users':     'User Management',
