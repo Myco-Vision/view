@@ -29,7 +29,7 @@
       </div>
 
       <!-- Filter chips -->
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <button
           v-for="f in filters"
           :key="f.value"
@@ -149,7 +149,7 @@
     <!-- Complete Scan Details Modal -->
     <Teleport to="body">
       <div v-if="showModal && selectedScan" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" @click.self="showModal = false">
-        <div class="bg-white rounded-2xl w-[540px] max-w-full shadow-2xl overflow-hidden border border-[#e2e8f0] animate-in fade-in zoom-in duration-200">
+        <div class="bg-white rounded-2xl w-[540px] max-w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-[#e2e8f0] animate-in fade-in zoom-in duration-200">
           
           <!-- Image Header with Floating Badge -->
           <div class="relative h-[220px] bg-[#0f172a]">

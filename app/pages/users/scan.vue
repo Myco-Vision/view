@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-[18px] h-full">
+  <div class="flex flex-col gap-[18px] min-h-full">
 
     <!-- Welcome Header & Quota Badge -->
     <ClientOnly>
@@ -55,10 +55,10 @@
     </div>
 
     <!-- Two-column card -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden flex-1 shadow-sm">
+    <div class="grid grid-cols-1 lg:grid-cols-2 bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden shadow-sm">
 
       <!-- ── LEFT: Bento scan area ─────────────────────── -->
-      <div class="p-4 sm:p-6 flex flex-col gap-3 overflow-hidden border-b lg:border-b-0 lg:border-r border-[#e2e8f0]">
+      <div class="p-4 sm:p-6 flex flex-col gap-3 border-b lg:border-b-0 lg:border-r border-[#e2e8f0]">
         <h2 class="text-[15px] font-semibold text-[#0f172a] text-center mb-0.5">Scan Mushroom</h2>
 
         <!-- Scan Result tile (shows preview once an image is chosen) -->

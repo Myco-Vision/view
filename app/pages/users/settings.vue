@@ -24,7 +24,7 @@
                 <p class="text-[11px] sm:text-[11.5px] text-[#64748b] mt-0.5">Member since {{ userProfile.joined }}</p>
               </div>
             </div>
-            <button class="py-[7px] px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer whitespace-nowrap transition-colors duration-[0.18s] shrink-0 self-start sm:self-auto hover:bg-[#f8fafc]">Edit Profile</button>
+            <button class="py-[7px] px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer whitespace-nowrap transition-colors duration-[0.18s] shrink-0 self-start sm:self-auto hover:bg-[#f8fafc]" @click="openEditProfile">Edit Profile</button>
           </div>
         </div>
 
@@ -92,13 +92,19 @@
               <span class="text-[16px]">🔑</span>
               <span>Change Password</span>
             </button>
-            <button class="flex items-center gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] text-left hover:bg-[#f8fafc]">
-              <span class="text-[16px]">📱</span>
-              <span>Two-Factor Auth (2FA)</span>
+            <button class="flex items-center justify-between gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-not-allowed opacity-60 w-full text-left">
+              <div class="flex items-center gap-2.5">
+                <span class="text-[16px]">📱</span>
+                <span>Two-Factor Auth (2FA)</span>
+              </div>
+              <span class="text-[11px] font-semibold bg-[#f1f5f9] text-[#94a3b8] px-2 py-0.5 rounded-full">Coming Soon</span>
             </button>
-            <button class="flex items-center gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] text-left hover:bg-[#f8fafc]">
-              <span class="text-[16px]">✉️</span>
-              <span>Email Settings</span>
+            <button class="flex items-center justify-between gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-not-allowed opacity-60 w-full text-left">
+              <div class="flex items-center gap-2.5">
+                <span class="text-[16px]">✉️</span>
+                <span>Email Settings</span>
+              </div>
+              <span class="text-[11px] font-semibold bg-[#f1f5f9] text-[#94a3b8] px-2 py-0.5 rounded-full">Coming Soon</span>
             </button>
           </div>
         </div>
@@ -205,8 +211,8 @@
       class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
       @click.self="closeConsentModal"
     >
-      <div class="bg-white rounded-2xl w-[520px] max-w-full shadow-2xl overflow-hidden border border-[#e2e8f0] animate-in fade-in zoom-in duration-200">
-        
+      <div class="bg-white rounded-2xl w-[520px] max-w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-[#e2e8f0] animate-in fade-in zoom-in duration-200">
+
         <!-- Modal Header -->
         <div class="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]">
           <div class="flex items-center gap-2.5">
@@ -285,7 +291,7 @@
       class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
       @click.self="closePasswordModal"
     >
-      <div class="bg-white rounded-2xl w-[460px] max-w-full shadow-2xl overflow-hidden border border-[#e2e8f0]">
+      <div class="bg-white rounded-2xl w-[460px] max-w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-[#e2e8f0]">
         <!-- Header -->
         <div class="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]">
           <div class="flex items-center gap-2.5">
@@ -344,6 +350,54 @@
       </div>
     </div>
   </Teleport>
+  <!-- Edit Profile Modal -->
+  <Teleport to="body">
+    <div
+      v-if="showEditProfile"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+      @click.self="showEditProfile = false"
+    >
+      <div class="bg-white rounded-2xl w-[460px] max-w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-[#e2e8f0]">
+        <div class="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-full bg-[#dbeafe] text-[#2563eb] flex items-center justify-center font-bold text-lg">👤</div>
+            <div>
+              <h3 class="text-[16px] font-bold text-[#0f172a]">Edit Profile</h3>
+              <p class="text-[12px] text-[#64748b]">Update your display name and username</p>
+            </div>
+          </div>
+          <button class="text-[#94a3b8] hover:text-[#0f172a] text-xl font-bold bg-transparent border-none cursor-pointer" @click="showEditProfile = false">✕</button>
+        </div>
+        <div class="p-5 flex flex-col gap-3.5">
+          <div v-if="editError" class="flex items-start gap-2 p-3 rounded-lg bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] text-[12.5px]">
+            <span>⚠️</span><span>{{ editError }}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#0f172a]">First Name</label>
+              <input v-model="editForm.firstName" type="text" placeholder="Maria" class="w-full py-2.5 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[13px] text-[#0f172a] outline-none focus:border-[#10b981]" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#0f172a]">Last Name</label>
+              <input v-model="editForm.lastName" type="text" placeholder="Santos" class="w-full py-2.5 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[13px] text-[#0f172a] outline-none focus:border-[#10b981]" />
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#0f172a]">Username</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] text-[13px]">@</span>
+              <input v-model="editForm.username" type="text" placeholder="maria_santos" class="w-full py-2.5 pl-7 pr-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[13px] text-[#0f172a] outline-none focus:border-[#10b981]" />
+            </div>
+          </div>
+        </div>
+        <div class="p-4 border-t border-[#f1f5f9] bg-[#f8fafc] flex items-center justify-end gap-2.5">
+          <button class="py-2 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium text-[#475569] hover:bg-[#f1f5f9] cursor-pointer" @click="showEditProfile = false">Cancel</button>
+          <button class="py-2 px-5 rounded-lg bg-gradient-to-r from-[#10b981] to-[#059669] text-white text-[13px] font-semibold cursor-pointer shadow-sm hover:opacity-90 disabled:opacity-50" :disabled="editLoading" @click="submitEditProfile">{{ editLoading ? 'Saving…' : 'Save Changes' }}</button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
+
 </template>
 
 <script setup lang="ts">
@@ -449,6 +503,59 @@ async function submitChangePassword() {
   }
 }
 
+// ── Edit Profile modal ──
+const showEditProfile = ref(false)
+const editForm = reactive({ firstName: '', lastName: '', username: '' })
+const editLoading = ref(false)
+const editError = ref('')
+
+function openEditProfile() {
+  const parts = (userProfile.name || '').split(' ')
+  editForm.firstName = parts[0] || ''
+  editForm.lastName  = parts.slice(1).join(' ') || ''
+  editForm.username  = ''
+  // Try to read username from stored user
+  try {
+    const u = JSON.parse(localStorage.getItem('user') || '{}')
+    editForm.username = u.username || ''
+  } catch {}
+  editError.value = ''
+  showEditProfile.value = true
+}
+
+async function submitEditProfile() {
+  editError.value = ''
+  if (!editForm.firstName.trim() || !editForm.username.trim()) {
+    editError.value = 'First name and username are required.'
+    return
+  }
+  editLoading.value = true
+  try {
+    const token = localStorage.getItem('token')
+    const user = await $fetch<any>(`${config.public.apiBase}/me`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: {
+        first_name: editForm.firstName.trim(),
+        last_name:  editForm.lastName.trim(),
+        username:   editForm.username.trim(),
+      },
+    })
+    applyUser(user)
+    localStorage.setItem('user', JSON.stringify(user))
+    useToast().success('Profile updated successfully.')
+    showEditProfile.value = false
+  } catch (err: any) {
+    editError.value =
+      err?.data?.errors?.username?.[0] ||
+      err?.data?.errors?.first_name?.[0] ||
+      err?.data?.message ||
+      'Failed to update profile.'
+  } finally {
+    editLoading.value = false
+  }
+}
+
 function applyUser(user: any) {
   userProfile.name = user.name || user.username || 'User'
   userProfile.email = user.email || 'No email'
@@ -482,11 +589,17 @@ onMounted(async () => {
   const token = localStorage.getItem('token')
   if (token) {
     try {
-      const user = await $fetch(`${config.public.apiBase}/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const [user, scansRes] = await Promise.all([
+        $fetch<any>(`${config.public.apiBase}/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        $fetch<any>(`${config.public.apiBase}/scans?per_page=1`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ])
       applyUser(user)
       localStorage.setItem('user', JSON.stringify(user))
+      scansCount.value = scansRes?.total ?? scansRes?.meta?.total ?? 0
     } catch {
       // keep cached user if the request fails
     }
@@ -511,9 +624,13 @@ const quick = reactive({
 watch(prefs, (v) => localStorage.setItem('mv_settings_prefs', JSON.stringify(v)), { deep: true })
 watch(quick, (v) => localStorage.setItem('mv_settings_quick', JSON.stringify(v)), { deep: true })
 
-const storageUsed    = 120
-const storageTotal   = 500
-const storagePercent = Math.round((storageUsed / storageTotal) * 100)
+// Storage — fetched from the API (scan count × average image size)
+const scansCount     = ref(0)
+const BYTES_PER_SCAN = 0.5 // MB estimate per scan
+const STORAGE_CAP_MB = 500
+const storageUsed    = computed(() => Math.min(Math.round(scansCount.value * BYTES_PER_SCAN), STORAGE_CAP_MB))
+const storageTotal   = STORAGE_CAP_MB
+const storagePercent = computed(() => Math.round((storageUsed.value / storageTotal) * 100))
 
 async function clearCache() {
   const { confirm } = useConfirm()
@@ -526,20 +643,57 @@ async function clearCache() {
   if (ok) useToast().success('Cache cleared!')
 }
 
-function exportData() { useToast().info('Exporting data…') }
+async function exportData() {
+  const token = localStorage.getItem('token')
+  if (!token) return
+  useToast().info('Preparing your data export…')
+  try {
+    // Fetch all scans (up to 500) and export as CSV
+    const res = await $fetch<any>(`${config.public.apiBase}/scans?per_page=500`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const rows: string[][] = [['ID', 'Species', 'Classification', 'Confidence', 'Latitude', 'Longitude', 'Date']]
+    for (const s of (res.data ?? [])) {
+      rows.push([
+        s.id,
+        s.result_name || 'Unknown',
+        s.result_classification || 'unknown',
+        Math.round(s.confidence_level || 0) + '%',
+        s.latitude || '',
+        s.longitude || '',
+        s.created_at ? new Date(s.created_at).toLocaleDateString() : '',
+      ])
+    }
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `mycovision_data_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    useToast().success('Data exported successfully.')
+  } catch {
+    useToast().error('Export failed. Please try again.')
+  }
+}
 
 async function deleteAccount() {
   const { confirm } = useConfirm()
   const ok = await confirm({
     title: 'Delete your account?',
-    message: 'All your scans, collection, and history will be permanently removed. This cannot be undone.',
+    message: 'This permanently removes all your scans, collections, and history. To request deletion please email support@mycovision.app with your registered email address.',
     tone: 'danger',
-    confirmText: 'Delete My Account',
-    requireText: 'DELETE',
+    confirmText: 'Copy Support Email',
   })
   if (!ok) return
-  // TODO: no self-service delete endpoint exists on the backend yet
-  useToast().info('Account deletion is not available yet. Please contact support to delete your account.')
+  // Copy support email to clipboard
+  try {
+    await navigator.clipboard.writeText('support@mycovision.app')
+    useToast().success('Support email copied to clipboard.')
+  } catch {
+    useToast().info('Email: support@mycovision.app')
+  }
 }
 
 // ── Consent Toggle & Modal Handlers ──────────────────────────────────────────
@@ -605,3 +759,4 @@ async function saveConsentApi(allow: boolean) {
   }
 }
 </script>
+>

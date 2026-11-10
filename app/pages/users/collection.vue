@@ -14,9 +14,9 @@
     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       <div class="flex items-center gap-3.5 py-3.5 px-[18px] rounded-xl bg-white border border-[#e2e8f0] border-l-[3px] border-l-[#a78bfa]">
         <span class="text-[26px] leading-none">🍄</span>
-        <div>
+        <div class="min-w-0">
           <p class="text-[22px] font-bold text-[#0f172a] leading-none">{{ collection.length }}</p>
-          <p class="text-[12px] text-[#64748b] mt-[3px]">Total Collected</p>
+          <p class="text-[12px] text-[#64748b] mt-[3px] truncate whitespace-nowrap">Total Collected</p>
         </div>
       </div>
       <div class="flex items-center gap-3.5 py-3.5 px-[18px] rounded-xl bg-white border border-[#e2e8f0] border-l-[3px] border-l-[#22c55e]">
@@ -54,7 +54,7 @@
       </div>
 
       <!-- Filter chips -->
-      <div class="flex gap-1.5">
+      <div class="flex flex-wrap gap-1.5">
         <button
           v-for="f in filters"
           :key="f.value"
@@ -167,7 +167,7 @@
     <!-- Complete Detail Modal -->
     <Teleport to="body">
       <div v-if="showModal && selectedItem" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" @click.self="showModal = false">
-        <div class="bg-white rounded-2xl w-[540px] max-w-full shadow-2xl overflow-hidden border border-[#e2e8f0] animate-in fade-in zoom-in duration-200">
+        <div class="bg-white rounded-2xl w-[540px] max-w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-[#e2e8f0] animate-in fade-in zoom-in duration-200">
           
           <!-- Image Header -->
           <div class="relative h-[220px] bg-[#0f172a]">

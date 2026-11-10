@@ -25,22 +25,22 @@
     </div>
 
     <!-- Tabs Navigation Bar -->
-    <div class="flex items-center gap-2 border-b border-[#e2e8f0]">
-      <button 
-        class="py-2.5 px-4 text-[14px] font-semibold transition-colors duration-200 border-b-2 -mb-[1px] cursor-pointer flex items-center gap-2"
+    <div class="flex items-center gap-2 border-b border-[#e2e8f0] overflow-x-auto">
+      <button
+        class="shrink-0 py-2.5 px-4 text-[14px] font-semibold transition-colors duration-200 border-b-2 -mb-[1px] cursor-pointer flex items-center gap-2"
         :class="activeTab === 'verified' ? 'border-[#10b981] text-[#10b981]' : 'border-transparent text-[#64748b] hover:text-[#0f172a]'"
         @click="activeTab = 'verified'"
       >
-        <span>📚 Verified Species (In DB)</span>
+        <span class="whitespace-nowrap">📚 Verified Species (In DB)</span>
         <span class="py-0.5 px-2 rounded-full text-[11px] bg-[#f1f5f9] text-[#475569]">{{ species.length }}</span>
       </button>
-      
-      <button 
-        class="py-2.5 px-4 text-[14px] font-semibold transition-colors duration-200 border-b-2 -mb-[1px] cursor-pointer flex items-center gap-2"
+
+      <button
+        class="shrink-0 py-2.5 px-4 text-[14px] font-semibold transition-colors duration-200 border-b-2 -mb-[1px] cursor-pointer flex items-center gap-2"
         :class="activeTab === 'candidates' ? 'border-[#10b981] text-[#10b981]' : 'border-transparent text-[#64748b] hover:text-[#0f172a]'"
         @click="activeTab = 'candidates'"
       >
-        <span>🔬 Candidate Scans (New Data - Not in DB)</span>
+        <span class="whitespace-nowrap">🔬 Candidate Scans (New Data - Not in DB)</span>
         <span class="py-0.5 px-2 rounded-full text-[11px] bg-[#d1fae5] text-[#065f46] font-bold">{{ candidateScans.length }}</span>
       </button>
     </div>
@@ -181,7 +181,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div class="flex flex-col gap-1.5">
               <label class="text-[12.5px] font-semibold text-[#475569]">Scientific Name *</label>
               <input v-model="form.scientific_name" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Volvariella volvacea" />
@@ -191,7 +191,7 @@
               <input v-model="form.name" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Paddy Straw Mushroom" />
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div class="flex flex-col gap-1.5">
               <label class="text-[12.5px] font-semibold text-[#475569]">Classification *</label>
               <select v-model="form.classification" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]">

@@ -140,7 +140,7 @@
                 <svg class="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                 Password Requirements
               </p>
-              <div class="grid grid-cols-2 gap-1.5">
+              <div class="grid grid-cols-1 min-[400px]:grid-cols-2 gap-1.5">
                 <span class="flex items-center gap-1.5 text-[0.7rem] font-medium transition-colors" :class="rules.len ? 'text-emerald-400' : 'text-slate-500'">
                   <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="rules.len ? 'bg-emerald-400' : 'bg-slate-600'" />At least 8 characters
                 </span>

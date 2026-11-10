@@ -25,7 +25,7 @@
             <span class="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
               Myco<span class="text-emerald-400">Vision</span>
             </span>
-            <span class="text-[10px] tracking-wider uppercase text-emerald-400/80 font-semibold">
+            <span class="text-[10px] tracking-wider uppercase text-emerald-400/80 font-semibold hidden sm:block">
               AI Mushroom Intelligence
             </span>
           </div>
@@ -43,7 +43,7 @@
         </nav>
 
         <!-- Navbar Action Buttons -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 sm:gap-3">
           <!-- Switch to Admin Login trigger -->
           <button
             @click="openLoginModal('admin')"
@@ -58,7 +58,7 @@
           <!-- General Sign In trigger -->
           <button
             @click="openLoginModal('user')"
-            class="px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/15 text-white border border-white/15 transition cursor-pointer shadow-sm"
+            class="hidden sm:inline-flex px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/15 text-white border border-white/15 transition cursor-pointer shadow-sm"
           >
             User Login
           </button>
@@ -85,9 +85,9 @@
           <div class="lg:col-span-7 flex flex-col items-start">
             
             <!-- Tech Badge -->
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-xs font-medium mb-6 backdrop-blur-md">
+            <div class="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-xs font-medium mb-6 backdrop-blur-md">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Deep Learning Computer Vision • 99.4% Species Accuracy</span>
+              <span class="text-center leading-snug">Deep Learning Computer Vision<span class="hidden sm:inline"> • 99.4% Species Accuracy</span></span>
             </div>
 
             <!-- Hero Headline -->
@@ -119,7 +119,7 @@
             </div>
 
             <!-- Trust Metrics Bar -->
-            <div class="mt-12 pt-8 border-t border-emerald-900/30 grid grid-cols-3 gap-6 sm:gap-10 w-full max-w-xl">
+            <div class="mt-12 pt-8 border-t border-emerald-900/30 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 sm:gap-10 w-full max-w-xl">
               <div>
                 <p class="text-2xl sm:text-3xl font-black text-white">500+</p>
                 <p class="text-xs text-slate-400 mt-0.5 font-medium">Species Indexed</p>
@@ -737,7 +737,7 @@
 
     <!-- ── FOOTER ─────────────────────────────────────────── -->
     <footer class="relative z-10 border-t border-emerald-900/40 bg-[#050e0b] py-12 text-slate-400 text-xs">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap items-center lg:justify-between gap-6">
         
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
@@ -751,7 +751,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-6 text-xs">
+        <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs">
           <NuxtLink to="/login" class="hover:text-emerald-400 transition">Login Page</NuxtLink>
           <NuxtLink to="/register" class="hover:text-emerald-400 transition">Register</NuxtLink>
           <NuxtLink to="/refund-policy" class="hover:text-emerald-400 transition">Refund Policy</NuxtLink>

@@ -50,9 +50,9 @@
             </button>
           </div>
           <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5 flex flex-col gap-1.5">
-            <div class="flex justify-between items-center"><span class="text-[12.5px] text-[#64748b]">Last updated:</span><span class="text-[13px] font-medium text-[#0f172a]">May 1, 2026</span></div>
-            <div class="flex justify-between items-center"><span class="text-[12.5px] text-[#64748b]">Training dataset:</span><span class="text-[13px] font-medium text-[#0f172a]">48,500 images</span></div>
-            <div class="flex justify-between items-center"><span class="text-[12.5px] text-[#64748b]">Accuracy (val):</span><span class="text-[13px] font-bold text-[#10b981]">94.2%</span></div>
+            <div class="flex justify-between items-center"><span class="text-[12.5px] text-[#64748b]">Model version:</span><span class="text-[13px] font-medium text-[#0f172a]">{{ model.version }}</span></div>
+            <div class="flex justify-between items-center"><span class="text-[12.5px] text-[#64748b]">Threshold:</span><span class="text-[13px] font-medium text-[#0f172a]">{{ model.threshold }}%</span></div>
+            <div class="flex justify-between items-center"><span class="text-[12.5px] text-[#64748b]">Multi-label:</span><span class="text-[13px] font-medium" :class="model.multiLabel ? 'text-[#10b981]' : 'text-[#94a3b8]'">{{ model.multiLabel ? 'Enabled' : 'Disabled' }}</span></div>
           </div>
         </div>
 
@@ -113,9 +113,9 @@
               <div class="absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-transform duration-200" :class="maintenance.enabled ? 'translate-x-[18px]' : ''"></div>
             </button>
           </div>
-          <div v-if="maintenance.enabled" class="flex items-center justify-between gap-4 py-2.5 border-t border-[#f1f5f9]">
+          <div v-if="maintenance.enabled" class="flex flex-col items-stretch sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 py-2.5 border-t border-[#f1f5f9]">
             <div class="flex-1 min-w-0"><p class="text-[13.5px] font-medium text-[#0f172a]">Maintenance Message</p></div>
-            <textarea v-model="maintenance.message" class="w-full py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13px] font-sans resize-y outline-none shrink-0 focus:border-[#ef4444]" rows="2" placeholder="We're currently performing scheduled maintenance…"/>
+            <textarea v-model="maintenance.message" class="w-full py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13px] font-sans resize-y outline-none focus:border-[#ef4444]" rows="2" placeholder="We're currently performing scheduled maintenance…"/>
           </div>
         </div>
 
@@ -128,7 +128,8 @@
           </div>
           
           <div v-if="loadingAdmins" class="py-4 text-center text-[#94a3b8] text-[13px]">Loading admins...</div>
-          <table v-else class="w-full border-collapse">
+          <div v-else class="overflow-x-auto">
+            <table class="w-full min-w-[420px] border-collapse">
             <thead>
               <tr>
                 <th class="text-left text-[11px] font-semibold text-[#94a3b8] uppercase py-1.5 px-2 border-b border-[#f1f5f9]">Name</th>
@@ -138,11 +139,13 @@
             </thead>
             <tbody>
               <tr v-for="a in admins" :key="a.id">
-                <td class="flex items-center gap-2 font-medium py-[9px] px-2 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
-                  <div class="w-[26px] h-[26px] rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0" :class="a.role === 'super_admin' ? 'bg-gradient-to-br from-amber-500 to-amber-600' : 'bg-gradient-to-br from-[#10b981] to-[#059669]'">{{ getInitials(a.name) }}</div>
-                  <div>
-                     <p class="leading-none">{{ a.name }}</p>
-                     <p class="text-[11px] text-[#94a3b8] font-normal mt-0.5 leading-none">{{ a.email }}</p>
+                <td class="font-medium py-[9px] px-2 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <div class="flex items-center gap-2">
+                    <div class="w-[26px] h-[26px] rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0" :class="a.role === 'super_admin' ? 'bg-gradient-to-br from-amber-500 to-amber-600' : 'bg-gradient-to-br from-[#10b981] to-[#059669]'">{{ getInitials(a.name) }}</div>
+                    <div>
+                      <p class="leading-none">{{ a.name }}</p>
+                      <p class="text-[11px] text-[#94a3b8] font-normal mt-0.5 leading-none">{{ a.email }}</p>
+                    </div>
                   </div>
                 </td>
                 <td class="py-[9px] px-2 border-b border-[#f8fafc] align-middle group-last:border-none">
@@ -153,7 +156,8 @@
                 <td class="text-[#94a3b8] text-[12px] whitespace-nowrap py-[9px] px-2 border-b border-[#f8fafc] align-middle group-last:border-none">{{ formatDate(a.created_at) }}</td>
               </tr>
             </tbody>
-          </table>
+            </table>
+          </div>
           <div v-if="!isSuperAdmin" class="mt-2 text-[12px] text-[#64748b] flex items-start gap-1.5">
              <span class="text-amber-500">⚠️</span>
              <p>Only Super Administrators can add or remove admin accounts. Please contact a Super Admin for account changes.</p>
@@ -168,10 +172,14 @@
           </div>
           <div class="flex flex-col">
             <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">App Name</span><span class="text-[13px] font-semibold text-[#0f172a]">MycoVision</span></div>
-            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">Version</span><span class="text-[13px] font-semibold text-[#0f172a]">1.0.0-beta</span></div>
-            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">Environment</span><span class="bg-[#fef3c7] text-[#92400e] py-[2px] px-2.5 rounded-[20px] text-[12px] font-semibold">Development</span></div>
-            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">Last Deploy</span><span class="text-[13px] font-semibold text-[#0f172a]">May 7, 2026</span></div>
-            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">Backend API</span><span class="text-[13px] font-semibold text-[#10b981]">● Online</span></div>
+            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">Version</span><span class="text-[13px] font-semibold text-[#0f172a]">{{ appVersion }}</span></div>
+            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none"><span class="text-[12.5px] text-[#64748b]">Environment</span><span class="text-[13px] font-semibold capitalize" :class="appEnv === 'production' ? 'bg-[#d1fae5] text-[#065f46] py-[2px] px-2.5 rounded-[20px]' : 'bg-[#fef3c7] text-[#92400e] py-[2px] px-2.5 rounded-[20px]'">{{ appEnv }}</span></div>
+            <div class="flex justify-between items-center py-[9px] border-b border-[#f8fafc] last:border-none">
+              <span class="text-[12.5px] text-[#64748b]">Backend API</span>
+              <span v-if="backendOnline === null" class="text-[13px] text-[#94a3b8] font-semibold">Checking…</span>
+              <span v-else-if="backendOnline" class="text-[13px] font-semibold text-[#10b981]">● Online</span>
+              <span v-else class="text-[13px] font-semibold text-[#ef4444]">● Offline</span>
+            </div>
           </div>
         </div>
       </div>
@@ -186,15 +194,32 @@ definePageMeta({
   roles: ['admin', 'super_admin'],
 })
 
-const { success: toastSuccess } = useToast()
+const { success: toastSuccess, error: toastError } = useToast()
 const config = useRuntimeConfig()
 const isSavingSettings = ref(false)
 
-// These would normally be saved to an API, but we'll mock the saving for now 
-// since there's no settings endpoint yet.
-const model = reactive({ threshold: 75, version: 'MycoNet v2.1 (Stable)', multiLabel: false })
+// Settings are persisted to localStorage (no backend settings endpoint yet).
+// On mount we restore whatever was last saved, so changes survive page reloads.
+const SETTINGS_KEY = 'mv_admin_settings'
+
+const model     = reactive({ threshold: 75, version: 'MycoNet v2.1 (Stable)', multiLabel: false })
 const retention = reactive({ autoDelete: true, days: 180, backup: 'Daily' })
 const maintenance = reactive({ enabled: false, message: '' })
+
+// App info — read from runtime config where possible, fall back to build-time values
+const appVersion = config.public.appVersion || '1.0.0-beta'
+const appEnv     = config.public.appEnv     || 'development'
+
+// Backend health — checked live
+const backendOnline = ref<boolean | null>(null)
+async function checkBackendHealth() {
+  try {
+    await $fetch(`${config.public.apiBase}/species?per_page=1`)
+    backendOnline.value = true
+  } catch {
+    backendOnline.value = false
+  }
+}
 
 const admins = ref<any[]>([])
 const loadingAdmins = ref(true)
@@ -207,7 +232,20 @@ const getHeaders = () => {
 
 onMounted(async () => {
   isSuperAdmin.value = localStorage.getItem('role') === 'super_admin'
+
+  // Restore previously saved settings
+  try {
+    const saved = localStorage.getItem(SETTINGS_KEY)
+    if (saved) {
+      const s = JSON.parse(saved)
+      if (s.model)       Object.assign(model, s.model)
+      if (s.retention)   Object.assign(retention, s.retention)
+      if (s.maintenance) Object.assign(maintenance, s.maintenance)
+    }
+  } catch {}
+
   fetchAdmins()
+  checkBackendHealth()
 })
 
 async function fetchAdmins() {
@@ -240,9 +278,17 @@ function formatDate(dateStr: string) {
 
 function saveAll() { 
   isSavingSettings.value = true
-  setTimeout(() => {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+      model:       { ...model },
+      retention:   { ...retention },
+      maintenance: { ...maintenance },
+    }))
+    toastSuccess('Settings saved.')
+  } catch {
+    toastError('Failed to save settings.')
+  } finally {
     isSavingSettings.value = false
-    toastSuccess('Settings saved successfully!')
-  }, 600)
+  }
 }
 </script>

@@ -67,7 +67,7 @@
       </table>
       </div>
 
-      <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
+      <div class="flex flex-wrap items-center justify-between gap-3 py-3 px-4 border-t border-[#f1f5f9]">
         <span class="text-[12.5px] text-[#64748b]">Showing {{ pagination.from || 0 }} to {{ pagination.to || 0 }} of {{ pagination.total }} users</span>
         <div class="flex items-center gap-2.5">
           <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="pagination.current_page === 1" @click="fetchUsers(pagination.current_page - 1)">‹</button>

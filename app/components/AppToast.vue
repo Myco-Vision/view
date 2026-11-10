@@ -87,4 +87,19 @@ const { toasts, remove } = useToast()
   transition: opacity 0.15s;
 }
 .toast-close:hover { opacity: 1; }
+
+/* Full-width, edge-to-edge-ish toasts on small screens (no fixed-width overflow) */
+@media (max-width: 480px) {
+  .toast-container {
+    right: 12px;
+    left: 12px;
+    bottom: 12px;
+  }
+
+  .toast-item {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+}
 </style>

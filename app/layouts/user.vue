@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen bg-[#07130f] overflow-hidden font-sans relative">
+  <div class="flex h-dvh bg-[#07130f] overflow-hidden font-sans relative">
 
     <!-- ── Background ambient glows ── -->
     <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -17,7 +17,7 @@
 
     <!-- ── Sidebar ── -->
     <aside
-      class="z-40 flex flex-col pt-5 pb-4 px-3 gap-1
+      class="z-40 flex flex-col pt-5 pb-4 px-3 gap-1 overflow-hidden
              bg-[#081712]/95 border-r border-emerald-900/40 backdrop-blur-xl
              fixed inset-y-0 left-0 transition-transform duration-300
              lg:static lg:translate-x-0 lg:w-[230px] lg:min-w-[230px]"
@@ -41,7 +41,7 @@
       </div>
 
       <!-- Navigation -->
-      <nav class="flex-1 flex flex-col gap-0.5">
+      <nav class="flex-1 flex flex-col gap-0.5 overflow-y-auto overscroll-contain min-h-0">
         <NuxtLink
           to="/users/scan"
           @click="mobileOpen = false"

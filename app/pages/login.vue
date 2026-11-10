@@ -250,6 +250,33 @@ const error       = ref('')
 
 const form = reactive({ email: '', password: '' })
 
+// Google token client — initialized once after GSI script loads
+let tokenClient: any = null
+let googleTimeoutId: ReturnType<typeof setTimeout> | null = null
+
+function clearGoogleTimeout() {
+  if (googleTimeoutId) { clearTimeout(googleTimeoutId); googleTimeoutId = null }
+}
+
+function initGoogleClient() {
+  const gsi = (window as any).google
+  if (!gsi) return
+  tokenClient = gsi.accounts.oauth2.initTokenClient({
+    client_id: config.public.googleClientId,
+    scope: 'email profile',
+    prompt: 'select_account',
+    callback: async (resp: any) => {
+      clearGoogleTimeout()
+      if (resp.error) {
+        error.value = 'Google sign-in was cancelled or failed.'
+        googleLoading.value = false
+        return
+      }
+      await processGoogleToken(resp.access_token)
+    },
+  })
+}
+
 // Load Google Identity Services script
 useHead({
   script: [
@@ -257,8 +284,19 @@ useHead({
       src: 'https://accounts.google.com/gsi/client',
       async: true,
       defer: true,
+      onload: 'window.__gsiLoaded && window.__gsiLoaded()',
     },
   ],
+})
+
+onMounted(() => {
+  // If GSI already loaded (e.g. cached), init immediately
+  if ((window as any).google?.accounts) {
+    initGoogleClient()
+  } else {
+    // Otherwise wait for the script onload
+    (window as any).__gsiLoaded = () => initGoogleClient()
+  }
 })
 
 // Redirect if already logged in
@@ -277,25 +315,16 @@ onMounted(() => {
 // Custom Google button — opens Google account picker popup on click
 function handleGoogleLogin() {
   error.value = ''
-  const gsi = (window as any).google
-  if (!gsi) {
+  if (!tokenClient) {
     error.value = 'Google Sign-In is not available. Please refresh and try again.'
     return
   }
-  const tokenClient = gsi.accounts.oauth2.initTokenClient({
-    client_id: config.public.googleClientId,
-    scope: 'email profile',
-    prompt: 'select_account',
-    callback: async (resp: any) => {
-      if (resp.error) {
-        error.value = 'Google sign-in was cancelled or failed.'
-        googleLoading.value = false
-        return
-      }
-      await processGoogleToken(resp.access_token)
-    },
-  })
   googleLoading.value = true
+  // Safety timeout — reset if popup is blocked or silently fails (e.g. origin not whitelisted)
+  googleTimeoutId = setTimeout(() => {
+    googleLoading.value = false
+    error.value = 'Google Sign-In timed out. Make sure pop-ups are allowed, then try again.'
+  }, 30000)
   tokenClient.requestAccessToken()
 }
 
@@ -335,6 +364,7 @@ async function handleLogin() {
 
 
 async function processGoogleToken(accessToken: string) {
+  clearGoogleTimeout()
   googleLoading.value = true
   error.value = ''
   try {

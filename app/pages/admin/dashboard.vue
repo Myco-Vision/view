@@ -46,11 +46,11 @@
           <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :style="{ background: stat.iconBg }">
             <span v-html="stat.icon" />
           </div>
-          <div>
+          <div class="min-w-0">
             <p class="text-[22px] font-bold text-[#0f172a] leading-[1.2] stat-value" :style="{ animationDelay: `${idx * 80}ms` }">{{ animatedStats[idx] ?? stat.value }}</p>
             <p class="text-[12.5px] text-[#64748b] mt-0.5">{{ stat.label }}</p>
+            <span v-if="stat.change" class="block w-fit mt-1 text-[11px] font-semibold py-[3px] px-2 rounded-full bg-[#d1fae5] text-[#065f46]">▲ {{ stat.change }}</span>
           </div>
-          <span v-if="stat.change" class="absolute top-3.5 right-3.5 text-[11px] font-semibold py-[3px] px-2 rounded-full bg-[#d1fae5] text-[#065f46]">▲ {{ stat.change }}</span>
         </div>
       </div>
 
@@ -123,7 +123,8 @@
             <NuxtLink to="/admin/scans" class="text-[13px] text-[#10b981] no-underline font-medium hover:underline">View all →</NuxtLink>
           </div>
           <div v-if="recentScans.length === 0" class="text-center py-8 text-[#94a3b8] text-[13.5px]">No scans recorded yet.</div>
-          <table v-else class="w-full border-collapse mt-1">
+          <div v-else class="overflow-x-auto -mx-5 px-5">
+            <table class="w-full min-w-[640px] border-collapse mt-1">
             <thead>
               <tr>
                 <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-2 px-2.5 border-b border-[#f1f5f9]">User</th>
@@ -135,8 +136,10 @@
             </thead>
             <tbody>
               <tr v-for="scan in recentScans" :key="scan.id" class="group hover:bg-[#f8fafc] transition-colors duration-150">
-                <td class="py-2.5 px-2.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle border-l-2 border-l-transparent group-hover:border-l-[#10b981] transition-all duration-150 flex items-center gap-2 whitespace-nowrap">
-                  <div class="w-[26px] h-[26px] rounded-full bg-gradient-to-br from-[#10b981] to-[#059669] text-white text-[10px] font-bold flex items-center justify-center shrink-0">{{ getInitials(scan.user) }}</div>{{ scan.user }}
+                <td class="py-2.5 px-2.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle border-l-2 border-l-transparent group-hover:border-l-[#10b981] transition-all duration-150 whitespace-nowrap">
+                  <div class="flex items-center gap-2">
+                    <div class="w-[26px] h-[26px] rounded-full bg-gradient-to-br from-[#10b981] to-[#059669] text-white text-[10px] font-bold flex items-center justify-center shrink-0">{{ getInitials(scan.user) }}</div>{{ scan.user }}
+                  </div>
                 </td>
                 <td class="py-2.5 px-2.5 text-[13px] text-[#1e293b] border-b border-[#f8fafc] align-middle italic">{{ scan.species }}</td>
                 <td class="py-2.5 px-2.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle">
@@ -152,6 +155,7 @@
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
 
         <!-- Quick Actions + System Health -->
@@ -286,12 +290,12 @@ function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
-const healthItems = [
-  { label: 'CPU Usage',    val: 38, color: '#10b981' },
-  { label: 'Memory',       val: 61, color: '#f59e0b' },
-  { label: 'Storage',      val: 45, color: '#3b82f6' },
-  { label: 'Model Uptime', val: 99, color: '#10b981' },
-]
+const healthItems = ref([
+  { label: 'CPU Usage',    val: 0, color: '#10b981' },
+  { label: 'Memory',       val: 0, color: '#f59e0b' },
+  { label: 'Storage',      val: 0, color: '#3b82f6' },
+  { label: 'Model Uptime', val: 0, color: '#10b981' },
+])
 
 onMounted(async () => {
   try {
@@ -300,6 +304,15 @@ onMounted(async () => {
       headers: { Authorization: `Bearer ${token}` },
     })
     dashData.value = data
+    // Populate health items from API response if available
+    if (data.health) {
+      healthItems.value = [
+        { label: 'CPU Usage',    val: data.health.cpu    ?? 0, color: '#10b981' },
+        { label: 'Memory',       val: data.health.memory ?? 0, color: '#f59e0b' },
+        { label: 'Storage',      val: data.health.storage ?? 0, color: '#3b82f6' },
+        { label: 'Model Uptime', val: data.health.uptime  ?? 0, color: '#10b981' },
+      ]
+    }
   } catch (error) {
     console.error('Failed to load dashboard:', error)
   } finally {
