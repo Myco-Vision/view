@@ -259,7 +259,11 @@
 
                 <!-- Forgot password link -->
                 <div class="flex justify-end -mt-1">
-                  <NuxtLink to="/forgot-password" class="text-[12.5px] text-emerald-400 hover:text-emerald-300 hover:underline font-semibold transition-colors">Forgot password?</NuxtLink>
+                  <NuxtLink
+                    to="/forgot-password"
+                    class="text-[12.5px] hover:underline font-semibold transition-colors"
+                    :class="activeRole === 'user' ? 'text-emerald-400 hover:text-emerald-300' : 'text-amber-400 hover:text-amber-300'"
+                  >Forgot password?</NuxtLink>
                 </div>
 
                 <!-- Submit Button -->
@@ -849,7 +853,11 @@
 
             <!-- Forgot password link -->
             <div class="flex justify-end -mt-1">
-              <NuxtLink to="/forgot-password" class="text-[12.5px] text-emerald-400 hover:text-emerald-300 hover:underline font-semibold transition-colors">Forgot password?</NuxtLink>
+              <NuxtLink
+                to="/forgot-password"
+                class="text-[12.5px] hover:underline font-semibold transition-colors"
+                :class="activeRole === 'user' ? 'text-emerald-400 hover:text-emerald-300' : 'text-amber-400 hover:text-amber-300'"
+              >Forgot password?</NuxtLink>
             </div>
 
             <button
