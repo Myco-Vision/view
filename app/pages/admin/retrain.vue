@@ -81,7 +81,7 @@
       </div>
 
       <!-- ── Summary Stats ──────────────────────────────────────────────────── -->
-      <div class="grid grid-cols-3 gap-3.5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex items-center gap-3.5">
           <div class="w-11 h-11 rounded-xl bg-[#f0fdf4] flex items-center justify-center text-[22px]">🍄</div>
           <div>
@@ -110,11 +110,11 @@
 
         <!-- Edible Panel -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
-          <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#f1f5f9] bg-[#f0fdf4]">
+          <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5 border-b border-[#f1f5f9] bg-[#f0fdf4]">
             <div class="flex items-center gap-2">
               <span class="text-[18px]">✅</span>
               <h2 class="text-[14px] font-bold text-[#065f46]">Edible Scans</h2>
-              <span class="text-[11px] font-semibold bg-[#bbf7d0] text-[#065f46] px-2 py-0.5 rounded-full">
+              <span class="shrink-0 whitespace-nowrap text-[11px] font-semibold bg-[#bbf7d0] text-[#065f46] px-2 py-0.5 rounded-full">
                 {{ edibleSelected.length }} / {{ candidates.edible.length }} selected
               </span>
             </div>
@@ -168,11 +168,11 @@
 
         <!-- Poisonous Panel -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
-          <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#f1f5f9] bg-[#fef2f2]">
+          <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5 border-b border-[#f1f5f9] bg-[#fef2f2]">
             <div class="flex items-center gap-2">
               <span class="text-[18px]">☠️</span>
               <h2 class="text-[14px] font-bold text-[#991b1b]">Poisonous Scans</h2>
-              <span class="text-[11px] font-semibold bg-[#fecaca] text-[#991b1b] px-2 py-0.5 rounded-full">
+              <span class="shrink-0 whitespace-nowrap text-[11px] font-semibold bg-[#fecaca] text-[#991b1b] px-2 py-0.5 rounded-full">
                 {{ poisonousSelected.length }} / {{ candidates.poisonous.length }} selected
               </span>
             </div>
@@ -234,7 +234,8 @@
           <p class="text-[13px] text-[#94a3b8]">No retraining runs yet.</p>
         </div>
 
-        <table v-else class="w-full text-[13px]">
+        <div v-else class="overflow-x-auto">
+          <table class="w-full min-w-[680px] text-[13px]">
           <thead class="bg-[#f8fafc]">
             <tr>
               <th class="text-left px-5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Date</th>
@@ -268,7 +269,8 @@
               <td class="px-4 py-3 font-semibold text-[#0f172a]">{{ run.val_accuracy != null ? run.val_accuracy + '%' : '—' }}</td>
             </tr>
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       <!-- Privacy Note -->

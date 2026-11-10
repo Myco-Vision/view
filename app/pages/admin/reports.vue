@@ -53,7 +53,9 @@
           <circle v-for="(p,i) in lineDots" :key="i" :cx="p.x" :cy="p.y" r="4" fill="#10b981" stroke="#fff" stroke-width="2"/>
         </svg>
         <div class="flex justify-between px-0.5 pt-1.5">
-          <span v-for="d in lineLabels" :key="d" class="text-[11px] text-[#94a3b8]">{{ d }}</span>
+          <template v-for="(d, i) in lineLabels" :key="i">
+            <span v-if="i % labelStep === 0" class="text-[11px] text-[#94a3b8] whitespace-nowrap">{{ d }}</span>
+          </template>
         </div>
       </div>
 
@@ -185,6 +187,8 @@ const summaryStats = computed(() => {
 
 // Line chart
 const lineLabels = computed(() => (reportData.value.scan_volume || []).map((v: any) => v.label))
+// Thicken axis-label spacing: show at most ~8 labels regardless of period length
+const labelStep = computed(() => Math.max(1, Math.ceil(lineLabels.value.length / 8)))
 const lineValues = computed(() => {
   const vols = (reportData.value.scan_volume || []).map((v: any) => v.count)
   return vols.length > 0 ? vols : [0]

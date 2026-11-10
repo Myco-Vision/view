@@ -94,13 +94,19 @@
               <span class="text-[16px]">🔑</span>
               <span>Change Password</span>
             </button>
-            <button class="flex items-center gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] text-left hover:bg-[#f8fafc]">
-              <span class="text-[16px]">📱</span>
-              <span>Two-Factor Auth (2FA)</span>
+            <button class="flex items-center justify-between gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-not-allowed opacity-60 w-full text-left">
+              <div class="flex items-center gap-2.5">
+                <span class="text-[16px]">📱</span>
+                <span>Two-Factor Auth (2FA)</span>
+              </div>
+              <span class="text-[11px] font-semibold bg-[#f1f5f9] text-[#94a3b8] px-2 py-0.5 rounded-full">Coming Soon</span>
             </button>
-            <button class="flex items-center gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] text-left hover:bg-[#f8fafc]">
-              <span class="text-[16px]">✉️</span>
-              <span>Email Settings</span>
+            <button class="flex items-center justify-between gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-not-allowed opacity-60 w-full text-left">
+              <div class="flex items-center gap-2.5">
+                <span class="text-[16px]">✉️</span>
+                <span>Email Settings</span>
+              </div>
+              <span class="text-[11px] font-semibold bg-[#f1f5f9] text-[#94a3b8] px-2 py-0.5 rounded-full">Coming Soon</span>
             </button>
           </div>
         </div>
@@ -338,8 +344,8 @@
       class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
       @click.self="closeConsentModal"
     >
-      <div class="bg-white rounded-2xl w-[520px] max-w-full shadow-2xl overflow-hidden border border-[#e2e8f0] animate-in fade-in zoom-in duration-200">
-        
+      <div class="bg-white rounded-2xl w-[520px] max-w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-[#e2e8f0] animate-in fade-in zoom-in duration-200">
+
         <!-- Modal Header -->
         <div class="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]">
           <div class="flex items-center gap-2.5">
@@ -418,7 +424,7 @@
       class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
       @click.self="closePasswordModal"
     >
-      <div class="bg-white rounded-2xl w-[460px] max-w-full shadow-2xl overflow-hidden border border-[#e2e8f0]">
+      <div class="bg-white rounded-2xl w-[460px] max-w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-[#e2e8f0]">
         <!-- Header -->
         <div class="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]">
           <div class="flex items-center gap-2.5">
@@ -820,11 +826,17 @@ onMounted(async () => {
   const token = localStorage.getItem('token')
   if (token) {
     try {
-      const user = await $fetch(`${config.public.apiBase}/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const [user, scansRes] = await Promise.all([
+        $fetch<any>(`${config.public.apiBase}/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        $fetch<any>(`${config.public.apiBase}/scans?per_page=1`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ])
       applyUser(user)
       localStorage.setItem('user', JSON.stringify(user))
+      scansCount.value = scansRes?.total ?? scansRes?.meta?.total ?? 0
     } catch {
       // keep cached user if the request fails
     }
@@ -849,9 +861,13 @@ const quick = reactive({
 watch(prefs, (v) => localStorage.setItem('mv_settings_prefs', JSON.stringify(v)), { deep: true })
 watch(quick, (v) => localStorage.setItem('mv_settings_quick', JSON.stringify(v)), { deep: true })
 
-const storageUsed    = 120
-const storageTotal   = 500
-const storagePercent = Math.round((storageUsed / storageTotal) * 100)
+// Storage — fetched from the API (scan count × average image size)
+const scansCount     = ref(0)
+const BYTES_PER_SCAN = 0.5 // MB estimate per scan
+const STORAGE_CAP_MB = 500
+const storageUsed    = computed(() => Math.min(Math.round(scansCount.value * BYTES_PER_SCAN), STORAGE_CAP_MB))
+const storageTotal   = STORAGE_CAP_MB
+const storagePercent = computed(() => Math.round((storageUsed.value / storageTotal) * 100))
 
 async function clearCache() {
   const { confirm } = useConfirm()
@@ -864,7 +880,40 @@ async function clearCache() {
   if (ok) useToast().success('Cache cleared!')
 }
 
-function exportData() { useToast().info('Exporting data…') }
+async function exportData() {
+  const token = localStorage.getItem('token')
+  if (!token) return
+  useToast().info('Preparing your data export…')
+  try {
+    // Fetch all scans (up to 500) and export as CSV
+    const res = await $fetch<any>(`${config.public.apiBase}/scans?per_page=500`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const rows: string[][] = [['ID', 'Species', 'Classification', 'Confidence', 'Latitude', 'Longitude', 'Date']]
+    for (const s of (res.data ?? [])) {
+      rows.push([
+        s.id,
+        s.result_name || 'Unknown',
+        s.result_classification || 'unknown',
+        Math.round(s.confidence_level || 0) + '%',
+        s.latitude || '',
+        s.longitude || '',
+        s.created_at ? new Date(s.created_at).toLocaleDateString() : '',
+      ])
+    }
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `mycovision_data_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    useToast().success('Data exported successfully.')
+  } catch {
+    useToast().error('Export failed. Please try again.')
+  }
+}
 
 async function deleteAccount() {
   const { confirm } = useConfirm()
@@ -1004,3 +1053,4 @@ async function saveConsentApi(allow: boolean) {
   }
 }
 </script>
+>

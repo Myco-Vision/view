@@ -136,10 +136,10 @@
         </div>
 
         <!-- Right action: Cancel Auto-renewal or Scan button -->
-        <div class="flex items-center gap-3 shrink-0">
+        <div class="flex flex-wrap items-center gap-3">
           <NuxtLink
             to="/users/scan"
-            class="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition shadow-sm inline-flex items-center gap-1.5 no-underline"
+            class="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition shadow-sm inline-flex items-center gap-1.5 no-underline"
           >
             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             <span>Scan Mushroom</span>
@@ -418,7 +418,7 @@
         </button>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
+        <table class="w-full min-w-[540px] text-left text-xs">
           <thead>
             <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider">
               <th class="pb-2.5">Date</th>

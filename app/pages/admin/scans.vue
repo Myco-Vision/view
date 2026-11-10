@@ -109,7 +109,7 @@
           </tbody>
         </table>
       </div>
-      <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
+      <div class="flex flex-wrap items-center justify-between gap-3 py-3 px-4 border-t border-[#f1f5f9]">
         <span class="text-[12.5px] text-[#64748b]">Showing {{ pagination.from || 0 }} to {{ pagination.to || 0 }} of {{ pagination.total }} scans</span>
         <div class="flex items-center gap-2.5">
           <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="pagination.current_page <= 1" @click="fetchScans(pagination.current_page - 1)">‹</button>
@@ -170,15 +170,13 @@ const selectedScan = ref<any>(null)
 const scans = ref<any[]>([])
 const pagination = reactive({ current_page: 1, last_page: 1, total: 0, from: 0, to: 0 })
 
-// Stats computed from the current page only (approximate).
-// For true totals per classification, have the API return aggregate counts.
-const edibleCount = computed(() => scans.value.filter(s => s.result_classification === 'edible').length)
-const poisonousCount = computed(() => scans.value.filter(s => s.result_classification === 'poisonous').length)
-const unknownCount = computed(() => scans.value.filter(s => !s.result_classification || s.result_classification === 'unknown').length)
-const avgConfidence = computed(() => {
-  if (scans.value.length === 0) return 0
-  return Math.round(scans.value.reduce((a, s) => a + (s.confidence_level || 0), 0) / scans.value.length)
-})
+// Aggregate stats — populated from API meta if available, else approximate from current page
+const aggregateStats = reactive({ edible: 0, poisonous: 0, unknown: 0, avg_confidence: 0 })
+
+const edibleCount    = computed(() => aggregateStats.edible)
+const poisonousCount = computed(() => aggregateStats.poisonous)
+const unknownCount   = computed(() => aggregateStats.unknown)
+const avgConfidence  = computed(() => aggregateStats.avg_confidence)
 
 const getHeaders = () => {
   const token = localStorage.getItem('token')
@@ -215,6 +213,19 @@ async function fetchScans(page = 1) {
     pagination.total = res.total
     pagination.from = res.from
     pagination.to = res.to
+    // Populate aggregate stats from API meta if available, else fall back to page totals
+    if (res.meta) {
+      aggregateStats.edible         = res.meta.edible_count    ?? 0
+      aggregateStats.poisonous      = res.meta.poisonous_count ?? 0
+      aggregateStats.unknown        = res.meta.unknown_count   ?? 0
+      aggregateStats.avg_confidence = res.meta.avg_confidence  ?? 0
+    } else {
+      aggregateStats.edible         = scans.value.filter((s: any) => s.result_classification === 'edible').length
+      aggregateStats.poisonous      = scans.value.filter((s: any) => s.result_classification === 'poisonous').length
+      aggregateStats.unknown        = scans.value.filter((s: any) => !s.result_classification || s.result_classification === 'unknown').length
+      const total = scans.value.reduce((a: number, s: any) => a + (s.confidence_level || 0), 0)
+      aggregateStats.avg_confidence = scans.value.length ? Math.round(total / scans.value.length) : 0
+    }
   } catch (error: any) {
     if (myId !== requestId) return
     console.error('Failed to fetch scans:', error)

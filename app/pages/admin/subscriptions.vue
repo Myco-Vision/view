@@ -117,7 +117,7 @@
           </tbody>
         </table>
       </div>
-      <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
+      <div class="flex flex-wrap items-center justify-between gap-3 py-3 px-4 border-t border-[#f1f5f9]">
         <span class="text-[12.5px] text-[#64748b]">Showing {{ pagination.from || 0 }} to {{ pagination.to || 0 }} of {{ pagination.total }}</span>
         <div class="flex items-center gap-2.5">
           <button class="pg-btn" :disabled="pagination.current_page <= 1" @click="fetchSubs(pagination.current_page - 1)">‹</button>
@@ -208,7 +208,7 @@
             </tbody>
           </table>
         </div>
-        <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
+        <div class="flex flex-wrap items-center justify-between gap-3 py-3 px-4 border-t border-[#f1f5f9]">
           <span class="text-[12.5px] text-[#64748b]">{{ refundPagination.total }} request(s)</span>
           <div class="flex items-center gap-2.5">
             <button class="pg-btn" :disabled="refundPagination.current_page <= 1" @click="fetchRefunds(refundPagination.current_page - 1)">‹</button>

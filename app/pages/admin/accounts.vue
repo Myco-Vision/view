@@ -124,7 +124,7 @@
         </table>
       </div>
       <!-- Pagination -->
-      <div v-if="pagination.last_page > 1" class="flex items-center justify-between py-3.5 px-4 border-t border-[#e2e8f0] bg-[#f8fafc]">
+      <div v-if="pagination.last_page > 1" class="flex flex-wrap items-center justify-between gap-3 py-3.5 px-4 border-t border-[#e2e8f0] bg-[#f8fafc]">
         <span class="text-[13px] text-[#64748b] font-medium">Showing <span class="text-[#0f172a] font-bold">{{ pagination.from || 0 }}</span> to <span class="text-[#0f172a] font-bold">{{ pagination.to || 0 }}</span> of <span class="text-[#0f172a] font-bold">{{ pagination.total }}</span> entries</span>
         <div class="flex items-center gap-1.5">
           <button class="py-1.5 px-3 rounded-[8px] border border-[#e2e8f0] bg-white text-[13px] font-medium text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-50 disabled:cursor-not-allowed" :disabled="pagination.current_page === 1" @click="changePage(pagination.current_page - 1)">Previous</button>
@@ -155,7 +155,7 @@
             {{ formError }}
           </div>
 
-          <div class="grid grid-cols-2 gap-x-4 gap-y-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
             <!-- Personal Info -->
             <div class="col-span-2"><h3 class="text-[12px] font-bold text-[#94a3b8] uppercase tracking-[0.5px] border-b border-[#f1f5f9] pb-2">Personal Information</h3></div>
 

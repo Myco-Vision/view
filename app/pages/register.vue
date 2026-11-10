@@ -244,7 +244,7 @@
               </svg>
               Password Requirements
             </p>
-            <div class="grid grid-cols-2 gap-1.5">
+            <div class="grid grid-cols-1 min-[400px]:grid-cols-2 gap-1.5">
               <span
                 class="flex items-center gap-1.5 text-[0.7rem] font-medium transition-colors"
                 :class="form.password.length >= 8 ? 'text-emerald-400' : 'text-slate-500'"
@@ -294,14 +294,14 @@
         <p class="text-xs text-slate-400">Almost there! Review your details before submitting.</p>
 
         <!-- Summary Card -->
-        <div class="grid grid-cols-2 gap-3 bg-stone-950/60 border border-emerald-900/40 rounded-2xl py-5 px-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-stone-950/60 border border-emerald-900/40 rounded-2xl py-5 px-5">
           <div class="flex flex-col gap-1">
             <span class="text-[0.68rem] uppercase tracking-[0.06em] text-emerald-400/80 font-bold">Full Name</span>
-            <span class="text-sm text-white font-medium">{{ form.firstName }} {{ form.lastName }}</span>
+            <span class="text-sm text-white font-medium break-words">{{ form.firstName }} {{ form.lastName }}</span>
           </div>
           <div class="flex flex-col gap-1">
             <span class="text-[0.68rem] uppercase tracking-[0.06em] text-emerald-400/80 font-bold">Username</span>
-            <span class="text-sm text-white font-medium">@{{ form.username }}</span>
+            <span class="text-sm text-white font-medium break-all">@{{ form.username }}</span>
           </div>
           <div class="flex flex-col gap-1">
             <span class="text-[0.68rem] uppercase tracking-[0.06em] text-emerald-400/80 font-bold">Email</span>
@@ -309,11 +309,11 @@
           </div>
           <div class="flex flex-col gap-1">
             <span class="text-[0.68rem] uppercase tracking-[0.06em] text-emerald-400/80 font-bold">Contact</span>
-            <span class="text-sm text-white font-medium">{{ form.contact }}</span>
+            <span class="text-sm text-white font-medium break-all">{{ form.contact }}</span>
           </div>
-          <div class="flex flex-col gap-1 col-span-2">
+          <div class="flex flex-col gap-1 sm:col-span-2">
             <span class="text-[0.68rem] uppercase tracking-[0.06em] text-emerald-400/80 font-bold">Address</span>
-            <span class="text-sm text-white font-medium">{{ form.address }}</span>
+            <span class="text-sm text-white font-medium break-words">{{ form.address }}</span>
           </div>
         </div>
 
@@ -630,6 +630,37 @@ onBeforeUnmount(() => {
   document.body.style.overflow = ''
 })
 
+// Google token client — initialized once after GSI script loads
+let tokenClient: any = null
+let googleTimeoutId: ReturnType<typeof setTimeout> | null = null
+
+function clearGoogleTimeout() {
+  if (googleTimeoutId) { clearTimeout(googleTimeoutId); googleTimeoutId = null }
+}
+
+function initGoogleClient() {
+  const gsi = (window as any).google
+  if (!gsi) return
+  tokenClient = gsi.accounts.oauth2.initTokenClient({
+    client_id: config.public.googleClientId,
+    scope: 'email profile',
+    prompt: 'select_account',
+    callback: async (resp: any) => {
+      clearGoogleTimeout()
+      if (resp.error) {
+        error.value = 'Google sign-up was cancelled or failed.'
+        googleLoading.value = false
+        return
+      }
+      await processGoogleToken(resp.access_token)
+    },
+    // Fires when the popup is closed or blocked — without this the button stays disabled forever
+    error_callback: () => {
+      clearGoogleTimeout()
+      googleLoading.value = false
+    },
+  })
+}
 // Load Google Identity Services script
 useHead({
   script: [
@@ -637,11 +668,11 @@ useHead({
       src: 'https://accounts.google.com/gsi/client',
       async: true,
       defer: true,
+      onload: 'window.__gsiLoaded && window.__gsiLoaded()',
     },
   ],
 })
 
-// Redirect if already logged in
 onMounted(() => {
   const token = localStorage.getItem('token')
   const role  = localStorage.getItem('role')
@@ -652,34 +683,27 @@ onMounted(() => {
       navigateTo('/users/scan')
     }
   }
+  // Init Google client once script is ready
+  if ((window as any).google?.accounts) {
+    initGoogleClient()
+  } else {
+    (window as any).__gsiLoaded = () => initGoogleClient()
+  }
 })
 
 // Custom Google button — opens Google account picker popup on click
 function handleGoogleRegister() {
   error.value = ''
-  const gsi = (window as any).google
-  if (!gsi) {
+  if (!tokenClient) {
     error.value = 'Google Sign-In is not available. Please refresh and try again.'
     return
   }
-  const tokenClient = gsi.accounts.oauth2.initTokenClient({
-    client_id: config.public.googleClientId,
-    scope: 'email profile',
-    prompt: 'select_account',
-    callback: async (resp: any) => {
-      if (resp.error) {
-        error.value = 'Google sign-up was cancelled or failed.'
-        googleLoading.value = false
-        return
-      }
-      await processGoogleToken(resp.access_token)
-    },
-    // Fires when the popup is closed or blocked — without this the button stays disabled forever
-    error_callback: () => {
-      googleLoading.value = false
-    },
-  })
   googleLoading.value = true
+  // Safety timeout — resets if popup is blocked or origin is not whitelisted in Google Console
+  googleTimeoutId = setTimeout(() => {
+    googleLoading.value = false
+    error.value = 'Google Sign-In timed out. Make sure pop-ups are allowed, then try again.'
+  }, 30000)
   tokenClient.requestAccessToken()
 }
 
@@ -943,6 +967,7 @@ async function handleRegister() {
 }
 
 async function processGoogleToken(accessToken: string) {
+  clearGoogleTimeout()
   googleLoading.value = true
   error.value = ''
   try {

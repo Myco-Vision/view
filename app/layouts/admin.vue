@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen bg-slate-100 overflow-hidden font-sans">
+  <div class="flex h-dvh bg-slate-100 overflow-hidden font-sans">
 
     <!-- ─── Mobile Overlay ─────────────────────────────── -->
     <div
@@ -66,7 +66,7 @@
       </div>
 
       <!-- Navigation -->
-      <nav class="flex-1 flex flex-col gap-0.5 overflow-hidden">
+      <nav class="flex-1 flex flex-col gap-0.5 overflow-y-auto overscroll-contain min-h-0">
         <p v-if="!sidebarCollapsed || mobileOpen" class="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.8px] px-2 mt-1 mb-0.5 whitespace-nowrap">Overview</p>
 
         <NuxtLink v-if="isAdminOrAbove" to="/admin/dashboard" :title="(sidebarCollapsed && !mobileOpen) ? 'Dashboard' : ''" @click="mobileOpen = false"
@@ -206,20 +206,20 @@
 
       <!-- Topbar -->
       <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-7 shrink-0 gap-4">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 min-w-0">
           <!-- Mobile hamburger -->
           <button
             @click="mobileOpen = true"
-            class="lg:hidden w-9 h-9 rounded-lg bg-transparent border border-slate-200 cursor-pointer flex items-center justify-center text-slate-500 transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900"
+            class="lg:hidden w-9 h-9 rounded-lg bg-transparent border border-slate-200 cursor-pointer flex items-center justify-center text-slate-500 transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900 shrink-0"
           >
             <svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
           </button>
-          <nav class="flex items-center gap-1.5 text-[13.5px]" aria-label="Breadcrumb">
+          <nav class="flex items-center gap-1.5 text-[13.5px] min-w-0" aria-label="Breadcrumb">
             <span class="text-slate-500 font-medium hidden sm:inline">Admin</span>
             <span class="text-slate-300 hidden sm:inline">›</span>
-            <span class="text-slate-900 font-semibold">{{ currentPageTitle }}</span>
+            <span class="text-slate-900 font-semibold truncate">{{ currentPageTitle }}</span>
           </nav>
         </div>
         <div class="flex items-center gap-3">
@@ -254,13 +254,18 @@ const adminName = ref('')
 const userRole = ref('')
 
 onMounted(() => {
-  const storedUser = localStorage.getItem('user')
-  if (storedUser) {
-    const user = JSON.parse(storedUser)
-    adminName.value = user.name || user.username || 'Admin User'
-    userRole.value = user.role || localStorage.getItem('role') || 'admin'
+  try {
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      const user = JSON.parse(storedUser)
+      adminName.value = user.name || user.username || 'Admin User'
+      userRole.value = user.role || localStorage.getItem('role') || 'admin'
+    } else {
+      userRole.value = localStorage.getItem('role') || ''
+    }
+  } catch {
+    userRole.value = localStorage.getItem('role') || ''
   }
-  userRole.value = localStorage.getItem('role') || ''
 })
 
 const isSuperAdmin = computed(() => userRole.value === 'super_admin')
