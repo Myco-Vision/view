@@ -1,5 +1,6 @@
 <template>
-  <Teleport to="body">
+  <ClientOnly>
+    <Teleport to="body">
     <Transition
       enter-active-class="transition duration-200 ease-out"
       enter-from-class="opacity-0"
@@ -62,7 +63,8 @@
         </div>
       </div>
     </Transition>
-  </Teleport>
+    </Teleport>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
@@ -94,7 +96,7 @@ const emit = defineEmits<{
 }>()
 
 const dialogRef = ref<HTMLElement | null>(null)
-const titleId = `modal-title-${Math.random().toString(36).slice(2, 9)}`
+const titleId = `modal-title-${useId()}`
 let previouslyFocused: HTMLElement | null = null
 
 const sizeClass = computed(() => ({

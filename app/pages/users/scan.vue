@@ -276,10 +276,9 @@
       </div>
     </div>
 
-    <!-- ── FULLSCREEN CAMERA OVERLAY ───────────────────────
-         Teleported to <body> and position:fixed so it covers the whole
-         viewport instead of just the left panel. -->
-    <Teleport to="body">
+    <!-- ── FULLSCREEN CAMERA OVERLAY & MODALS ─────────────── -->
+    <ClientOnly>
+      <Teleport to="body">
       <div v-if="isCameraOpen" class="fixed inset-0 z-[55] bg-black">
         <video
           ref="videoRef"
@@ -457,6 +456,7 @@
         </div>
       </Transition>
     </Teleport>
+    </ClientOnly>
   </div>
 </template>
 
@@ -1130,7 +1130,7 @@ async function analyzeImage() {
       remainingScans.value = 0
       showUpgradeModal.value = true
     } else {
-      alert('Failed to analyze the image. Please try again.')
+      uploadError.value = error?.data?.message || 'Failed to analyze the image. The AI classification service may be waking up or temporarily unavailable — please try again in a moment.'
     }
   } finally {
     isAnalyzing.value = false

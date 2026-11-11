@@ -1,5 +1,6 @@
 <template>
-  <teleport to="body">
+  <ClientOnly>
+    <teleport to="body">
     <div class="toast-container" aria-live="polite">
       <transition-group name="toast" tag="div" class="toast-stack">
         <div
@@ -21,7 +22,8 @@
         </div>
       </transition-group>
     </div>
-  </teleport>
+    </teleport>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
