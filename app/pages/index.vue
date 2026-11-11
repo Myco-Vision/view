@@ -190,11 +190,20 @@
               </div>
 
               <!-- Error Alert -->
-              <div v-if="loginError" class="mb-4 p-3 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div v-if="loginError" class="mb-4 p-3 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs flex items-start gap-2">
+                <svg class="w-4 h-4 shrink-0 text-red-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <span>{{ loginError }}</span>
+                <div class="flex-1 min-w-0">
+                  <p>{{ loginError }}</p>
+                  <NuxtLink
+                    v-if="unverifiedEmail"
+                    :to="`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`"
+                    class="inline-block mt-1.5 font-semibold text-emerald-300 hover:text-emerald-200 underline"
+                  >
+                    Resend verification link →
+                  </NuxtLink>
+                </div>
               </div>
 
               <!-- Form Inputs -->
@@ -822,7 +831,14 @@
 
           <!-- Error Alert -->
           <div v-if="loginError" class="mb-4 p-2.5 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs">
-            {{ loginError }}
+            <p>{{ loginError }}</p>
+            <NuxtLink
+              v-if="unverifiedEmail"
+              :to="`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`"
+              class="inline-block mt-1.5 font-semibold text-emerald-300 hover:text-emerald-200 underline"
+            >
+              Resend verification link →
+            </NuxtLink>
           </div>
 
           <!-- Modal Form -->
@@ -938,10 +954,12 @@ const loginForm = reactive({
 const showPassword = ref(false)
 const isSubmitting = ref(false)
 const loginError = ref('')
+const unverifiedEmail = ref('')
 
 function openLoginModal(role: 'user' | 'admin') {
   activeRole.value = role
   loginError.value = ''
+  unverifiedEmail.value = ''
   modalOpen.value = true
 }
 
@@ -1009,6 +1027,7 @@ async function processGoogleToken(accessToken: string) {
 
 async function handleLoginSubmit() {
   loginError.value = ''
+  unverifiedEmail.value = ''
 
   if (!loginForm.email || !loginForm.password) {
     loginError.value = 'Please provide both email and password.'
@@ -1040,6 +1059,9 @@ async function handleLoginSubmit() {
       await navigateTo('/users/scan')
     }
   } catch (err: any) {
+    if (err?.data?.error === 'EMAIL_NOT_VERIFIED') {
+      unverifiedEmail.value = err?.data?.email || loginForm.email.trim()
+    }
     const msg = err?.data?.message || err?.data?.errors?.email?.[0]
     loginError.value = msg || 'Invalid email or password. Please try again.'
   } finally {

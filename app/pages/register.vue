@@ -834,20 +834,22 @@ const emailValid = computed(() =>
 
 // Email availability — debounced live check against the backend
 const emailStatus = ref<'empty' | 'invalid' | 'checking' | 'available' | 'taken'>('empty')
+const emailCustomError = ref('')
 let emailCheckTimer: ReturnType<typeof setTimeout> | null = null
 
 const emailHint = computed(() => {
   switch (emailStatus.value) {
-    case 'invalid':   return { text: 'Enter a valid email (name@example.com)', color: 'text-red-400',     dot: 'bg-red-400' }
-    case 'checking':  return { text: 'Checking availability…',                   color: 'text-amber-400',   dot: 'bg-amber-400' }
-    case 'available': return { text: 'Email is available',                       color: 'text-emerald-400',  dot: 'bg-emerald-400' }
-    case 'taken':     return { text: 'This email is already registered',         color: 'text-red-400',     dot: 'bg-red-400' }
+    case 'invalid':   return { text: emailCustomError.value || 'Enter a valid email (name@example.com)', color: 'text-red-400',     dot: 'bg-red-400' }
+    case 'checking':  return { text: 'Checking email…',                            color: 'text-amber-400',   dot: 'bg-amber-400' }
+    case 'available': return { text: 'Email is valid and available',               color: 'text-emerald-400',  dot: 'bg-emerald-400' }
+    case 'taken':     return { text: 'This email is already registered',           color: 'text-red-400',     dot: 'bg-red-400' }
     default:          return { text: '', color: '', dot: '' }
   }
 })
 
 watch(() => form.email, (val) => {
   if (emailCheckTimer) { clearTimeout(emailCheckTimer); emailCheckTimer = null }
+  emailCustomError.value = ''
   const v = (val || '').trim()
   if (!v) { emailStatus.value = 'empty'; return }
   if (!emailValid.value) { emailStatus.value = 'invalid'; return }
@@ -860,9 +862,15 @@ watch(() => form.email, (val) => {
       // Ignore stale responses if the user kept typing
       if (form.email.trim() !== v) return
       emailStatus.value = res.available ? 'available' : 'taken'
-    } catch {
+    } catch (err: any) {
       if (form.email.trim() !== v) return
-      // Network/validation hiccup — don't block the user; submit-time validation still enforces uniqueness
+      const status = err?.status ?? err?.statusCode ?? err?.response?.status
+      if (status === 422) {
+        emailCustomError.value = err?.data?.errors?.email?.[0] || err?.data?.message || 'Please enter a legitimate email address.'
+        emailStatus.value = 'invalid'
+        return
+      }
+      // Network hiccup — don't block the user; submit-time validation still enforces legitimacy & uniqueness
       emailStatus.value = 'available'
     }
   }, 500)
@@ -883,7 +891,7 @@ function goNext() {
     return
   }
   if (emailStatus.value === 'invalid') {
-    error.value = 'Please enter a valid email address (e.g. name@example.com).'
+    error.value = emailCustomError.value || 'Please enter a valid email address (e.g. name@example.com).'
     return
   }
   if (emailStatus.value === 'taken') {
@@ -930,7 +938,7 @@ async function handleRegister() {
   loading.value = true
 
   try {
-    const data = await $fetch<{ user: any; token: string }>(`${config.public.apiBase}/register`, {
+    const data = await $fetch<{ user?: any; token?: string; requires_verification?: boolean; email?: string }>(`${config.public.apiBase}/register`, {
       method: 'POST',
       body: {
         first_name: form.firstName,
@@ -943,6 +951,12 @@ async function handleRegister() {
         password_confirmation: form.confirmPassword,
       },
     })
+
+    if (data.requires_verification || !data.token) {
+      const targetEmail = encodeURIComponent(data.email || form.email.trim())
+      await navigateTo(`/verify-email?email=${targetEmail}`)
+      return
+    }
 
     // Persist auth data
     localStorage.setItem('token', data.token)

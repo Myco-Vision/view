@@ -55,7 +55,16 @@
             <svg class="w-4 h-4 shrink-0 text-red-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <span>{{ error }}</span>
+            <div class="flex-1 min-w-0">
+              <p>{{ error }}</p>
+              <NuxtLink
+                v-if="unverifiedEmail"
+                :to="`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`"
+                class="inline-block mt-1.5 font-semibold text-emerald-300 hover:text-emerald-200 underline"
+              >
+                Verify email / Resend link →
+              </NuxtLink>
+            </div>
           </div>
 
           <!-- Success state -->
@@ -116,6 +125,7 @@ const config = useRuntimeConfig()
 
 const loading = ref(false)
 const error = ref('')
+const unverifiedEmail = ref('')
 const sent = ref(false)
 const form = reactive({ email: '' })
 
@@ -123,6 +133,7 @@ useHead({ title: 'Forgot Password — MycoVision' })
 
 async function handleSubmit() {
   error.value = ''
+  unverifiedEmail.value = ''
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
     error.value = 'Please enter a valid email address.'
     return
@@ -135,7 +146,10 @@ async function handleSubmit() {
     })
     sent.value = true
   } catch (err: any) {
-    error.value = err?.data?.message || 'Something went wrong. Please try again.'
+    if (err?.data?.error === 'EMAIL_NOT_VERIFIED') {
+      unverifiedEmail.value = err?.data?.email || form.email.trim()
+    }
+    error.value = err?.data?.errors?.email?.[0] || err?.data?.message || 'Something went wrong. Please try again.'
   } finally {
     loading.value = false
   }
