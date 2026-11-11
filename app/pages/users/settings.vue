@@ -310,6 +310,7 @@
             <input v-model.number="cropZoom" type="range" min="1" max="3" step="0.01" class="flex-1 accent-[#10b981]" aria-label="Zoom" />
             <span class="text-[12px] text-[#64748b]">+</span>
           </div>
+          <p v-if="cropError" class="w-full text-[12.5px] text-[#dc2626] bg-[#fef2f2] border border-[#fecaca] rounded-lg px-3 py-2">{{ cropError }}</p>
         </div>
 
         <div class="p-4 border-t border-[#f1f5f9] bg-[#f8fafc] flex items-center justify-end gap-2.5">
@@ -674,6 +675,7 @@ const CROP_VIEW = 240 // viewport size in px
 const CROP_OUT = 512  // exported image size in px
 const showCrop = ref(false)
 const cropSrc = ref('')
+const cropError = ref('')
 const cropNat = reactive({ w: 0, h: 0 })
 const cropZoom = ref(1)
 const cropOffset = reactive({ x: 0, y: 0 })
@@ -720,6 +722,7 @@ function onCropWheel(e: WheelEvent) {
 function closeCrop() {
   if (uploadingAvatar.value) return
   showCrop.value = false
+  cropError.value = ''
   if (cropSrc.value) URL.revokeObjectURL(cropSrc.value)
   cropSrc.value = ''
   cropImg = null
@@ -730,7 +733,9 @@ function onAvatarSelected(e: Event) {
   const file = input.files?.[0]
   input.value = '' // allow re-selecting the same file
   if (!file) return
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+  const validMime = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)
+  const validExt = !file.type && /\.(jpe?g|png|webp)$/i.test(file.name)
+  if (!validMime && !validExt) {
     useToast().error('Please choose a JPG, PNG or WebP image.')
     return
   }
@@ -747,6 +752,7 @@ function onAvatarSelected(e: Event) {
     cropZoom.value = 1
     cropOffset.x = 0
     cropOffset.y = 0
+    cropError.value = ''
     cropSrc.value = url
     showCrop.value = true
   }
@@ -759,10 +765,16 @@ function onAvatarSelected(e: Event) {
 
 async function saveCroppedAvatar() {
   if (!cropImg) return
+  cropError.value = ''
   const canvas = document.createElement('canvas')
   canvas.width = CROP_OUT
   canvas.height = CROP_OUT
-  const ctx = canvas.getContext('2d')!
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    cropError.value = 'Could not initialize image cropper.'
+    useToast().error(cropError.value)
+    return
+  }
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, 0, CROP_OUT, CROP_OUT)
   const ratio = CROP_OUT / CROP_VIEW
@@ -777,7 +789,8 @@ async function saveCroppedAvatar() {
   )
   const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9))
   if (!blob) {
-    useToast().error('Could not process the image.')
+    cropError.value = 'Could not process the image.'
+    useToast().error(cropError.value)
     return
   }
 
@@ -795,7 +808,8 @@ async function saveCroppedAvatar() {
     closeCrop()
     useToast().success('Profile photo updated!')
   } catch (err: any) {
-    useToast().error(err?.data?.errors?.avatar?.[0] || err?.data?.message || 'Failed to upload photo.')
+    cropError.value = err?.data?.errors?.avatar?.[0] || err?.data?.message || 'Failed to upload photo.'
+    useToast().error(cropError.value)
   } finally {
     uploadingAvatar.value = false
   }
