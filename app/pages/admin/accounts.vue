@@ -240,7 +240,8 @@
             </div>
             <div class="flex flex-col gap-1.5 col-span-2">
               <label class="text-[13px] font-semibold text-[#334155]">Address</label>
-              <textarea v-model="form.address" rows="2" class="py-[9px] px-3.5 border border-[#e2e8f0] rounded-[10px] text-[14px] font-sans text-[#0f172a] outline-none transition-colors focus:border-amber-500 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.1)] resize-y" placeholder="123 Main St, City, Country"></textarea>
+              <PhAddressSelect v-if="!isEditing" v-model="form.address" :disabled="isSubmitting" />
+              <textarea v-else v-model="form.address" rows="2" class="py-[9px] px-3.5 border border-[#e2e8f0] rounded-[10px] text-[14px] font-sans text-[#0f172a] outline-none transition-colors focus:border-amber-500 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.1)] resize-y" placeholder="123 Main St, City, Country"></textarea>
             </div>
           </div>
         </div>

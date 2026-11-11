@@ -251,7 +251,8 @@
             </div>
             <div class="flex flex-col gap-1.5 col-span-2">
               <label class="text-[13px] font-semibold text-[#334155]">Address</label>
-              <textarea v-model="form.address" rows="2" :class="[inputCls, 'resize-y']" placeholder="123 Main St, City, Country"></textarea>
+              <PhAddressSelect v-if="!isEditing" v-model="form.address" :disabled="isSubmitting" />
+              <textarea v-else v-model="form.address" rows="2" :class="[inputCls, 'resize-y']" placeholder="123 Main St, City, Country"></textarea>
             </div>
           </div>
         </div>
