@@ -187,10 +187,10 @@
           </div>
 
           <!-- Location source toggle -->
-          <div class="grid grid-cols-2 gap-1 p-1 rounded-[10px] bg-[#f1f5f9] border border-[#e2e8f0]">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 p-1 rounded-[10px] bg-[#f1f5f9] border border-[#e2e8f0]">
             <button
               type="button"
-              class="py-1.5 px-2 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors inline-flex items-center justify-center gap-1.5"
+              class="w-full py-2 px-2.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
               :class="locationMode === 'gps' ? 'bg-white text-[#059669] shadow-sm' : 'bg-transparent text-[#64748b] hover:text-[#0f172a]'"
               @click="fetchUserLocation"
             >
@@ -198,7 +198,7 @@
             </button>
             <button
               type="button"
-              class="py-1.5 px-2 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors inline-flex items-center justify-center gap-1.5"
+              class="w-full py-2 px-2.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
               :class="locationMode === 'manual' ? 'bg-white text-[#059669] shadow-sm' : 'bg-transparent text-[#64748b] hover:text-[#0f172a]'"
               @click="selectManualMode"
             >
@@ -358,11 +358,11 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-end gap-2.5 pt-2">
-            <button @click="showUpgradeModal = false" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">
+          <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 pt-2">
+            <button @click="showUpgradeModal = false" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer text-center">
               Maybe Later
             </button>
-            <NuxtLink to="/users/subscription" @click="showUpgradeModal = false" class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition no-underline shadow-sm">
+            <NuxtLink to="/users/subscription" @click="showUpgradeModal = false" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition no-underline shadow-sm text-center">
               View Plans &amp; Subscribe →
             </NuxtLink>
           </div>
@@ -431,11 +431,11 @@
               </div>
 
               <!-- Actions -->
-              <div class="px-6 pb-6 flex gap-3">
+              <div class="px-6 pb-6 flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3">
                 <button
                   id="btn-consent-decline"
                   :disabled="isSubmittingConsent"
-                  class="flex-1 py-2.5 rounded-xl border border-[#e2e8f0] bg-white text-[13.5px] font-semibold text-[#64748b] hover:bg-[#f8fafc] transition cursor-pointer disabled:opacity-50"
+                  class="w-full sm:flex-1 py-2.5 rounded-xl border border-[#e2e8f0] bg-white text-[13.5px] font-semibold text-[#64748b] hover:bg-[#f8fafc] transition cursor-pointer disabled:opacity-50"
                   @click="submitConsent(false)"
                 >
                   No thanks
@@ -443,7 +443,7 @@
                 <button
                   id="btn-consent-allow"
                   :disabled="isSubmittingConsent"
-                  class="flex-1 py-2.5 rounded-xl bg-gradient-to-br from-[#10b981] to-[#059669] text-white text-[13.5px] font-bold hover:opacity-90 transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                  class="w-full sm:flex-1 py-2.5 rounded-xl bg-gradient-to-br from-[#10b981] to-[#059669] text-white text-[13.5px] font-bold hover:opacity-90 transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                   @click="submitConsent(true)"
                 >
                   <span v-if="isSubmittingConsent" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />

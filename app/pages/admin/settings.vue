@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col gap-[22px]">
-    <div class="flex items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-[22px] font-bold text-[#0f172a]">System Settings</h1>
         <p class="text-[13.5px] text-[#64748b] mt-[3px]">Configure application behaviour and administrative preferences</p>
       </div>
-      <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 flex items-center gap-2" @click="saveAll" :disabled="isSavingSettings">
+      <button class="w-full sm:w-auto justify-center py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 flex items-center gap-2" @click="saveAll" :disabled="isSavingSettings">
         <span v-if="isSavingSettings">Saving...</span>
         <span v-else class="inline-flex items-center gap-1.5"><AppIcon name="save" class="w-4 h-4" />Save Changes</span>
       </button>

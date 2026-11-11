@@ -2,20 +2,20 @@
   <div class="flex flex-col gap-[18px]">
 
     <!-- Header row -->
-    <div class="flex items-baseline justify-between gap-3">
-      <div class="flex items-baseline gap-3">
-        <h1 class="text-[22px] font-bold text-[#0f172a]">Scan History</h1>
-        <span class="text-[13px] text-[#64748b] bg-[#f8fafc] py-0.5 px-2.5 rounded-[20px]">{{ filtered.length }} records</span>
+    <div class="flex flex-wrap items-center justify-between gap-2.5">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <h1 class="text-[22px] font-bold text-white">Scan History</h1>
+        <span class="text-[12.5px] font-medium text-[#64748b] bg-[#f8fafc] py-0.5 px-2.5 rounded-[20px] whitespace-nowrap shrink-0">{{ filtered.length }} records</span>
       </div>
-      <span v-if="favorites.length" class="text-[12.5px] font-medium text-[#ef4444] bg-[#fef2f2] border border-[#fecaca] py-1 px-3 rounded-full flex items-center gap-1.5">
+      <span v-if="favorites.length" class="text-[12.5px] font-medium text-[#ef4444] bg-[#fef2f2] border border-[#fecaca] py-1 px-3 rounded-full inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
         <AppIcon name="heart-solid" class="w-3.5 h-3.5" /> {{ favorites.length }} Favorites saved
       </span>
     </div>
 
     <!-- Search + Filter row -->
-    <div class="flex items-center gap-3 flex-wrap">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
       <!-- Search -->
-      <div class="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-[10px] py-2 px-3.5 flex-1 min-w-[200px]">
+      <div class="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-[10px] py-2 px-3.5 w-full sm:flex-1 sm:min-w-[200px]">
         <svg class="w-4 h-4 text-[#94a3b8] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -29,12 +29,12 @@
       </div>
 
       <!-- Filter chips -->
-      <div class="flex flex-wrap gap-2">
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
         <button
           v-for="f in filters"
           :key="f.value"
-          class="py-[7px] px-4 rounded-[20px] border border-[#e2e8f0] bg-white text-[13px] font-sans text-[#64748b] cursor-pointer transition-all duration-[0.18s] font-medium hover:bg-[#f8fafc] hover:text-[#0f172a] inline-flex items-center gap-1.5"
-          :class="{ 'bg-[#10b981] border-[#10b981] text-white hover:bg-[#10b981] hover:text-white': activeFilter === f.value }"
+          class="py-[7px] px-3.5 rounded-[20px] border text-[13px] font-sans cursor-pointer transition-all duration-[0.18s] font-medium inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
+          :class="activeFilter === f.value ? 'bg-[#10b981] border-[#10b981] text-white' : 'bg-white border-[#e2e8f0] text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a]'"
           @click="activeFilter = f.value"
         >
           <AppIcon v-if="f.icon" :name="f.icon" class="w-3.5 h-3.5" :class="activeFilter === f.value ? 'text-white' : f.iconClass" />
@@ -221,9 +221,9 @@
           </div>
 
           <!-- Modal Footer Actions -->
-          <div class="p-4 border-t border-[#f1f5f9] bg-[#f8fafc] flex items-center justify-between">
+          <div class="p-4 border-t border-[#f1f5f9] bg-[#f8fafc] flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2.5">
             <button 
-              class="py-2 px-4 rounded-xl border text-[13px] font-semibold cursor-pointer flex items-center gap-1.5 transition-all"
+              class="w-full sm:w-auto justify-center py-2 px-4 rounded-xl border text-[13px] font-semibold cursor-pointer flex items-center gap-1.5 transition-all"
               :class="isFavorite(selectedScan.id) ? 'bg-[#fef2f2] border-[#fecaca] text-[#ef4444]' : 'bg-white border-[#e2e8f0] text-[#475569] hover:text-[#ef4444]'"
               @click="toggleFavorite(selectedScan)"
             >
@@ -233,7 +233,7 @@
               </span>
             </button>
             <button 
-              class="py-2 px-5 rounded-xl bg-[#0f172a] text-white text-[13px] font-semibold cursor-pointer hover:bg-[#334155] transition-colors"
+              class="w-full sm:w-auto py-2 px-5 rounded-xl bg-[#0f172a] text-white text-[13px] font-semibold cursor-pointer hover:bg-[#334155] transition-colors text-center"
               @click="showModal = false"
             >
               Close

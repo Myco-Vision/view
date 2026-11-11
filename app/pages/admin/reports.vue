@@ -5,13 +5,13 @@
         <h1 class="text-[22px] font-bold text-[#0f172a]">Reports & Analytics</h1>
         <p class="text-[13.5px] text-[#64748b] mt-[3px]">Platform performance and scan data insights</p>
       </div>
-      <div class="flex items-center gap-2.5">
-        <select v-model="period" @change="fetchReports" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
+      <div class="flex items-center gap-2.5 w-full sm:w-auto">
+        <select v-model="period" @change="fetchReports" class="flex-1 sm:flex-initial py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
           <option value="7">Last 7 Days</option>
           <option value="30">Last 30 Days</option>
           <option value="90">Last 90 Days</option>
         </select>
-        <button class="py-2 px-4 rounded-lg bg-[#0f172a] text-white border-none text-[13px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-85" @click="exportReport">⬇ Export CSV</button>
+        <button class="flex-1 sm:flex-initial py-2 px-4 rounded-lg bg-[#0f172a] text-white border-none text-[13px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-85 whitespace-nowrap" @click="exportReport">⬇ Export CSV</button>
       </div>
     </div>
 

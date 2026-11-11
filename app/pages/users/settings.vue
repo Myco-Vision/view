@@ -1,7 +1,7 @@
 <template>
 <div>
   <div class="flex flex-col gap-[18px]">
-    <h1 class="text-[22px] font-bold text-[#0f172a]">Settings</h1>
+    <h1 class="text-[22px] font-bold text-white">Settings</h1>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
 
@@ -26,7 +26,7 @@
                 <p class="text-[11px] sm:text-[11.5px] text-[#64748b] mt-0.5">Member since {{ userProfile.joined }}</p>
               </div>
             </div>
-            <button class="py-[7px] px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer whitespace-nowrap transition-colors duration-[0.18s] shrink-0 self-start sm:self-auto hover:bg-[#f8fafc]" @click="openEditProfile">Edit Profile</button>
+            <button class="w-full sm:w-auto py-[7px] px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer whitespace-nowrap transition-colors duration-[0.18s] shrink-0 text-center hover:bg-[#f8fafc]" @click="openEditProfile">Edit Profile</button>
           </div>
         </div>
 
@@ -162,9 +162,9 @@
             <div class="h-full bg-[#10b981] rounded-[10px] transition-[width] duration-400 ease-in-out" :style="{ width: storagePercent + '%' }" />
           </div>
           <p class="text-[12px] text-[#64748b] -mt-1.5">Scan images and history data</p>
-          <div class="flex gap-2">
-            <button class="py-2 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc]" @click="clearCache">Clear Cache</button>
-            <button class="py-2 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc]" @click="exportData">Export My Data</button>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button class="w-full sm:w-auto py-2 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc] text-center" @click="clearCache">Clear Cache</button>
+            <button class="w-full sm:w-auto py-2 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc] text-center" @click="exportData">Export My Data</button>
           </div>
         </div>
 
@@ -199,7 +199,7 @@
             <AppIcon name="warning" class="w-4 h-4 text-[#dc2626]" /> Danger Zone
           </p>
           <p class="text-[12.5px] text-[#7f1d1d] leading-[1.6]">Once you delete your account, all your scans, collection, and history will be permanently removed. This cannot be undone.</p>
-          <button class="py-2.5 px-[22px] rounded-[9px] bg-[#dc2626] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer self-start transition-colors duration-[0.18s] hover:bg-[#b91c1c]" @click="deleteAccount">Delete Account</button>
+          <button class="w-full sm:w-auto sm:self-start py-2.5 px-[22px] rounded-[9px] bg-[#dc2626] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer text-center transition-colors duration-[0.18s] hover:bg-[#b91c1c]" @click="deleteAccount">Delete Account</button>
         </div>
 
       </div>

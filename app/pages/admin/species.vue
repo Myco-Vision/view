@@ -8,19 +8,19 @@
           Manage verified database species and review user-scanned research candidate data.
         </p>
       </div>
-      <div class="flex items-center gap-2.5 flex-wrap">
-        <div class="relative">
+      <div class="flex items-center gap-2.5 flex-wrap w-full sm:w-auto">
+        <div class="relative w-full sm:w-auto">
           <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="searchQuery" @input="debouncedFilter" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-[200px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search species…" />
+          <input v-model="searchQuery" @input="debouncedFilter" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-full sm:w-[200px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search species…" />
         </div>
-        <select v-model="clsFilter" @change="filterSpecies" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
+        <select v-model="clsFilter" @change="filterSpecies" class="w-full sm:w-auto py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans bg-white cursor-pointer outline-none">
           <option value="">All Classifications</option>
           <option value="edible">Edible</option>
           <option value="poisonous">Poisonous</option>
           <option value="unknown">Unknown</option>
         </select>
-        <button v-if="activeTab === 'verified'" class="py-2 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[#334155] text-[13.5px] font-semibold font-sans cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc] flex items-center gap-1.5" @click="exportCatalogPdf"><AppIcon name="file" class="w-4 h-4 text-[#64748b]" /><span>Export Catalog PDF</span></button>
-        <button v-if="activeTab === 'verified'" class="py-2 px-[18px] rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="openAdd">+ Add Species</button>
+        <button v-if="activeTab === 'verified'" class="flex-1 sm:flex-initial justify-center py-2 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[#334155] text-[13.5px] font-semibold font-sans cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc] flex items-center gap-1.5 whitespace-nowrap" @click="exportCatalogPdf"><AppIcon name="file" class="w-4 h-4 text-[#64748b]" /><span>Export Catalog PDF</span></button>
+        <button v-if="activeTab === 'verified'" class="flex-1 sm:flex-initial justify-center py-2 px-[18px] rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 whitespace-nowrap" @click="openAdd">+ Add Species</button>
       </div>
     </div>
 
@@ -101,11 +101,11 @@
 
     <!-- Tab 2: Candidate Scans -->
     <div v-if="activeTab === 'candidates'" class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
-      <div class="bg-[#f8fafc] p-3.5 border-b border-[#f1f5f9] flex items-center justify-between">
-        <p class="text-[12.5px] text-[#475569]">
+      <div class="bg-[#f8fafc] p-3.5 border-b border-[#f1f5f9] flex flex-wrap items-center justify-between gap-2.5">
+        <p class="text-[12.5px] text-[#475569] flex-1 min-w-[200px]">
           Showing user scans where <strong class="text-[#059669]">Share Data for Research</strong> is enabled. Admins can promote valid candidate scans into official DB species.
         </p>
-        <button class="py-1.5 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12px] font-medium text-[#475569] cursor-pointer hover:bg-[#f1f5f9] inline-flex items-center gap-1.5" @click="fetchCandidateScans"><AppIcon name="refresh" class="w-3.5 h-3.5" /><span>Refresh</span></button>
+        <button class="w-full sm:w-auto justify-center py-1.5 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12px] font-medium text-[#475569] cursor-pointer hover:bg-[#f1f5f9] inline-flex items-center gap-1.5 shrink-0" @click="fetchCandidateScans"><AppIcon name="refresh" class="w-3.5 h-3.5" /><span>Refresh</span></button>
       </div>
 
       <div class="overflow-x-auto">

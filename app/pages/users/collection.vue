@@ -2,12 +2,12 @@
   <div class="flex flex-col gap-[18px]">
 
     <!-- Header -->
-    <div class="flex items-start justify-between">
+    <div class="flex flex-wrap items-center justify-between gap-2.5">
       <div>
-        <h1 class="text-[22px] font-normal text-[#0f172a]">Welcome, <strong class="font-bold">{{ firstName }}!</strong></h1>
-        <p class="text-[13px] text-[#64748b] mt-0.5">Your Mushroom Collection</p>
+        <h1 class="text-[22px] font-normal text-white">Welcome, <strong class="font-bold">{{ firstName }}!</strong></h1>
+        <p class="text-[13px] text-emerald-300/80 mt-0.5">Your Mushroom Collection</p>
       </div>
-      <span class="text-[13px] font-medium bg-[#f8fafc] text-[#64748b] py-1 px-3.5 rounded-[20px] mt-1">{{ filtered.length }} mushrooms</span>
+      <span class="text-[12.5px] font-medium bg-[#f8fafc] text-[#64748b] py-1 px-3.5 rounded-[20px] whitespace-nowrap shrink-0">{{ filtered.length }} mushrooms</span>
     </div>
 
     <!-- Stats row -->
@@ -43,9 +43,9 @@
     </div>
 
     <!-- Controls -->
-    <div class="flex items-center gap-2.5 flex-wrap">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:flex-wrap">
       <!-- Search -->
-      <div class="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-[10px] py-2 px-3.5 flex-1 min-w-[180px]">
+      <div class="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-[10px] py-2 px-3.5 w-full sm:flex-1 sm:min-w-[180px]">
         <svg class="w-[15px] h-[15px] text-[#94a3b8] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -54,18 +54,18 @@
       </div>
 
       <!-- Filter chips -->
-      <div class="flex flex-wrap gap-1.5">
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
         <button
           v-for="f in filters"
           :key="f.value"
-          class="py-[7px] px-3.5 rounded-[20px] border border-[#e2e8f0] bg-white text-[13px] font-sans text-[#64748b] cursor-pointer transition-all duration-[0.18s] font-medium whitespace-nowrap hover:bg-[#f8fafc] hover:text-[#0f172a] inline-flex items-center gap-1.5"
-          :class="{ 'bg-[#10b981] border-[#10b981] text-white hover:bg-[#10b981] hover:text-white': activeFilter === f.value }"
+          class="py-[7px] px-3.5 rounded-[20px] border text-[13px] font-sans cursor-pointer transition-all duration-[0.18s] font-medium whitespace-nowrap inline-flex items-center justify-center gap-1.5"
+          :class="activeFilter === f.value ? 'bg-[#10b981] border-[#10b981] text-white' : 'bg-white border-[#e2e8f0] text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a]'"
           @click="activeFilter = f.value"
         ><AppIcon v-if="f.icon" :name="f.icon" class="w-3.5 h-3.5" :class="activeFilter === f.value ? 'text-white' : f.iconClass" />{{ f.label }}</button>
       </div>
 
       <!-- Sort -->
-      <select v-model="sortBy" class="py-2 px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white font-sans text-[13px] text-[#0f172a] cursor-pointer outline-none">
+      <select v-model="sortBy" class="w-full sm:w-auto py-2 px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white font-sans text-[13px] text-[#0f172a] cursor-pointer outline-none">
         <option value="date">Newest first</option>
         <option value="name">Name A–Z</option>
         <option value="confidence">Confidence ↓</option>
@@ -230,9 +230,9 @@
           </div>
 
           <!-- Footer -->
-          <div class="p-4 border-t border-[#f1f5f9] bg-[#f8fafc] flex items-center justify-between">
+          <div class="p-4 border-t border-[#f1f5f9] bg-[#f8fafc] flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2.5">
             <button 
-              class="py-2 px-4 rounded-xl border text-[13px] font-semibold cursor-pointer flex items-center gap-1.5"
+              class="w-full sm:w-auto justify-center py-2 px-4 rounded-xl border text-[13px] font-semibold cursor-pointer flex items-center gap-1.5"
               :class="isFavorite(selectedItem.id) ? 'bg-[#fef2f2] border-[#fecaca] text-[#ef4444]' : 'bg-white border-[#e2e8f0] text-[#475569] hover:text-[#ef4444]'"
               @click="toggleFavorite(selectedItem)"
             >
@@ -241,7 +241,7 @@
                 {{ isFavorite(selectedItem.id) ? 'Favorite' : 'Add to Favorites' }}
               </span>
             </button>
-            <button class="py-2 px-5 rounded-xl bg-[#0f172a] text-white text-[13px] font-semibold cursor-pointer hover:bg-[#334155]" @click="showModal = false">
+            <button class="w-full sm:w-auto py-2 px-5 rounded-xl bg-[#0f172a] text-white text-[13px] font-semibold cursor-pointer hover:bg-[#334155] text-center" @click="showModal = false">
               Close
             </button>
           </div>

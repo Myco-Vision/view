@@ -12,7 +12,7 @@
       <button
         id="btn-start-retrain"
         :disabled="retrainState === 'running' || totalSelected === 0"
-        class="py-2 px-[22px] rounded-lg text-[13.5px] font-semibold text-white transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="w-full sm:w-auto justify-center py-2 px-[22px] rounded-lg text-[13.5px] font-semibold text-white transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         :class="retrainState === 'running'
           ? 'bg-[#64748b] cursor-not-allowed'
           : 'bg-gradient-to-br from-[#10b981] to-[#059669] hover:opacity-90'"
