@@ -201,11 +201,18 @@
               </div>
             </div>
 
-            <!-- Notes or Description -->
-            <div class="flex flex-col gap-1.5">
-              <span class="text-[12px] font-semibold text-[#475569] uppercase tracking-wider">Species Notes & Identification</span>
-              <p class="text-[13px] text-[#475569] leading-relaxed bg-[#f8fafc] p-3 rounded-xl border border-[#f1f5f9]">
-                {{ selectedScan.notes || 'No user notes added for this scan. AI model identified specimen characteristics as ' + selectedScan.name + '.' }}
+            <!-- Brief Information (Wikipedia Description, Habitat & Reference Link) -->
+            <div class="flex flex-col gap-1.5 bg-[#f8fafc] p-3.5 rounded-xl border border-[#f1f5f9]">
+              <span class="text-[12px] font-semibold text-[#475569] uppercase tracking-wider">Brief Information</span>
+              <p class="text-[12.5px] text-[#0f172a] leading-[1.65] text-justify">
+                <em class="italic underline font-semibold">{{ selectedScan.name }}</em>{{ selectedScan.descriptionRest }}
+              </p>
+              <p v-if="selectedScan.habitat" class="text-[12px] text-[#334155] leading-[1.5]">
+                <strong class="text-[#0f172a]">Habitat:</strong> {{ selectedScan.habitat }}
+              </p>
+              <a :href="selectedScan.reference" target="_blank" rel="noopener noreferrer" class="text-[11px] text-[#059669] break-all no-underline leading-normal hover:underline">{{ selectedScan.reference }}</a>
+              <p v-if="selectedScan.notes" class="text-[12px] text-[#475569] pt-1.5 mt-1 border-t border-[#e2e8f0]">
+                <strong class="text-[#0f172a]">Notes:</strong> {{ selectedScan.notes }}
               </p>
             </div>
 
@@ -260,6 +267,9 @@ interface MushroomScan {
   location: string;
   image: string;
   notes?: string;
+  descriptionRest: string;
+  habitat: string;
+  reference: string;
 }
 
 const scans = ref<MushroomScan[]>([])
@@ -316,16 +326,19 @@ async function fetchScans() {
     })
     
     scans.value = data.map(scan => {
-      const rawClass = scan.result_classification || 'unknown';
+      const brief = resolveSpeciesBrief(scan)
       return {
         id: scan.id,
-        name: scan.result_name || 'Unknown Species',
-        classification: rawClass.charAt(0).toUpperCase() + rawClass.slice(1),
-        confidence: scan.confidence_level || 0,
+        name: brief.name,
+        classification: brief.classification,
+        confidence: brief.confidence,
         location: scan.location_name || (scan.latitude && scan.longitude ? `${scan.latitude}, ${scan.longitude}` : 'Unknown Location'),
         date: new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
         image: scan.image_url || (scan.image_path ? `${config.public.apiBase.replace(/\/api$/, '')}/storage/${scan.image_path}` : 'https://placehold.co/320x320/e8f0e8/a3a3a3?text=No+Image'),
-        notes: scan.notes
+        notes: scan.notes,
+        descriptionRest: brief.descriptionRest,
+        habitat: brief.habitat,
+        reference: brief.reference,
       }
     })
   } catch (error) {
