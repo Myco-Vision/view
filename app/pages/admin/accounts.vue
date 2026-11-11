@@ -89,7 +89,21 @@
                 </td>
                 <td class="py-3 px-4 border-b border-[#f1f5f9] align-middle group-last:border-none">
                   <div class="flex flex-col gap-0.5">
-                    <span class="text-[13.5px] text-[#334155] font-medium">{{ user.email }}</span>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="text-[13.5px] text-[#334155] font-medium">{{ user.email }}</span>
+                      <span
+                        v-if="user.email_verified_at"
+                        class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      >Verified</span>
+                      <template v-else>
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">Unverified</span>
+                        <button
+                          type="button"
+                          class="text-[10.5px] font-semibold text-emerald-600 hover:text-emerald-700 underline bg-transparent border-none cursor-pointer p-0"
+                          @click="resendUserVerification(user)"
+                        >Resend</button>
+                      </template>
+                    </div>
                     <span class="text-[12px] text-[#64748b]">@{{ user.username || 'unknown' }}</span>
                   </div>
                 </td>
@@ -175,7 +189,8 @@
             </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-[13px] font-semibold text-[#334155]">Email Address <span class="text-red-500">*</span></label>
-              <input v-model="form.email" type="email" class="py-[9px] px-3.5 border border-[#e2e8f0] rounded-[10px] text-[14px] font-sans text-[#0f172a] outline-none transition-colors focus:border-amber-500 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.1)]" placeholder="jane@example.com"/>
+              <input v-model="form.email" type="email" class="py-[9px] px-3.5 border border-[#e2e8f0] rounded-[10px] text-[14px] font-sans text-[#0f172a] outline-none transition-colors focus:border-amber-500 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.1)]" placeholder="jane@gmail.com"/>
+              <p class="text-[11px] text-[#64748b]">Must be a legitimate email. A verification link will be sent to confirm it.</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -424,15 +439,16 @@ async function saveAccount() {
       // keep the display name in sync with first/last name
       name: `${form.first_name} ${form.last_name}`.trim(),
     }
+    let res: any
     if (wasEditing) {
       delete payload.password // handled separately via reset
-      await $fetch(`${config.public.apiBase}/admin/accounts/${form.id}`, {
+      res = await $fetch(`${config.public.apiBase}/admin/accounts/${form.id}`, {
         method: 'PUT',
         headers: getHeaders(),
         body: payload
       })
     } else {
-      await $fetch(`${config.public.apiBase}/admin/accounts`, {
+      res = await $fetch(`${config.public.apiBase}/admin/accounts`, {
         method: 'POST',
         headers: getHeaders(),
         body: payload
@@ -440,12 +456,26 @@ async function saveAccount() {
     }
 
     closeModal()
-    toastSuccess(wasEditing ? 'Account updated.' : 'Account created.')
+    toastSuccess(res?.message || (wasEditing ? 'Account updated.' : 'Account created. Verification email sent.'))
     fetchAccounts(wasEditing ? pagination.current_page : 1)
   } catch (err: any) {
-    formError.value = err?.data?.message || err?.message || 'An error occurred while saving the account.'
+    const errors = err?.data?.errors
+    const firstErr = errors ? Object.values(errors).flat()[0] : null
+    formError.value = (firstErr as string) || err?.data?.message || err?.message || 'An error occurred while saving the account.'
   } finally {
     isSubmitting.value = false
+  }
+}
+
+async function resendUserVerification(user: any) {
+  try {
+    const res = await $fetch<any>(`${config.public.apiBase}/admin/accounts/${user.id}/resend-verification`, {
+      method: 'POST',
+      headers: getHeaders(),
+    })
+    toastSuccess(res?.message || `Verification email sent to ${user.email}.`)
+  } catch (err: any) {
+    toastError(err?.data?.message || 'Failed to send verification email.')
   }
 }
 
