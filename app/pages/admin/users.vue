@@ -218,7 +218,23 @@
 
             <div v-if="!isEditing" class="flex flex-col gap-1.5">
               <label class="text-[13px] font-semibold text-[#334155]">Password <span class="text-red-500">*</span></label>
-              <input v-model="form.password" type="password" :class="inputCls" placeholder="••••••••" />
+              <div class="relative">
+                <input
+                  v-model="form.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  :class="[inputCls, 'w-full pr-10']"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                  @click="showPassword = !showPassword"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748b] hover:text-[#0f172a] transition-colors bg-transparent border-none cursor-pointer p-0 flex items-center"
+                >
+                  <svg v-if="!showPassword" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                </button>
+              </div>
             </div>
             <div v-else class="flex flex-col gap-1.5">
               <label class="text-[13px] font-semibold text-[#334155]">Reset Password</label>
@@ -261,7 +277,23 @@
           <div v-if="resetError" class="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-[13px] font-medium">{{ resetError }}</div>
           <div class="flex flex-col gap-1.5">
             <label class="text-[13px] font-semibold text-[#334155]">New Password</label>
-            <input v-model="resetPasswordVal" type="password" :class="inputCls" placeholder="••••••••" />
+            <div class="relative">
+              <input
+                v-model="resetPasswordVal"
+                :type="showResetPassword ? 'text' : 'password'"
+                :class="[inputCls, 'w-full pr-10']"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                :aria-label="showResetPassword ? 'Hide password' : 'Show password'"
+                @click="showResetPassword = !showResetPassword"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748b] hover:text-[#0f172a] transition-colors bg-transparent border-none cursor-pointer p-0 flex items-center"
+              >
+                <svg v-if="!showResetPassword" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
           </div>
         </div>
         <div class="p-4 bg-[#f8fafc] flex justify-end gap-2 border-t border-[#f1f5f9]">
@@ -312,6 +344,7 @@ const pagination = reactive({ current_page: 1, last_page: 1, total: 0, from: 0, 
 const isModalOpen = ref(false)
 const isEditing = ref(false)
 const isSubmitting = ref(false)
+const showPassword = ref(false)
 const formError = ref('')
 const emptyForm = () => ({ id: null, name: '', first_name: '', last_name: '', username: '', email: '', role: 'forager', password: '', contact_number: '', address: '' })
 const form = reactive<any>(emptyForm())
@@ -320,6 +353,7 @@ const formDisplayName = computed(() => form.name || `${form.first_name} ${form.l
 // Password reset state
 const isResetModalOpen = ref(false)
 const isResetting = ref(false)
+const showResetPassword = ref(false)
 const resetPasswordVal = ref('')
 const resetError = ref('')
 
@@ -378,6 +412,7 @@ function canDelete(user: any) {
 // Modal actions
 function openCreateModal() {
   isEditing.value = false
+  showPassword.value = false
   formError.value = ''
   Object.assign(form, emptyForm())
   isModalOpen.value = true
@@ -467,6 +502,7 @@ async function confirmDelete(user: any) {
 // Password reset
 function openResetPasswordModal() {
   resetPasswordVal.value = ''
+  showResetPassword.value = false
   resetError.value = ''
   isResetModalOpen.value = true
 }
