@@ -460,6 +460,7 @@
 definePageMeta({ layout: 'user', middleware: 'auth' })
 
 const config = useRuntimeConfig()
+const { clearSession } = useAuthSession()
 
 // Where to send the user when their token is rejected (adjust to your login page)
 const LOGIN_ROUTE = '/login'
@@ -482,8 +483,7 @@ function getErrorStatus(error: any): number | undefined {
 // Token rejected → stop everything, clear the dead session, go to login
 async function handleAuthExpired() {
   closeCamera()
-  localStorage.removeItem('token')
-  localStorage.removeItem('user')
+  clearSession()
   await navigateTo(LOGIN_ROUTE)
 }
 

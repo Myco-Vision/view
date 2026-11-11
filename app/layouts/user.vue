@@ -157,6 +157,7 @@
 
 <script setup lang="ts">
 const config = useRuntimeConfig()
+const { getToken, getUser, updateStoredUser, clearSession, restoreAndValidateSession } = useAuthSession()
 
 const mobileOpen     = ref(false)
 const userName       = ref('')
@@ -221,8 +222,15 @@ async function refreshUserSubscription() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   refreshUserSubscription()
+  // Hydrate user profile from /me when restored from cookie or verify active session
+  const user = await restoreAndValidateSession()
+  if (!user) {
+    await navigateTo('/login')
+    return
+  }
+  syncUserFromStorage()
   window.addEventListener('subscription-updated', refreshUserSubscription)
   window.addEventListener('user-updated', syncUserFromStorage)
 })
@@ -253,7 +261,7 @@ async function handleLogout() {
   if (!ok) return
   mobileOpen.value = false
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (token) {
       await $fetch(`${config.public.apiBase}/logout`, {
         method: 'POST',
@@ -263,10 +271,7 @@ async function handleLogout() {
   } catch (error) {
     console.error('Logout error:', error)
   } finally {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    localStorage.removeItem('role')
-    localStorage.removeItem('uuid')
+    clearSession()
     await navigateTo('/login')
   }
 }

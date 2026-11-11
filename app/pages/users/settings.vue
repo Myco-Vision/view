@@ -500,6 +500,7 @@
 definePageMeta({ layout: 'user', middleware: 'auth' })
 
 const config = useRuntimeConfig()
+const { updateStoredUser, clearSession } = useAuthSession()
 
 // User Profile State
 const userProfile = reactive({
@@ -618,7 +619,7 @@ function photoUrl(path: string) {
 }
 
 function syncStoredUser(user: any) {
-  localStorage.setItem('user', JSON.stringify(user))
+  updateStoredUser(user)
   applyUser(user)
   window.dispatchEvent(new Event('user-updated')) // refresh the sidebar
 }
@@ -1000,8 +1001,7 @@ async function submitDeleteAccount() {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
       body: { password: deletePassword.value },
     })
-    localStorage.clear()
-    useCookie('token').value = null
+    clearSession()
     showDeleteModal.value = false
     useToast().success('Your account has been deleted.')
     await navigateTo('/login')

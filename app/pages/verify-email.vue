@@ -155,6 +155,7 @@
 <script setup lang="ts">
 const config = useRuntimeConfig()
 const route = useRoute()
+const { setSession } = useAuthSession()
 
 const emailInput = ref((route.query.email as string) || '')
 const verifying = ref(false)
@@ -202,9 +203,7 @@ onMounted(async () => {
       }
     )
     if (data.token && data.user) {
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
-      localStorage.setItem('role', data.user.role)
+      setSession(data.token, data.user)
     }
     if (data.message) successMessage.value = data.message
     verified.value = true

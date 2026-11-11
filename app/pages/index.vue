@@ -1,5 +1,12 @@
 <template>
   <div class="min-h-screen bg-[#07130f] text-slate-100 font-sans selection:bg-emerald-500 selection:text-white relative overflow-x-hidden">
+    <div
+      v-if="restoringSession"
+      class="fixed inset-0 z-50 bg-[#07130f] flex flex-col items-center justify-center gap-3"
+    >
+      <div class="w-9 h-9 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin" />
+      <p class="text-sm text-emerald-300 font-medium">Restoring your session…</p>
+    </div>
 
     <!-- ── GLOBAL BACKGROUND GLOW / MESH ACCENTS ─────────── -->
     <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -930,6 +937,22 @@
 
 <script setup lang="ts">
 const config = useRuntimeConfig()
+const { getToken, setSession, getHomeRoute, restoreAndValidateSession } = useAuthSession()
+const restoringSession = ref(false)
+
+onMounted(async () => {
+  if (!getToken()) return
+  restoringSession.value = true
+  try {
+    const user = await restoreAndValidateSession()
+    if (user) {
+      await navigateTo(getHomeRoute(user), { replace: true })
+      return
+    }
+  } finally {
+    restoringSession.value = false
+  }
+})
 
 // SEO Meta
 useHead({
@@ -1008,16 +1031,13 @@ function handleGoogleLogin() {
 
 async function processGoogleToken(accessToken: string) {
   try {
-    const data = await $fetch<{ user: any; token: string }>(`${config.public.apiBase}/auth/google`, {
+    const data = await $fetch<{ user: any; token: string; needs_completion?: boolean }>(`${config.public.apiBase}/auth/google`, {
       method: 'POST',
       body: { access_token: accessToken },
     })
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    localStorage.setItem('role', data.user.role)
-    const isAdmin = data.user.role === 'admin' || data.user.role === 'super_admin'
+    setSession(data.token, data.user)
     // Full-page redirect: the GSI callback runs outside Vue's lifecycle
-    await navigateTo(isAdmin ? '/admin/dashboard' : '/users/scan', { external: true })
+    await navigateTo(getHomeRoute(data.user, data.needs_completion), { external: true })
   } catch (err: any) {
     loginError.value = err?.data?.message || 'Google sign-in failed. Please try again.'
   } finally {
@@ -1045,19 +1065,12 @@ async function handleLoginSubmit() {
       },
     })
 
-    // Store token and user data in localStorage
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    localStorage.setItem('role', data.user.role)
+    setSession(data.token, data.user)
 
     modalOpen.value = false
 
     // Smart role-based routing
-    if (data.user.role === 'admin' || data.user.role === 'super_admin') {
-      await navigateTo('/admin/dashboard')
-    } else {
-      await navigateTo('/users/scan')
-    }
+    await navigateTo(getHomeRoute(data.user))
   } catch (err: any) {
     if (err?.data?.error === 'EMAIL_NOT_VERIFIED') {
       unverifiedEmail.value = err?.data?.email || loginForm.email.trim()

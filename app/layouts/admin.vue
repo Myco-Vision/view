@@ -309,6 +309,7 @@
 
 <script setup lang="ts">
 const config = useRuntimeConfig()
+const { getToken, getRole, getUser, clearSession, restoreAndValidateSession } = useAuthSession()
 const sidebarCollapsed = ref(false)
 const mobileOpen = ref(false)
 const adminName = ref('')
@@ -376,23 +377,31 @@ function handleDocumentKeydown(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   try {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      const user = JSON.parse(storedUser)
+    const user = getUser()
+    if (user?.name || user?.username) {
       adminName.value = user.name || user.username || 'Admin User'
-      userRole.value = user.role || localStorage.getItem('role') || 'admin'
+      userRole.value = user.role || getRole() || 'admin'
     } else {
-      userRole.value = localStorage.getItem('role') || ''
+      userRole.value = getRole()
     }
   } catch {
-    userRole.value = localStorage.getItem('role') || ''
+    userRole.value = getRole()
   }
 
-  fetchNotifications()
   document.addEventListener('click', handleDocumentClick)
   document.addEventListener('keydown', handleDocumentKeydown)
+
+  const validated = await restoreAndValidateSession()
+  if (!validated) {
+    await navigateTo('/login')
+    return
+  }
+  adminName.value = validated.name || validated.username || 'Admin User'
+  userRole.value = validated.role || getRole()
+
+  fetchNotifications()
 })
 
 onBeforeUnmount(() => {
@@ -452,7 +461,7 @@ async function handleLogout() {
   if (!ok) return
   mobileOpen.value = false
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (token) {
       await $fetch(`${config.public.apiBase}/logout`, {
         method: 'POST',
@@ -464,10 +473,7 @@ async function handleLogout() {
   } catch (error) {
     console.error('Logout error:', error)
   } finally {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    localStorage.removeItem('role')
-    localStorage.removeItem('uuid')
+    clearSession()
     await navigateTo('/login')
   }
 }

@@ -673,21 +673,19 @@ useHead({
   ],
 })
 
-onMounted(() => {
-  const token = localStorage.getItem('token')
-  const role  = localStorage.getItem('role')
-  if (token) {
-    if (role === 'admin' || role === 'super_admin') {
-      navigateTo('/admin/dashboard')
-    } else {
-      navigateTo('/users/scan')
-    }
-  }
+const { setSession, getHomeRoute, restoreAndValidateSession } = useAuthSession()
+
+onMounted(async () => {
   // Init Google client once script is ready
   if ((window as any).google?.accounts) {
     initGoogleClient()
   } else {
     (window as any).__gsiLoaded = () => initGoogleClient()
+  }
+
+  const user = await restoreAndValidateSession()
+  if (user) {
+    await navigateTo(getHomeRoute(user), { replace: true })
   }
 })
 
@@ -959,11 +957,9 @@ async function handleRegister() {
     }
 
     // Persist auth data
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    localStorage.setItem('role', data.user.role)
+    setSession(data.token, data.user)
 
-    await navigateTo('/users/scan')
+    await navigateTo(getHomeRoute(data.user))
   } catch (err: any) {
     let msg = err?.data?.message || 'Registration failed.'
     // If validation errors are returned, show the first one
@@ -989,20 +985,11 @@ async function processGoogleToken(accessToken: string) {
       method: 'POST',
       body: { access_token: accessToken },
     })
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    localStorage.setItem('role', data.user.role)
-
-    // Gate: force profile completion for new / incomplete Google accounts
-    if (data.needs_completion) {
-      await navigateTo('/complete-profile', { external: true })
-      return
-    }
+    setSession(data.token, data.user)
 
     // Full-page redirect (not a client-side route change): the Google popup callback runs outside
     // Vue's lifecycle, so an SPA transition left the old page stuck under the new layout.
-    const isAdmin = data.user.role === 'admin' || data.user.role === 'super_admin'
-    await navigateTo(isAdmin ? '/admin/dashboard' : '/users/scan', { external: true })
+    await navigateTo(getHomeRoute(data.user, data.needs_completion), { external: true })
   } catch (err: any) {
     error.value = err?.data?.message || 'Google sign-up failed. Please try again.'
   } finally {

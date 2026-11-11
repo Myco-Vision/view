@@ -310,13 +310,14 @@
 definePageMeta({ middleware: [] }) // no auth middleware — page IS the gate
 
 const config  = useRuntimeConfig()
+const { getToken, getUser, updateStoredUser, clearSession, getHomeRoute } = useAuthSession()
 const loading = ref(false)
 const error   = ref('')
 
 // ── Google user info from localStorage ──
 const googleUser = computed(() => {
   if (import.meta.server) return { name: '', email: '', photo: '' }
-  const u = JSON.parse(localStorage.getItem('user') || '{}')
+  const u = getUser()
   return {
     name:  u.first_name ? `${u.first_name} ${u.last_name}` : u.name ?? '',
     email: u.email ?? '',
@@ -326,13 +327,12 @@ const googleUser = computed(() => {
 
 // Redirect if not logged in or profile already complete
 onMounted(() => {
-  const token = localStorage.getItem('token')
+  const token = getToken()
   if (!token) { navigateTo('/login'); return }
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const user = getUser()
   if (!user.needs_profile_completion) {
-    const role = localStorage.getItem('role')
-    navigateTo(role === 'admin' || role === 'super_admin' ? '/admin/dashboard' : '/users/scan')
+    navigateTo(getHomeRoute(user))
   }
 })
 
@@ -469,7 +469,7 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     const data = await $fetch<{ user: any; message: string }>(`${config.public.apiBase}/complete-profile`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
@@ -483,8 +483,7 @@ async function handleSubmit() {
     })
 
     // Update stored user — mark as complete
-    localStorage.setItem('user', JSON.stringify(data.user))
-    localStorage.setItem('role', data.user.role)
+    updateStoredUser(data.user)
 
     // Redirect to the app
     await navigateTo('/users/scan', { external: true })
@@ -502,7 +501,7 @@ async function handleSubmit() {
 
 // ── Sign out ──
 function signOut() {
-  localStorage.clear()
+  clearSession()
   navigateTo('/login')
 }
 </script>

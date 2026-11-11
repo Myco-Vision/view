@@ -1,14 +1,14 @@
 export default defineNuxtRouteMiddleware((to) => {
-  // Skip on server (localStorage isn't available)
+  // Skip on server so existing localStorage-only sessions still hydrate cleanly on the client
   if (import.meta.server) return
 
-  const token = localStorage.getItem('token')
-  const role  = localStorage.getItem('role')
-  const user  = JSON.parse(localStorage.getItem('user') || '{}')
+  const { getToken, getRole, getUser } = useAuthSession()
+  const token = getToken()
+  const role  = getRole()
+  const user  = getUser()
 
   // No token → redirect to login
   if (!token) {
-    // Allow /complete-profile to redirect to login instead of infinite loop
     return navigateTo('/login')
   }
 

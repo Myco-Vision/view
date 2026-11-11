@@ -304,6 +304,8 @@ useHead({
   ],
 })
 
+const { setSession, getHomeRoute, restoreAndValidateSession } = useAuthSession()
+
 onMounted(() => {
   // If GSI already loaded (e.g. cached), init immediately
   if ((window as any).google?.accounts) {
@@ -314,16 +316,11 @@ onMounted(() => {
   }
 })
 
-// Redirect if already logged in
-onMounted(() => {
-  const token = localStorage.getItem('token')
-  const role  = localStorage.getItem('role')
-  if (token) {
-    if (role === 'admin' || role === 'super_admin') {
-      navigateTo('/admin/dashboard')
-    } else {
-      navigateTo('/users/scan')
-    }
+// Redirect if already logged in (validates token to avoid loops on expired/revoked sessions)
+onMounted(async () => {
+  const user = await restoreAndValidateSession()
+  if (user) {
+    await navigateTo(getHomeRoute(user), { replace: true })
   }
 })
 
@@ -360,16 +357,10 @@ async function handleLogin() {
     })
 
     // Persist auth data
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    localStorage.setItem('role', data.user.role)
+    setSession(data.token, data.user)
 
     // Redirect based on role
-    if (data.user.role === 'admin' || data.user.role === 'super_admin') {
-      await navigateTo('/admin/dashboard')
-    } else {
-      await navigateTo('/users/scan')
-    }
+    await navigateTo(getHomeRoute(data.user))
   } catch (err: any) {
     if (err?.data?.error === 'EMAIL_NOT_VERIFIED') {
       unverifiedEmail.value = err?.data?.email || form.email.trim()
@@ -391,20 +382,11 @@ async function processGoogleToken(accessToken: string) {
       method: 'POST',
       body: { access_token: accessToken },
     })
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    localStorage.setItem('role', data.user.role)
-
-    // Gate: force profile completion for new / incomplete Google accounts
-    if (data.needs_completion) {
-      await navigateTo('/complete-profile', { external: true })
-      return
-    }
+    setSession(data.token, data.user)
 
     // Full-page redirect (not a client-side route change): the Google popup callback runs outside
     // Vue's lifecycle, so an SPA transition left the old page stuck under the new layout.
-    const isAdmin = data.user.role === 'admin' || data.user.role === 'super_admin'
-    await navigateTo(isAdmin ? '/admin/dashboard' : '/users/scan', { external: true })
+    await navigateTo(getHomeRoute(data.user, data.needs_completion), { external: true })
   } catch (err: any) {
     error.value = err?.data?.message || 'Google sign-in failed. Please try again.'
   } finally {
