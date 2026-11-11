@@ -119,18 +119,18 @@
             </div>
 
             <!-- Trust Metrics Bar -->
-            <div class="mt-12 pt-8 border-t border-emerald-900/30 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 sm:gap-10 w-full max-w-xl">
+            <div class="mt-12 pt-8 border-t border-emerald-900/30 grid grid-cols-3 gap-3 sm:gap-10 w-full max-w-xl">
               <div>
-                <p class="text-2xl sm:text-3xl font-black text-white">500+</p>
-                <p class="text-xs text-slate-400 mt-0.5 font-medium">Species Indexed</p>
+                <p class="text-xl sm:text-3xl font-black text-white">500+</p>
+                <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5 font-medium">Species Indexed</p>
               </div>
               <div>
-                <p class="text-2xl sm:text-3xl font-black text-emerald-400">3 Scans</p>
-                <p class="text-xs text-slate-400 mt-0.5 font-medium">Free Lifetime Tier</p>
+                <p class="text-xl sm:text-3xl font-black text-emerald-400">3 Scans</p>
+                <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5 font-medium">Free Lifetime Tier</p>
               </div>
               <div>
-                <p class="text-2xl sm:text-3xl font-black text-white">99.8%</p>
-                <p class="text-xs text-slate-400 mt-0.5 font-medium">Safety Verification</p>
+                <p class="text-xl sm:text-3xl font-black text-white">99.8%</p>
+                <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5 font-medium">Safety Verification</p>
               </div>
             </div>
 
