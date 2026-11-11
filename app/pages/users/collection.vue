@@ -213,6 +213,18 @@
                 <span class="text-[13px] font-semibold text-[#0f172a] truncate">{{ selectedItem.location }}</span>
               </div>
             </div>
+
+            <!-- Brief Information (Wikipedia Description, Habitat & Reference Link) -->
+            <div class="flex flex-col gap-1.5 bg-[#f8fafc] p-3.5 rounded-xl border border-[#f1f5f9]">
+              <span class="text-[12px] font-semibold text-[#475569] uppercase tracking-wider">Brief Information</span>
+              <p class="text-[12.5px] text-[#0f172a] leading-[1.65] text-justify">
+                <em class="italic underline font-semibold">{{ selectedItem.name }}</em>{{ selectedItem.descriptionRest }}
+              </p>
+              <p v-if="selectedItem.habitat" class="text-[12px] text-[#334155] leading-[1.5]">
+                <strong class="text-[#0f172a]">Habitat:</strong> {{ selectedItem.habitat }}
+              </p>
+              <a :href="selectedItem.reference" target="_blank" rel="noopener noreferrer" class="text-[11px] text-[#059669] break-all no-underline leading-normal hover:underline">{{ selectedItem.reference }}</a>
+            </div>
           </div>
 
           <!-- Footer -->
@@ -263,6 +275,9 @@ interface Mushroom {
   location: string;
   date: string;
   image: string;
+  descriptionRest: string;
+  habitat: string;
+  reference: string;
 }
 
 const collection = ref<Mushroom[]>([])
@@ -332,15 +347,18 @@ async function fetchCollection() {
     collection.value = data
       .filter(scan => isFavorite(scan.id))
       .map(scan => {
-        const rawClass = scan.result_classification || 'unknown';
+        const brief = resolveSpeciesBrief(scan)
         return {
           id: scan.id,
-          name: scan.result_name || 'Unknown Species',
-          classification: rawClass.charAt(0).toUpperCase() + rawClass.slice(1),
-          confidence: scan.confidence_level || 0,
+          name: brief.name,
+          classification: brief.classification,
+          confidence: brief.confidence,
           location: scan.location_name || (scan.latitude && scan.longitude ? `${scan.latitude}, ${scan.longitude}` : 'Unknown Location'),
           date: new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          image: scan.image_url || (scan.image_path ? `${config.public.apiBase.replace(/\/api$/, '')}/storage/${scan.image_path}` : 'https://placehold.co/400x400/e8f0e8/a3a3a3?text=No+Image')
+          image: scan.image_url || (scan.image_path ? `${config.public.apiBase.replace(/\/api$/, '')}/storage/${scan.image_path}` : 'https://placehold.co/400x400/e8f0e8/a3a3a3?text=No+Image'),
+          descriptionRest: brief.descriptionRest,
+          habitat: brief.habitat,
+          reference: brief.reference,
         }
       })
   } catch (error) {

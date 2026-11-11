@@ -157,7 +157,10 @@
         <div class="flex flex-col gap-1.5">
           <p class="text-[13px] font-medium text-[#0f172a]">Brief information:</p>
           <p class="text-[12.5px] text-[#0f172a] leading-[1.65] text-justify">
-            <em class="italic underline">{{ result.name }}</em>{{ result.descriptionRest }}
+            <em class="italic underline font-semibold">{{ result.name }}</em>{{ result.descriptionRest }}
+          </p>
+          <p v-if="result.habitat" class="text-[12px] text-[#334155] leading-[1.5]">
+            <strong class="text-[#0f172a]">Habitat:</strong> {{ result.habitat }}
           </p>
           <a :href="result.reference" target="_blank" rel="noopener noreferrer" class="text-[11px] text-[#64748b] break-all no-underline leading-normal hover:underline">{{ result.reference }}</a>
         </div>
@@ -965,6 +968,10 @@ async function captureAndAnalyze() {
   }
 }
 
+function buildScanResult(data: any) {
+  return resolveSpeciesBrief(data)
+}
+
 async function saveFinalScan(file: File) {
   const formData = new FormData()
   formData.append('image', file)
@@ -992,16 +999,9 @@ async function saveFinalScan(file: File) {
   // The saved scan counts against the quota, so refresh it
   notifySubscriptionUpdated()
 
-  const rawClass = data.result_classification || 'unknown'
   selectedFile.value = null
   loadPreview(file)
-  result.value = {
-    name: data.result_name || 'Unknown',
-    classification: rawClass.charAt(0).toUpperCase() + rawClass.slice(1),
-    confidence: data.confidence_level || 0,
-    descriptionRest: ' is the identified species based on your scan. More details will be populated here when the species database is fully linked.',
-    reference: 'https://en.wikipedia.org/wiki/' + encodeURIComponent(data.result_name || 'Mushroom'),
-  }
+  result.value = buildScanResult(data)
 }
 
 // ── Upload handlers ───────────────────────────────────
@@ -1085,14 +1085,7 @@ async function analyzeImage() {
     notifySubscriptionUpdated()
 
     // Map result from backend to UI state
-    const rawClass = data.result_classification || 'unknown'
-    result.value = {
-      name: data.result_name || 'Unknown',
-      classification: rawClass.charAt(0).toUpperCase() + rawClass.slice(1),
-      confidence: data.confidence_level || 0,
-      descriptionRest: ' is the identified species based on your scan. More details will be populated here when the species database is fully linked.',
-      reference: 'https://en.wikipedia.org/wiki/' + encodeURIComponent(data.result_name || 'Mushroom')
-    }
+    result.value = buildScanResult(data)
 
     // Show consent modal once after the first successful scan
     setTimeout(maybeShowConsentModal, 800)
