@@ -170,7 +170,11 @@
 
             <!-- Forgot password link -->
             <div class="flex justify-end -mt-1 mb-3">
-              <NuxtLink to="/forgot-password" class="text-[11px] text-emerald-400 hover:underline font-semibold">Forgot password?</NuxtLink>
+              <NuxtLink
+                to="/forgot-password"
+                class="text-[12.5px] hover:underline font-semibold transition-colors"
+                :class="activeRole === 'user' ? 'text-emerald-400 hover:text-emerald-300' : 'text-amber-400 hover:text-amber-300'"
+              >Forgot password?</NuxtLink>
             </div>
 
             <!-- Submit Button -->
@@ -227,7 +231,8 @@
               <NuxtLink to="/register" class="text-emerald-400 hover:underline font-semibold ml-1">Create free account</NuxtLink>
             </span>
             <span v-else class="text-amber-300/80 font-medium">
-              Need admin access? Contact Super Admin
+              Forgot your password?
+              <NuxtLink to="/forgot-password" class="text-amber-400 hover:underline font-semibold ml-1">Reset it here</NuxtLink>
             </span>
             <span class="text-[10px] text-slate-600">v2.4 Core</span>
           </div>

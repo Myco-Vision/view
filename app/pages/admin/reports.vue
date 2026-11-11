@@ -31,27 +31,29 @@
     </div>
 
     <!-- Charts Row 1 -->
-    <div class="flex gap-3.5 flex-wrap items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-3.5">
       <!-- Line Chart: Scan Volume -->
-      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] flex-[2] min-w-0">
-        <div class="flex items-center justify-between mb-4">
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px]">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
           <p class="text-[14px] font-semibold text-[#0f172a]">Scan Volume Over Time</p>
           <div class="flex gap-3.5">
             <span class="flex items-center gap-1.5 text-[12px] text-[#64748b]"><span class="w-2 h-2 rounded-full bg-[#10b981]"></span>Scans</span>
           </div>
         </div>
-        <svg viewBox="0 0 600 160" class="w-full h-[160px]" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/>
-              <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <line v-for="y in gridYs" :key="y" x1="0" :y1="y" x2="600" :y2="y" stroke="#f1f5f9" stroke-width="1"/>
-          <path :d="lineAreaPath" fill="url(#lineGrad)"/>
-          <polyline :points="linePoints" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle v-for="(p,i) in lineDots" :key="i" :cx="p.x" :cy="p.y" r="4" fill="#10b981" stroke="#fff" stroke-width="2"/>
-        </svg>
+        <div class="w-full overflow-hidden">
+          <svg viewBox="0 0 600 160" class="w-full h-[140px] sm:h-[160px]" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <line v-for="y in gridYs" :key="y" x1="0" :y1="y" x2="600" :y2="y" stroke="#f1f5f9" stroke-width="1"/>
+            <path :d="lineAreaPath" fill="url(#lineGrad)"/>
+            <polyline :points="linePoints" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle v-for="(p,i) in lineDots" :key="i" :cx="p.x" :cy="p.y" r="4" fill="#10b981" stroke="#fff" stroke-width="2"/>
+          </svg>
+        </div>
         <div class="flex justify-between px-0.5 pt-1.5">
           <template v-for="(d, i) in lineLabels" :key="i">
             <span v-if="i % labelStep === 0" class="text-[11px] text-[#94a3b8] whitespace-nowrap">{{ d }}</span>
@@ -60,7 +62,7 @@
       </div>
 
       <!-- Bar Chart: Top Species -->
-      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] flex-1 min-w-[200px] min-w-0">
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px]">
         <div class="flex items-center justify-between mb-4"><p class="text-[14px] font-semibold text-[#0f172a]">Top 5 Identified Species</p></div>
         <div v-if="topSpecies.length === 0" class="text-center py-4 text-[#94a3b8] text-[13px]">No data available</div>
         <div v-else class="flex flex-col gap-3">
@@ -76,12 +78,12 @@
     </div>
 
     <!-- Charts Row 2 -->
-    <div class="flex gap-3.5 flex-wrap items-start">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
       <!-- Donut: Classification -->
-      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] flex-1 min-w-0">
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px]">
         <div class="flex items-center justify-between mb-4"><p class="text-[14px] font-semibold text-[#0f172a]">Classification Breakdown</p></div>
         <div class="flex flex-col items-center gap-4">
-          <svg viewBox="0 0 140 140" class="w-[140px] h-[140px]">
+          <svg viewBox="0 0 140 140" class="w-[120px] h-[120px] sm:w-[140px] sm:h-[140px]">
             <circle cx="70" cy="70" r="52" fill="none" stroke="#f1f5f9" stroke-width="22"/>
             <circle cx="70" cy="70" r="52" fill="none" stroke="#10b981" stroke-width="22"
                     :stroke-dasharray="`${d_edible} ${d_total}`" stroke-dashoffset="0"
@@ -104,32 +106,32 @@
       </div>
 
       <!-- Confidence Distribution -->
-      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] flex-1 min-w-0">
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px]">
         <div class="flex items-center justify-between mb-4"><p class="text-[14px] font-semibold text-[#0f172a]">Confidence Distribution</p></div>
-        <div class="flex items-end gap-3 h-[140px] pb-1">
-          <div v-for="bucket in confBuckets" :key="bucket.label" class="flex flex-col items-center gap-1 flex-1">
+        <div class="flex items-end gap-2 h-[140px] pb-1">
+          <div v-for="bucket in confBuckets" :key="bucket.label" class="flex flex-col items-center gap-1 flex-1 min-w-0">
             <div class="h-[100px] flex items-end w-full justify-center">
-              <div class="w-7 rounded-t-md min-h-[4px] transition-all duration-400" :style="{ height: (bucket.pct) + '%', background: bucket.color }"></div>
+              <div class="w-full max-w-[28px] rounded-t-md min-h-[4px] transition-all duration-400" :style="{ height: (bucket.pct) + '%', background: bucket.color }"></div>
             </div>
-            <span class="text-[12px] font-bold text-[#0f172a]">{{ bucket.pct }}%</span>
-            <span class="text-[10.5px] text-[#94a3b8] text-center whitespace-nowrap">{{ bucket.label }}</span>
+            <span class="text-[11px] font-bold text-[#0f172a]">{{ bucket.pct }}%</span>
+            <span class="text-[9.5px] sm:text-[10.5px] text-[#94a3b8] text-center whitespace-nowrap overflow-hidden text-ellipsis w-full text-center">{{ bucket.label }}</span>
           </div>
         </div>
       </div>
 
       <!-- Most Active Users -->
-      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] flex-1 min-w-0">
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] py-5 px-[22px] sm:col-span-2 lg:col-span-1">
         <div class="flex items-center justify-between mb-4"><p class="text-[14px] font-semibold text-[#0f172a]">Most Active Users</p></div>
         <div v-if="topUsers.length === 0" class="text-center py-4 text-[#94a3b8] text-[13px]">No active users</div>
         <div v-else class="flex flex-col gap-2.5">
           <div v-for="(u, i) in topUsers" :key="u.name" class="flex items-center gap-2.5">
-            <span class="text-[12px] font-bold w-[22px]" :class="Number(i) < 3 ? 'text-[#f59e0b]' : 'text-[#94a3b8]'">#{{ Number(i) + 1 }}</span>
+            <span class="text-[12px] font-bold w-[22px] shrink-0" :class="Number(i) < 3 ? 'text-[#f59e0b]' : 'text-[#94a3b8]'">#{{ Number(i) + 1 }}</span>
             <div class="w-7 h-7 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0" :style="{ background: userColors[Number(i)] || '#10b981' }">{{ u.initials }}</div>
-            <div class="min-w-[80px]">
-              <p class="text-[12.5px] font-semibold text-[#0f172a]">{{ u.name }}</p>
+            <div class="min-w-0 flex-1">
+              <p class="text-[12.5px] font-semibold text-[#0f172a] truncate">{{ u.name }}</p>
               <p class="text-[11px] text-[#94a3b8]">{{ u.scans }} scans</p>
             </div>
-            <div class="flex-1 h-1.5 bg-[#f1f5f9] rounded-[10px] overflow-hidden">
+            <div class="w-16 sm:w-20 h-1.5 bg-[#f1f5f9] rounded-[10px] overflow-hidden shrink-0">
               <div class="h-full rounded-[10px] transition-all duration-400" :style="{ width: (u.scans / topUsers[0].scans * 100) + '%', background: '#10b981' }"></div>
             </div>
           </div>

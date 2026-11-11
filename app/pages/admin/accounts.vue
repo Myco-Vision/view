@@ -3,9 +3,7 @@
     <!-- Header Section -->
     <div class="flex items-end justify-between gap-3 flex-wrap">
       <div>
-        <h1 class="text-[22px] font-bold text-[#0f172a] flex items-center gap-2">
-          <span class="text-amber-500">👑</span> Account Management
-        </h1>
+        <h1 class="text-[22px] font-bold text-[#0f172a]">Account Management</h1>
         <p class="text-[13.5px] text-[#64748b] mt-[3px]">Manage all system users and administrators.</p>
       </div>
       <div class="flex items-center gap-2.5 flex-wrap">

@@ -257,6 +257,15 @@
                   </div>
                 </div>
 
+                <!-- Forgot password link -->
+                <div class="flex justify-end -mt-1">
+                  <NuxtLink
+                    to="/forgot-password"
+                    class="text-[12.5px] hover:underline font-semibold transition-colors"
+                    :class="activeRole === 'user' ? 'text-emerald-400 hover:text-emerald-300' : 'text-amber-400 hover:text-amber-300'"
+                  >Forgot password?</NuxtLink>
+                </div>
+
                 <!-- Submit Button -->
                 <button
                   id="login-submit-button"
@@ -840,6 +849,15 @@
                 class="w-full py-2.5 px-3 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm focus:outline-none focus:border-emerald-400"
                 :disabled="isSubmitting"
               />
+            </div>
+
+            <!-- Forgot password link -->
+            <div class="flex justify-end -mt-1">
+              <NuxtLink
+                to="/forgot-password"
+                class="text-[12.5px] hover:underline font-semibold transition-colors"
+                :class="activeRole === 'user' ? 'text-emerald-400 hover:text-emerald-300' : 'text-amber-400 hover:text-amber-300'"
+              >Forgot password?</NuxtLink>
             </div>
 
             <button
