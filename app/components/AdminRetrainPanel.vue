@@ -123,6 +123,55 @@
         </div>
       </div>
 
+      <!-- Queue Switcher: Ready vs Already Trained -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="inline-flex rounded-xl border border-[#e2e8f0] bg-white p-1 gap-1">
+          <button
+            type="button"
+            class="px-3.5 py-1.5 rounded-lg text-[12.5px] font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+            :class="queueView === 'ready' ? 'bg-[#0f172a] text-white' : 'text-[#64748b] hover:text-[#0f172a]'"
+            @click="queueView = 'ready'"
+          >
+            <span>Ready for Training</span>
+            <span
+              class="text-[11px] px-1.5 py-0.5 rounded-full font-bold"
+              :class="queueView === 'ready' ? 'bg-white/20 text-white' : 'bg-[#f1f5f9] text-[#475569]'"
+            >{{ summary.total }}</span>
+          </button>
+          <button
+            type="button"
+            class="px-3.5 py-1.5 rounded-lg text-[12.5px] font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+            :class="queueView === 'trained' ? 'bg-[#0f172a] text-white' : 'text-[#64748b] hover:text-[#0f172a]'"
+            @click="queueView = 'trained'"
+          >
+            <span>Already Trained</span>
+            <span
+              class="text-[11px] px-1.5 py-0.5 rounded-full font-bold"
+              :class="queueView === 'trained' ? 'bg-white/20 text-white' : 'bg-[#f1f5f9] text-[#475569]'"
+            >{{ retrainedSummary.total }}</span>
+          </button>
+        </div>
+
+        <div v-if="queueView === 'trained' && retrainedSummary.total > 0" class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            :disabled="restoring || totalSelectedInView === 0"
+            class="py-1.5 px-3.5 rounded-lg bg-[#059669] text-white text-[12.5px] font-semibold hover:bg-[#047857] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            @click="restoreScans(false)"
+          >
+            {{ restoring ? 'Restoring…' : `Restore Selected (${totalSelectedInView})` }}
+          </button>
+          <button
+            type="button"
+            :disabled="restoring"
+            class="py-1.5 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[#475569] text-[12.5px] font-semibold hover:bg-[#f8fafc] disabled:opacity-50 cursor-pointer"
+            @click="restoreScans(true)"
+          >
+            Restore All to Queue
+          </button>
+        </div>
+      </div>
+
       <!-- Dual Panels: Edible | Poisonous -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div
@@ -135,7 +184,7 @@
               <AppIcon :name="panel.icon" class="w-[18px] h-[18px]" :class="panel.iconClass" />
               <h3 class="text-[14px] font-bold" :class="panel.titleClass">{{ panel.title }}</h3>
               <span class="shrink-0 whitespace-nowrap text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="panel.badgeClass">
-                {{ selectedIds(panel.cls).length }} / {{ candidates[panel.cls].length }} selected
+                {{ selectedIds(panel.cls).length }} / {{ visibleList(panel.cls).length }} selected
               </span>
             </div>
             <div class="flex gap-2">
@@ -145,24 +194,38 @@
             </div>
           </div>
 
-          <div v-if="candidates[panel.cls].length === 0" class="flex flex-col items-center justify-center py-14 gap-2 text-center px-4">
+          <div v-if="visibleList(panel.cls).length === 0" class="flex flex-col items-center justify-center py-14 gap-2 text-center px-4">
             <AppIcon :name="panel.emptyIcon" class="w-10 h-10" :class="panel.emptyIconClass" />
-            <p class="text-[13.5px] font-semibold text-[#0f172a]">{{ panel.emptyTitle }}</p>
-            <p class="text-[12px] text-[#64748b]">Foragers need to consent to data sharing for their scans to appear here.</p>
+            <p class="text-[13.5px] font-semibold text-[#0f172a]">
+              {{ queueView === 'trained' ? `No trained ${panel.cls} scans yet` : panel.emptyTitle }}
+            </p>
+            <p class="text-[12px] text-[#64748b]">
+              {{ queueView === 'trained'
+                ? 'Images successfully used in completed retrain runs will appear here.'
+                : (retrainedSummary[panel.cls === 'edible' ? 'edible_count' : 'poisonous_count'] > 0
+                    ? 'Previously trained images can be viewed or restored in the Already Trained tab.'
+                    : 'Foragers need to consent to data sharing for their scans to appear here.') }}
+            </p>
           </div>
 
           <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 max-h-[420px] overflow-y-auto">
             <div
-              v-for="scan in candidates[panel.cls]"
+              v-for="scan in visibleList(panel.cls)"
               :key="scan.id"
               class="relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all duration-200 hover:shadow-md group"
               :class="isSelected(panel.cls, scan.id) ? panel.selectedBorder : 'border-[#e2e8f0]'"
               @click="toggleSelect(panel.cls, scan.id)"
             >
+              <div v-if="brokenImages[scan.id]" class="w-full h-[100px] bg-[#f1f5f9] flex flex-col items-center justify-center text-[#94a3b8] gap-1">
+                <AppIcon name="mushroom" class="w-6 h-6" />
+                <span class="text-[10px]">Unavailable</span>
+              </div>
               <img
-                :src="scan.image_url"
+                v-else
+                :src="getImageUrl(scan.image_url || scan.image_path)"
                 :alt="scan.result_name"
-                class="w-full h-[100px] object-cover"
+                class="w-full h-[100px] object-cover bg-[#f8fafc]"
+                @error="brokenImages[scan.id] = true"
               />
               <div
                 class="absolute inset-0 flex items-center justify-center transition-opacity duration-200"
@@ -177,7 +240,9 @@
               </div>
               <div class="p-2">
                 <p class="text-[11.5px] font-semibold text-[#0f172a] truncate italic">{{ scan.result_name }}</p>
-                <p class="text-[11px] text-[#94a3b8]">{{ scan.confidence }}% · {{ scan.scanned_at }}</p>
+                <p class="text-[11px] text-[#94a3b8]">
+                  {{ scan.confidence }}% · {{ queueView === 'trained' && scan.retrained_at ? `Trained ${scan.retrained_at}` : scan.scanned_at }}
+                </p>
               </div>
             </div>
           </div>
@@ -212,7 +277,7 @@
             <tbody>
               <tr
                 v-for="(run, i) in history"
-                :key="i"
+                :key="run.id ?? i"
                 class="border-t border-[#f1f5f9] hover:bg-[#f8fafc]"
               >
                 <td class="px-5 py-3 text-[#334155]">{{ formatDate(run.started_at) }}</td>
@@ -225,9 +290,12 @@
                       'bg-[#fef9c3] text-[#713f12]': run.status === 'running',
                     }"
                   >{{ run.status }}</span>
+                  <p v-if="run.status === 'failed' && run.error" class="text-[11px] text-[#dc2626] mt-1 max-w-[260px] truncate" :title="run.error">
+                    {{ run.error }}
+                  </p>
                 </td>
-                <td class="px-4 py-3 text-[#334155]">{{ run.total_edible ?? '—' }}</td>
-                <td class="px-4 py-3 text-[#334155]">{{ run.total_poisonous ?? '—' }}</td>
+                <td class="px-4 py-3 text-[#334155]">{{ run.total_edible ?? run.new_edible ?? '—' }}</td>
+                <td class="px-4 py-3 text-[#334155]">{{ run.total_poisonous ?? run.new_poisonous ?? '—' }}</td>
                 <td class="px-4 py-3 font-semibold text-[#0f172a]">{{ run.train_accuracy != null ? run.train_accuracy + '%' : '—' }}</td>
                 <td class="px-4 py-3 font-semibold text-[#0f172a]">{{ run.val_accuracy != null ? run.val_accuracy + '%' : '—' }}</td>
               </tr>
@@ -249,11 +317,13 @@
 interface ScanCandidate {
   id: number
   image_url: string
+  image_path?: string
   result_name: string
   confidence: number
   classification: 'edible' | 'poisonous'
   user: string
   scanned_at: string
+  retrained_at?: string | null
 }
 
 const emit = defineEmits<{
@@ -316,15 +386,31 @@ const classPanels: Array<{
 ]
 
 const loading = ref(true)
+const restoring = ref(false)
+const queueView = ref<'ready' | 'trained'>('ready')
+const brokenImages = ref<Record<number, boolean>>({})
+
 const candidates = ref<{ edible: ScanCandidate[]; poisonous: ScanCandidate[] }>({
   edible: [],
   poisonous: [],
 })
+const retrainedCandidates = ref<{ edible: ScanCandidate[]; poisonous: ScanCandidate[] }>({
+  edible: [],
+  poisonous: [],
+})
 const summary = ref({ total: 0, edible_count: 0, poisonous_count: 0 })
+const retrainedSummary = ref({ total: 0, edible_count: 0, poisonous_count: 0 })
 
 const edibleSelected = ref<number[]>([])
 const poisonousSelected = ref<number[]>([])
+const trainedSelected = ref<{ edible: number[]; poisonous: number[] }>({ edible: [], poisonous: [] })
+
 const totalSelected = computed(() => edibleSelected.value.length + poisonousSelected.value.length)
+const totalSelectedInView = computed(() =>
+  queueView.value === 'trained'
+    ? trainedSelected.value.edible.length + trainedSelected.value.poisonous.length
+    : totalSelected.value
+)
 
 const retrainState = ref<'idle' | 'running' | 'done' | 'failed' | 'unknown'>('idle')
 const lastResult = ref<any>(null)
@@ -339,6 +425,7 @@ const statusMessage = computed(() => {
   if (retrainState.value === 'running') return 'Retraining in progress — this may take several minutes…'
   if (retrainState.value === 'done') return 'Retraining completed successfully.'
   if (retrainState.value === 'failed') return 'Retraining failed. See error below.'
+  if (retrainState.value === 'unknown') return 'ML service status unavailable.'
   return ''
 })
 
@@ -346,8 +433,23 @@ function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem('token')}` }
 }
 
-function selectedIds(cls: 'edible' | 'poisonous') {
+function getImageUrl(path?: string): string {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  return `${api.replace(/\/api\/?$/, '')}/storage/${path.replace(/^\/+/, '')}`
+}
+
+function visibleList(cls: 'edible' | 'poisonous'): ScanCandidate[] {
+  return queueView.value === 'trained' ? retrainedCandidates.value[cls] : candidates.value[cls]
+}
+
+function selectionBucket(cls: 'edible' | 'poisonous'): number[] {
+  if (queueView.value === 'trained') return trainedSelected.value[cls]
   return cls === 'edible' ? edibleSelected.value : poisonousSelected.value
+}
+
+function selectedIds(cls: 'edible' | 'poisonous') {
+  return selectionBucket(cls)
 }
 
 function isSelected(cls: 'edible' | 'poisonous', id: number) {
@@ -355,30 +457,49 @@ function isSelected(cls: 'edible' | 'poisonous', id: number) {
 }
 
 function toggleSelect(cls: 'edible' | 'poisonous', id: number) {
-  const arr = cls === 'edible' ? edibleSelected : poisonousSelected
-  const idx = arr.value.indexOf(id)
-  if (idx > -1) arr.value.splice(idx, 1)
-  else arr.value.push(id)
+  const arr = selectionBucket(cls)
+  const idx = arr.indexOf(id)
+  if (idx > -1) arr.splice(idx, 1)
+  else arr.push(id)
 }
 
 function selectAll(cls: 'edible' | 'poisonous') {
-  if (cls === 'edible') edibleSelected.value = candidates.value.edible.map(s => s.id)
-  else poisonousSelected.value = candidates.value.poisonous.map(s => s.id)
+  const ids = visibleList(cls).map(s => s.id)
+  if (queueView.value === 'trained') {
+    trainedSelected.value[cls] = ids
+  } else if (cls === 'edible') {
+    edibleSelected.value = ids
+  } else {
+    poisonousSelected.value = ids
+  }
 }
 
 function deselectAll(cls: 'edible' | 'poisonous') {
-  if (cls === 'edible') edibleSelected.value = []
-  else poisonousSelected.value = []
+  if (queueView.value === 'trained') {
+    trainedSelected.value[cls] = []
+  } else if (cls === 'edible') {
+    edibleSelected.value = []
+  } else {
+    poisonousSelected.value = []
+  }
 }
 
 async function fetchCandidates() {
   loading.value = true
   try {
     const data = await $fetch<any>(`${api}/admin/retrain/candidates`, { headers: authHeaders() })
-    candidates.value = { edible: data.edible, poisonous: data.poisonous }
-    summary.value = data.summary
-    edibleSelected.value = data.edible.map((s: ScanCandidate) => s.id)
-    poisonousSelected.value = data.poisonous.map((s: ScanCandidate) => s.id)
+    candidates.value = { edible: data.edible || [], poisonous: data.poisonous || [] }
+    retrainedCandidates.value = {
+      edible: data.retrained_edible || [],
+      poisonous: data.retrained_poisonous || [],
+    }
+    summary.value = data.summary || { total: 0, edible_count: 0, poisonous_count: 0 }
+    retrainedSummary.value = data.retrained_summary || { total: 0, edible_count: 0, poisonous_count: 0 }
+
+    edibleSelected.value = candidates.value.edible.map((s: ScanCandidate) => s.id)
+    poisonousSelected.value = candidates.value.poisonous.map((s: ScanCandidate) => s.id)
+    trainedSelected.value = { edible: [], poisonous: [] }
+    brokenImages.value = {}
   } catch (err) {
     console.error('Failed to fetch retrain candidates:', err)
   } finally {
@@ -386,10 +507,31 @@ async function fetchCandidates() {
   }
 }
 
+async function restoreScans(all: boolean) {
+  const ids = [...trainedSelected.value.edible, ...trainedSelected.value.poisonous]
+  if (!all && ids.length === 0) return
+
+  restoring.value = true
+  try {
+    await $fetch(`${api}/admin/retrain/restore`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: all ? { all: true } : { scan_ids: ids },
+    })
+    await fetchCandidates()
+    queueView.value = 'ready'
+  } catch (err: any) {
+    statusError.value = err?.data?.message || 'Failed to restore scan images.'
+  } finally {
+    restoring.value = false
+  }
+}
+
 async function fetchStatus() {
+  const previousState = retrainState.value
   try {
     const data = await $fetch<any>(`${api}/admin/retrain/status`, { headers: authHeaders() })
-    const current = data.current
+    const current = data.current || { state: 'idle' }
     retrainState.value = current.state
     statusError.value = current.error ?? null
     if (current.last_result) lastResult.value = current.last_result
@@ -398,8 +540,11 @@ async function fetchStatus() {
     if (current.state === 'done' || current.state === 'failed') {
       stopPolling()
     }
+    if (data.scans_updated || (previousState === 'running' && current.state === 'done')) {
+      await fetchCandidates()
+    }
   } catch {
-    // silently ignore status check errors
+    // silently ignore transient polling errors
   }
 }
 
@@ -429,10 +574,12 @@ async function startRetrain() {
         poisonous_ids: poisonousSelected.value,
       },
     })
+    await fetchStatus()
     startPolling()
   } catch (err: any) {
     retrainState.value = 'failed'
     statusError.value = err?.data?.message || String(err)
+    await fetchStatus()
   }
 }
 
