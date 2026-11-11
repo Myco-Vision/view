@@ -236,7 +236,10 @@
 
             <div class="flex flex-col gap-1.5 col-span-2 md:col-span-1">
               <label class="text-[13px] font-semibold text-[#334155]">Contact Number</label>
-              <input v-model="form.contact_number" class="py-[9px] px-3.5 border border-[#e2e8f0] rounded-[10px] text-[14px] font-sans text-[#0f172a] outline-none transition-colors focus:border-amber-500 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.1)]" placeholder="+1 (555) 000-0000"/>
+              <input v-model="form.contact_number" inputmode="tel" maxlength="20" class="py-[9px] px-3.5 border rounded-[10px] text-[14px] font-sans text-[#0f172a] outline-none transition-colors focus:border-amber-500 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.1)]" :class="form.contact_number && !phoneValid ? 'border-red-300' : 'border-[#e2e8f0]'" placeholder="0917 123 4567 or +63 917 123 4567"/>
+              <p v-if="form.contact_number" class="text-[11px] font-medium" :class="phoneValid ? 'text-emerald-600' : 'text-red-500'">
+                {{ phoneValid ? 'Valid mobile number' : 'Use PH format: 0917 123 4567 or +63 917 123 4567' }}
+              </p>
             </div>
             <div class="flex flex-col gap-1.5 col-span-2">
               <label class="text-[13px] font-semibold text-[#334155]">Address</label>
@@ -333,6 +336,11 @@ const formError = ref('')
 const form = reactive<any>({
   id: null, name: '', first_name: '', last_name: '', username: '', email: '', role: 'forager', password: '', contact_number: '', address: ''
 })
+
+// Philippine mobile format: 09XX XXX XXXX or +63 9XX XXX XXXX
+const phoneValid = computed(() =>
+  /^(\+63|0)9\d{9}$/.test(String(form.contact_number || '').replace(/[\s\-()]/g, ''))
+)
 
 // Password Reset State
 const isResetModalOpen = ref(false)
@@ -464,6 +472,10 @@ async function saveAccount() {
   }
   if (!isEditing.value && (!form.password || form.password.length < 8)) {
     formError.value = 'Password must be at least 8 characters for new accounts.'
+    return
+  }
+  if (form.contact_number && !phoneValid.value) {
+    formError.value = 'Please enter a valid Philippine mobile number (e.g. 0917 123 4567 or +63 917 123 4567).'
     return
   }
 
