@@ -19,7 +19,7 @@
         @click="startRetrain"
       >
         <span v-if="retrainState === 'running'" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
-        <span v-else>🧠</span>
+        <AppIcon v-else name="brain" class="w-4 h-4" />
         {{ retrainState === 'running' ? 'Training in progress…' : `Retrain with ${totalSelected} image${totalSelected !== 1 ? 's' : ''}` }}
       </button>
     </div>
@@ -41,8 +41,16 @@
           'bg-[#fef2f2] border-[#fecaca]': retrainState === 'failed' || retrainState === 'unknown',
         }"
       >
-        <div class="text-[28px] leading-none mt-0.5">
-          {{ retrainState === 'running' ? '⚙️' : retrainState === 'done' ? '✅' : '❌' }}
+        <div class="mt-0.5">
+          <AppIcon
+            :name="retrainState === 'running' ? 'cog' : retrainState === 'done' ? 'check-circle' : 'x-circle'"
+            class="w-6 h-6"
+            :class="{
+              'text-[#d97706] animate-spin': retrainState === 'running',
+              'text-[#059669]': retrainState === 'done',
+              'text-[#dc2626]': retrainState === 'failed' || retrainState === 'unknown',
+            }"
+          />
         </div>
         <div class="flex flex-col gap-0.5 flex-1">
           <p class="text-[14px] font-semibold"
@@ -69,7 +77,7 @@
         v-if="summary.total < 20"
         class="rounded-[14px] bg-[#fffbeb] border border-[#fde68a] px-5 py-4 flex items-start gap-3"
       >
-        <span class="text-[20px] mt-0.5">⚠️</span>
+        <AppIcon name="warning" class="w-5 h-5 text-[#d97706] mt-0.5" />
         <div>
           <p class="text-[13.5px] font-semibold text-[#92400e]">Low image count</p>
           <p class="text-[12.5px] text-[#78350f] mt-0.5">
@@ -83,21 +91,21 @@
       <!-- ── Summary Stats ──────────────────────────────────────────────────── -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-xl bg-[#f0fdf4] flex items-center justify-center text-[22px]">🍄</div>
+          <div class="w-11 h-11 rounded-xl bg-[#f0fdf4] text-[#059669] flex items-center justify-center"><AppIcon name="mushroom" class="w-6 h-6" /></div>
           <div>
             <p class="text-[24px] font-bold text-[#0f172a] leading-none">{{ summary.total }}</p>
             <p class="text-[12px] text-[#64748b] mt-1">Total Candidate Images</p>
           </div>
         </div>
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-xl bg-[#f0fdf4] flex items-center justify-center text-[22px]">✅</div>
+          <div class="w-11 h-11 rounded-xl bg-[#f0fdf4] text-[#10b981] flex items-center justify-center"><AppIcon name="check-circle" class="w-6 h-6" /></div>
           <div>
             <p class="text-[24px] font-bold text-[#0f172a] leading-none">{{ summary.edible_count }}</p>
             <p class="text-[12px] text-[#64748b] mt-1">Edible Images</p>
           </div>
         </div>
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-xl bg-[#fef2f2] flex items-center justify-center text-[22px]">☠️</div>
+          <div class="w-11 h-11 rounded-xl bg-[#fef2f2] text-[#dc2626] flex items-center justify-center"><AppIcon name="skull" class="w-6 h-6" /></div>
           <div>
             <p class="text-[24px] font-bold text-[#0f172a] leading-none">{{ summary.poisonous_count }}</p>
             <p class="text-[12px] text-[#64748b] mt-1">Poisonous Images</p>
@@ -112,7 +120,7 @@
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
           <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5 border-b border-[#f1f5f9] bg-[#f0fdf4]">
             <div class="flex items-center gap-2">
-              <span class="text-[18px]">✅</span>
+              <AppIcon name="check-circle" class="w-[18px] h-[18px] text-[#059669]" />
               <h2 class="text-[14px] font-bold text-[#065f46]">Edible Scans</h2>
               <span class="shrink-0 whitespace-nowrap text-[11px] font-semibold bg-[#bbf7d0] text-[#065f46] px-2 py-0.5 rounded-full">
                 {{ edibleSelected.length }} / {{ candidates.edible.length }} selected
@@ -126,7 +134,7 @@
           </div>
 
           <div v-if="candidates.edible.length === 0" class="flex flex-col items-center justify-center py-14 gap-2 text-center">
-            <span class="text-[40px]">🌿</span>
+            <AppIcon name="leaf" class="w-10 h-10 text-[#10b981]" />
             <p class="text-[13.5px] font-semibold text-[#0f172a]">No edible candidates yet</p>
             <p class="text-[12px] text-[#64748b]">Foragers need to consent to data sharing for their scans to appear here.</p>
           </div>
@@ -170,7 +178,7 @@
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
           <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5 border-b border-[#f1f5f9] bg-[#fef2f2]">
             <div class="flex items-center gap-2">
-              <span class="text-[18px]">☠️</span>
+              <AppIcon name="skull" class="w-[18px] h-[18px] text-[#dc2626]" />
               <h2 class="text-[14px] font-bold text-[#991b1b]">Poisonous Scans</h2>
               <span class="shrink-0 whitespace-nowrap text-[11px] font-semibold bg-[#fecaca] text-[#991b1b] px-2 py-0.5 rounded-full">
                 {{ poisonousSelected.length }} / {{ candidates.poisonous.length }} selected
@@ -184,7 +192,7 @@
           </div>
 
           <div v-if="candidates.poisonous.length === 0" class="flex flex-col items-center justify-center py-14 gap-2 text-center">
-            <span class="text-[40px]">💀</span>
+            <AppIcon name="skull" class="w-10 h-10 text-[#ef4444]" />
             <p class="text-[13.5px] font-semibold text-[#0f172a]">No poisonous candidates yet</p>
             <p class="text-[12px] text-[#64748b]">Foragers need to consent to data sharing for their scans to appear here.</p>
           </div>
@@ -227,7 +235,7 @@
       <!-- ── Retrain History ────────────────────────────────────────────────── -->
       <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
         <div class="px-5 py-3.5 border-b border-[#f1f5f9]">
-          <h2 class="text-[14px] font-bold text-[#0f172a]">📋 Retraining History</h2>
+          <h2 class="text-[14px] font-bold text-[#0f172a] flex items-center gap-2"><AppIcon name="clipboard" class="w-4 h-4 text-[#64748b]" /><span>Retraining History</span></h2>
         </div>
 
         <div v-if="history.length === 0" class="py-10 text-center">
@@ -240,8 +248,8 @@
             <tr>
               <th class="text-left px-5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Date</th>
               <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Status</th>
-              <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">✅ Edible</th>
-              <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">☠️ Poisonous</th>
+              <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide"><span class="inline-flex items-center gap-1"><AppIcon name="check-circle" class="w-3.5 h-3.5 text-[#059669]" />Edible</span></th>
+              <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide"><span class="inline-flex items-center gap-1"><AppIcon name="skull" class="w-3.5 h-3.5 text-[#dc2626]" />Poisonous</span></th>
               <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Train Acc.</th>
               <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Val Acc.</th>
             </tr>
@@ -274,8 +282,8 @@
       </div>
 
       <!-- Privacy Note -->
-      <p class="text-[12px] text-[#94a3b8] text-center">
-        🔒 Only scan images from foragers who have opted in to data sharing (<code>allow_data_training = true</code>) are used for retraining.
+      <p class="text-[12px] text-[#94a3b8] text-center flex items-center justify-center gap-1.5">
+        <AppIcon name="lock" class="w-3.5 h-3.5 text-[#64748b]" /><span>Only scan images from foragers who have opted in to data sharing (<code>allow_data_training = true</code>) are used for retraining.</span>
       </p>
 
     </template>
@@ -325,8 +333,8 @@ let statusInterval: ReturnType<typeof setInterval> | null = null
 
 const statusMessage = computed(() => {
   if (retrainState.value === 'running') return 'Retraining in progress — this may take several minutes…'
-  if (retrainState.value === 'done')    return `✅ Retraining completed successfully.`
-  if (retrainState.value === 'failed')  return '❌ Retraining failed. See error below.'
+  if (retrainState.value === 'done')    return 'Retraining completed successfully.'
+  if (retrainState.value === 'failed')  return 'Retraining failed. See error below.'
   return ''
 })
 

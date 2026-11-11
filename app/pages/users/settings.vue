@@ -33,7 +33,7 @@
         <!-- Preferences -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">
           <p class="text-[14px] font-bold text-[#0f172a] flex items-center gap-[7px]">
-            <span class="text-[16px]">⚙️</span> Preferences
+            <AppIcon name="cog" class="w-4 h-4 text-[#64748b]" /> Preferences
           </p>
           <div class="flex flex-col gap-3.5">
             <div class="flex items-center justify-between gap-3">
@@ -87,23 +87,23 @@
         <!-- Account -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">
           <p class="text-[14px] font-bold text-[#0f172a] flex items-center gap-[7px]">
-            <span class="text-[16px]">🔐</span> Account
+            <AppIcon name="shield-lock" class="w-4 h-4 text-[#059669]" /> Account
           </p>
           <div class="flex flex-col gap-2">
             <button class="flex items-center gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] text-left hover:bg-[#f8fafc]" @click="openChangePassword">
-              <span class="text-[16px]">🔑</span>
+              <AppIcon name="key" class="w-4 h-4 text-[#64748b]" />
               <span>Change Password</span>
             </button>
             <button class="flex items-center justify-between gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-not-allowed opacity-60 w-full text-left">
               <div class="flex items-center gap-2.5">
-                <span class="text-[16px]">📱</span>
+                <AppIcon name="smartphone" class="w-4 h-4 text-[#64748b]" />
                 <span>Two-Factor Auth (2FA)</span>
               </div>
               <span class="text-[11px] font-semibold bg-[#f1f5f9] text-[#94a3b8] px-2 py-0.5 rounded-full">Coming Soon</span>
             </button>
             <button class="flex items-center justify-between gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-not-allowed opacity-60 w-full text-left">
               <div class="flex items-center gap-2.5">
-                <span class="text-[16px]">✉️</span>
+                <AppIcon name="mail" class="w-4 h-4 text-[#64748b]" />
                 <span>Email Settings</span>
               </div>
               <span class="text-[11px] font-semibold bg-[#f1f5f9] text-[#94a3b8] px-2 py-0.5 rounded-full">Coming Soon</span>
@@ -119,7 +119,7 @@
         <!-- Quick Settings -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">
           <p class="text-[14px] font-bold text-[#0f172a] flex items-center gap-[7px]">
-            <span class="text-[16px]">⚡</span> Quick Settings
+            <AppIcon name="bolt" class="w-4 h-4 text-[#f59e0b]" /> Quick Settings
           </p>
           <div class="flex flex-col gap-3.5">
             <div class="flex items-center justify-between gap-3">
@@ -155,7 +155,7 @@
         <!-- Storage -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">
           <p class="text-[14px] font-bold text-[#0f172a] flex items-center gap-[7px]">
-            <span class="text-[16px]">💾</span> Storage
+            <AppIcon name="save" class="w-4 h-4 text-[#64748b]" /> Storage
           </p>
           <p class="text-[13.5px] font-medium text-[#0f172a]">{{ storageUsed }}MB of {{ storageTotal }}MB used</p>
           <div class="h-2 bg-[#e5e7eb] rounded-[10px] overflow-hidden">
@@ -171,7 +171,7 @@
         <!-- Privacy -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">
           <p class="text-[14px] font-bold text-[#0f172a] flex items-center gap-[7px]">
-            <span class="text-[16px]">🔒</span> Privacy
+            <AppIcon name="lock" class="w-4 h-4 text-[#059669]" /> Privacy
           </p>
           <div class="flex flex-col gap-3.5">
             <div class="flex items-center justify-between gap-3">
@@ -196,7 +196,7 @@
                 <!-- Danger Zone -->
         <div class="bg-[#fff8f8] border border-[#fecaca] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">
           <p class="text-[14px] font-bold text-[#dc2626] flex items-center gap-[7px]">
-            <span class="text-[16px]">⚠️</span> Danger Zone
+            <AppIcon name="warning" class="w-4 h-4 text-[#dc2626]" /> Danger Zone
           </p>
           <p class="text-[12.5px] text-[#7f1d1d] leading-[1.6]">Once you delete your account, all your scans, collection, and history will be permanently removed. This cannot be undone.</p>
           <button class="py-2.5 px-[22px] rounded-[9px] bg-[#dc2626] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer self-start transition-colors duration-[0.18s] hover:bg-[#b91c1c]" @click="deleteAccount">Delete Account</button>
@@ -350,8 +350,8 @@
         <!-- Modal Header -->
         <div class="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]">
           <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-full bg-[#d1fae5] text-[#059669] flex items-center justify-center font-bold text-lg">
-              🧬
+            <div class="w-9 h-9 rounded-full bg-[#d1fae5] text-[#059669] flex items-center justify-center">
+              <AppIcon name="dna" class="w-5 h-5" />
             </div>
             <div>
               <h3 class="text-[16px] font-bold text-[#0f172a]">Data Sharing Permission</h3>
@@ -376,15 +376,15 @@
             
             <ul class="flex flex-col gap-2 text-[12.5px] text-[#334155]">
               <li class="flex items-start gap-2">
-                <span class="text-[15px]">📸</span>
+                <AppIcon name="camera" class="w-4 h-4 text-[#059669] mt-0.5" />
                 <span><strong>Mushroom Images:</strong> High-quality photos of scanned mushroom specimens.</span>
               </li>
               <li class="flex items-start gap-2">
-                <span class="text-[15px]">📍</span>
+                <AppIcon name="map-pin" class="w-4 h-4 text-[#059669] mt-0.5" />
                 <span><strong>Geolocation Data:</strong> Latitude, longitude, and region where the specimen was scanned.</span>
               </li>
               <li class="flex items-start gap-2">
-                <span class="text-[15px]">🏷️</span>
+                <AppIcon name="tag" class="w-4 h-4 text-[#059669] mt-0.5" />
                 <span><strong>Species Name & Details:</strong> Identified scientific name, common name, and classification.</span>
               </li>
             </ul>
@@ -392,7 +392,7 @@
 
           <!-- Privacy Shield Guarantee -->
           <div class="flex items-center gap-2.5 p-3 rounded-lg bg-[#ecfdf5] border border-[#a7f3d0] text-[#065f46] text-[12px]">
-            <span class="text-[16px]">🔒</span>
+            <AppIcon name="lock" class="w-4 h-4 text-[#059669]" />
             <span><strong>Your Privacy is Protected:</strong> Your personal identity, email address, and account details are <u>never</u> attached or shared.</span>
           </div>
         </div>
@@ -429,7 +429,7 @@
         <!-- Header -->
         <div class="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]">
           <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-full bg-[#d1fae5] text-[#059669] flex items-center justify-center font-bold text-lg">🔑</div>
+            <div class="w-9 h-9 rounded-full bg-[#d1fae5] text-[#059669] flex items-center justify-center"><AppIcon name="key" class="w-5 h-5" /></div>
             <div>
               <h3 class="text-[16px] font-bold text-[#0f172a]">Change Password</h3>
               <p class="text-[12px] text-[#64748b]">Update your account password</p>
@@ -441,7 +441,7 @@
         <!-- Body -->
         <div class="p-5 flex flex-col gap-3.5">
           <div v-if="passwordError" class="flex items-start gap-2 p-3 rounded-lg bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] text-[12.5px]">
-            <span>⚠️</span><span>{{ passwordError }}</span>
+            <AppIcon name="warning" class="w-4 h-4 mt-0.5" /><span>{{ passwordError }}</span>
           </div>
 
           <div class="flex flex-col gap-1.5">

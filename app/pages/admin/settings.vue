@@ -5,9 +5,9 @@
         <h1 class="text-[22px] font-bold text-[#0f172a]">System Settings</h1>
         <p class="text-[13.5px] text-[#64748b] mt-[3px]">Configure application behaviour and administrative preferences</p>
       </div>
-      <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="saveAll" :disabled="isSavingSettings">
+      <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 flex items-center gap-2" @click="saveAll" :disabled="isSavingSettings">
         <span v-if="isSavingSettings">Saving...</span>
-        <span v-else>💾 Save Changes</span>
+        <span v-else class="inline-flex items-center gap-1.5"><AppIcon name="save" class="w-4 h-4" />Save Changes</span>
       </button>
     </div>
 
@@ -17,7 +17,7 @@
         <!-- AI Model Settings -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
           <div class="flex items-center gap-2.5">
-            <span class="w-[34px] h-[34px] rounded-lg text-[17px] flex items-center justify-center shrink-0 bg-[#d1fae5] text-[#059669]">🤖</span>
+            <span class="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0 bg-[#d1fae5] text-[#059669]"><AppIcon name="cpu" class="w-4 h-4" /></span>
             <p class="text-[14px] font-bold text-[#0f172a] flex-1">AI Model Settings</p>
           </div>
           <div class="flex items-center justify-between gap-4 py-2.5 border-t border-[#f1f5f9]">
@@ -59,7 +59,7 @@
         <!-- Data Retention -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
           <div class="flex items-center gap-2.5">
-            <span class="w-[34px] h-[34px] rounded-lg text-[17px] flex items-center justify-center shrink-0 bg-[#fef3c7] text-[#d97706]">💾</span>
+            <span class="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0 bg-[#fef3c7] text-[#d97706]"><AppIcon name="save" class="w-4 h-4" /></span>
             <p class="text-[14px] font-bold text-[#0f172a] flex-1">Data Retention</p>
           </div>
           <div class="flex items-center justify-between gap-4 py-2.5 border-t border-[#f1f5f9]">
@@ -100,7 +100,7 @@
         <!-- Maintenance Mode -->
         <div class="border rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]" :class="maintenance.enabled ? 'bg-[#fff8f8] border-[#fca5a5]' : 'bg-white border-[#e2e8f0]'">
           <div class="flex items-center gap-2.5">
-            <span class="w-[34px] h-[34px] rounded-lg text-[17px] flex items-center justify-center shrink-0 bg-[#fee2e2] text-[#dc2626]">🔧</span>
+            <span class="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0 bg-[#fee2e2] text-[#dc2626]"><AppIcon name="wrench" class="w-4 h-4" /></span>
             <p class="text-[14px] font-bold text-[#0f172a] flex-1">Maintenance Mode</p>
             <span v-if="maintenance.enabled" class="text-[11px] font-bold text-[#dc2626] bg-[#fee2e2] py-[3px] px-2 rounded-[20px]">ACTIVE</span>
           </div>
@@ -122,7 +122,7 @@
         <!-- Admin Accounts -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
           <div class="flex items-center gap-2.5">
-            <span class="w-[34px] h-[34px] rounded-lg text-[17px] flex items-center justify-center shrink-0 bg-[#f3e8ff] text-[#7c3aed]">👑</span>
+            <span class="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0 bg-[#f3e8ff] text-[#7c3aed]"><AppIcon name="crown" class="w-4 h-4" /></span>
             <p class="text-[14px] font-bold text-[#0f172a] flex-1">Admin Accounts</p>
             <NuxtLink v-if="isSuperAdmin" to="/admin/accounts" class="py-1.5 px-3.5 rounded-[7px] bg-[#f1f5f9] border border-[#e2e8f0] text-[12.5px] font-semibold cursor-pointer font-sans text-[#0f172a] transition-colors duration-[0.18s] hover:bg-[#e2e8f0] no-underline flex items-center gap-1">Manage</NuxtLink>
           </div>
@@ -159,7 +159,7 @@
             </table>
           </div>
           <div v-if="!isSuperAdmin" class="mt-2 text-[12px] text-[#64748b] flex items-start gap-1.5">
-             <span class="text-amber-500">⚠️</span>
+             <AppIcon name="warning" class="w-4 h-4 text-amber-500 mt-0.5" />
              <p>Only Super Administrators can add or remove admin accounts. Please contact a Super Admin for account changes.</p>
           </div>
         </div>
@@ -167,7 +167,7 @@
         <!-- App Info -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
           <div class="flex items-center gap-2.5">
-            <span class="w-[34px] h-[34px] rounded-lg text-[17px] flex items-center justify-center shrink-0 bg-[#dbeafe] text-[#1d4ed8]">ℹ️</span>
+            <span class="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0 bg-[#dbeafe] text-[#1d4ed8]"><AppIcon name="info" class="w-4 h-4" /></span>
             <p class="text-[14px] font-bold text-[#0f172a] flex-1">App Information</p>
           </div>
           <div class="flex flex-col">

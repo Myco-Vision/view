@@ -4,7 +4,7 @@
     <div class="flex items-end justify-between gap-3 flex-wrap">
       <div>
         <h1 class="text-[22px] font-bold text-[#0f172a] flex items-center gap-2">
-          <span v-if="isSuperAdmin" class="text-amber-500">👑</span> User Account Management
+          <AppIcon v-if="isSuperAdmin" name="crown" class="w-5 h-5 text-amber-500" /> User Account Management
         </h1>
         <p class="text-[13.5px] text-[#64748b] mt-[3px]">{{ pagination.total }} registered accounts</p>
       </div>

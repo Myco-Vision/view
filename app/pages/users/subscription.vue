@@ -43,11 +43,10 @@
       :class="alertType === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : (alertType === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-red-50 border-red-200 text-red-900')"
     >
       <div class="flex items-start gap-3">
-        <span class="text-xl">
-          <template v-if="alertType === 'success'">🎉</template>
-          <template v-else-if="alertType === 'warning'">⚠️</template>
-          <template v-else>ℹ️</template>
-        </span>
+        <AppIcon
+          :name="alertType === 'success' ? 'sparkles' : alertType === 'warning' ? 'warning' : 'info'"
+          class="w-5 h-5 mt-0.5"
+        />
         <div>
           <p class="font-bold text-sm">{{ alertTitle }}</p>
           <p class="text-xs mt-0.5 opacity-90">{{ alertMessage }}</p>
@@ -108,8 +107,9 @@
                   :style="{ width: `${Math.min(100, (subscriptionStatus.scans_used / 3) * 100)}%` }"
                 ></div>
               </div>
-              <p v-if="freeScansRemaining === 0" class="text-red-600 font-semibold mt-0.5">
-                ⚠️ All free scans used. Subscribe to Premium below to continue scanning!
+              <p v-if="freeScansRemaining === 0" class="text-red-600 font-semibold mt-0.5 inline-flex items-center gap-1.5">
+                <AppIcon name="warning" class="w-4 h-4" />
+                <span>All free scans used. Subscribe to Premium below to continue scanning!</span>
               </p>
               <p v-else class="text-slate-500">
                 {{ freeScansRemaining }} {{ freeScansRemaining === 1 ? 'scan' : 'scans' }} remaining before subscription is required.
@@ -178,7 +178,7 @@
 
         <div class="flex items-center gap-2">
           <span class="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border bg-[#007DFE] text-white border-[#007DFE] shadow-sm">
-            <span>🔵 GCash</span>
+            <span class="inline-flex items-center gap-1.5"><AppIcon name="circle-dot" class="w-3 h-3 text-white/90" />GCash</span>
             <span class="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">Only method</span>
           </span>
         </div>
@@ -605,7 +605,7 @@
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 relative animate-in fade-in zoom-in duration-200">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
-              <span class="text-xl">📱</span>
+              <AppIcon name="smartphone" class="w-5 h-5 text-[#007DFE]" />
               <span class="font-bold text-slate-900 text-sm">GCash Test Gateway</span>
             </div>
             <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
@@ -629,8 +629,9 @@
             <p class="mt-0.5 opacity-90">
               Clicking <strong>Authorize Payment</strong> simulates a successful GCash transaction and activates your subscription.
             </p>
-            <p class="mt-1 text-[10.5px] text-blue-700">
-              💡 To test the official hosted PayMongo page, paste your real <code>sk_test_...</code> key into <code>api/.env</code>.
+            <p class="mt-1 text-[10.5px] text-blue-700 flex items-start gap-1.5">
+              <AppIcon name="lightbulb" class="w-3.5 h-3.5 mt-0.5" />
+              <span>To test the official hosted PayMongo page, paste your real <code>sk_test_...</code> key into <code>api/.env</code>.</span>
             </p>
           </div>
 
@@ -840,7 +841,7 @@ async function syncPaymentStatus() {
     await fetchSubscriptionStatus()
     window.dispatchEvent(new CustomEvent('subscription-updated'))
     if (subscriptionStatus.value.is_subscribed) {
-      alertTitle.value = '🎉 Subscription Active'
+      alertTitle.value = 'Subscription Active'
       alertMessage.value = 'Your PayMongo subscription is active! Unlimited AI mushroom scans are unlocked.'
       alertType.value = 'success'
     } else {
@@ -873,7 +874,7 @@ async function verifyReturnedPayment(sessionId: string, plan: string) {
       },
     })
 
-    alertTitle.value = '🎉 Subscription Activated!'
+    alertTitle.value = 'Subscription Activated!'
     alertMessage.value = res.message || 'Payment confirmed via PayMongo. Unlimited mushroom scans are now unlocked!'
     alertType.value = 'success'
 
@@ -888,7 +889,7 @@ async function verifyReturnedPayment(sessionId: string, plan: string) {
     // Check if auto-sync in status endpoint already activated it
     await fetchSubscriptionStatus()
     if (subscriptionStatus.value.is_subscribed) {
-      alertTitle.value = '🎉 Subscription Activated!'
+      alertTitle.value = 'Subscription Activated!'
       alertMessage.value = 'Payment confirmed via PayMongo. Unlimited mushroom scans are now unlocked!'
       alertType.value = 'success'
       router.replace({ path: '/users/subscription' })

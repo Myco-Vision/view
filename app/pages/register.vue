@@ -489,7 +489,7 @@
               </div>
 
               <div class="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30">
-                <p class="font-bold text-amber-300 mb-1">2. ⚠ Safety Disclaimer — Never Eat Based on AI Alone</p>
+                <p class="font-bold text-amber-300 mb-1 flex items-center gap-1.5"><AppIcon name="warning" class="w-4 h-4 shrink-0" /><span>2. Safety Disclaimer — Never Eat Based on AI Alone</span></p>
                 <p>MycoVision uses AI to estimate mushroom species. Results are <strong class="text-white">informational only</strong> and may be inaccurate. Many edible mushrooms have deadly look-alikes. You must <strong class="text-white">never consume any wild mushroom</strong> based solely on an app result. Always consult a qualified mycologist or expert before eating any foraged mushroom. MycoVision and its developers accept no liability for illness, injury, or death resulting from consumption.</p>
               </div>
 

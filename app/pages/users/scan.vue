@@ -28,7 +28,7 @@
     <ClientOnly>
       <div v-if="!canScan && !isSubscribed" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col gap-2">
         <div class="flex items-start gap-2">
-          <span class="text-base shrink-0">⚠️</span>
+          <AppIcon name="warning" class="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
           <div>
             <p class="font-bold">Free Scan Limit Reached (3 of 3 used)</p>
             <p class="text-[11.5px] mt-0.5 text-amber-800 leading-relaxed">
@@ -180,8 +180,8 @@
               </span>
               <span v-else-if="userLat !== null" class="text-[11px] text-[#64748b] text-right">
                 <span v-if="isResolvingName" class="text-[10px] text-[#94a3b8] block">Looking up place name…</span>
-                <span v-else-if="locationName" class="font-semibold text-[#0f172a] block">📍 {{ locationName }}</span>
-                <span :class="locationName ? 'text-[10px] text-[#94a3b8]' : ''" class="block">📍 {{ userLat.toFixed(5) }}, {{ userLng!.toFixed(5) }}</span>
+                <span v-else-if="locationName" class="font-semibold text-[#0f172a] inline-flex items-center justify-end gap-1"><AppIcon name="map-pin" class="w-3 h-3 text-[#059669]" />{{ locationName }}</span>
+                <span :class="locationName ? 'text-[10px] text-[#94a3b8]' : ''" class="inline-flex items-center justify-end gap-1"><AppIcon name="map-pin" class="w-3 h-3 text-[#64748b]" />{{ userLat.toFixed(5) }}, {{ userLng!.toFixed(5) }}</span>
               </span>
             </div>
           </div>
@@ -190,19 +190,19 @@
           <div class="grid grid-cols-2 gap-1 p-1 rounded-[10px] bg-[#f1f5f9] border border-[#e2e8f0]">
             <button
               type="button"
-              class="py-1.5 px-2 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors"
+              class="py-1.5 px-2 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors inline-flex items-center justify-center gap-1.5"
               :class="locationMode === 'gps' ? 'bg-white text-[#059669] shadow-sm' : 'bg-transparent text-[#64748b] hover:text-[#0f172a]'"
               @click="fetchUserLocation"
             >
-              📡 Use my current location
+              <AppIcon name="radar" class="w-3.5 h-3.5" /><span>Use my current location</span>
             </button>
             <button
               type="button"
-              class="py-1.5 px-2 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors"
+              class="py-1.5 px-2 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors inline-flex items-center justify-center gap-1.5"
               :class="locationMode === 'manual' ? 'bg-white text-[#059669] shadow-sm' : 'bg-transparent text-[#64748b] hover:text-[#0f172a]'"
               @click="selectManualMode"
             >
-              ✏️ Enter coordinates
+              <AppIcon name="pencil" class="w-3.5 h-3.5" /><span>Enter coordinates</span>
             </button>
           </div>
 
@@ -269,7 +269,7 @@
       <!-- Empty state when no result -->
       <div v-else class="hidden lg:flex items-center justify-center bg-[#f8fafc] p-6 lg:col-start-2">
         <div class="text-center max-w-[260px] flex flex-col items-center gap-3">
-          <div class="text-[56px] opacity-50 grayscale-[0.8]">🍄</div>
+          <AppIcon name="mushroom" class="w-14 h-14 text-[#94a3b8] opacity-60" />
           <h3 class="text-[18px] font-semibold text-[#475569]">Ready to Analyze</h3>
           <p class="text-[13.5px] text-[#64748b] leading-[1.5]">Upload a mushroom picture on the left to see the AI classification and confidence results here.</p>
         </div>
@@ -345,11 +345,11 @@
 
           <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 flex flex-col gap-2.5 text-xs text-slate-700">
             <div class="flex items-center justify-between font-bold">
-              <span>✨ Premium Monthly</span>
+              <span class="inline-flex items-center gap-1.5"><AppIcon name="sparkles" class="w-4 h-4 text-emerald-600" />Premium Monthly</span>
               <span class="text-emerald-700 font-extrabold text-sm">₱149 / month</span>
             </div>
             <div class="flex items-center justify-between font-bold">
-              <span>🌟 Premium Annual <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Save ~27%</span></span>
+              <span class="inline-flex items-center gap-1.5"><AppIcon name="star" class="w-4 h-4 text-amber-500" />Premium Annual <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Save ~27%</span></span>
               <span class="text-emerald-700 font-extrabold text-sm">₱1,299 / year</span>
             </div>
             <div class="pt-1 border-t border-slate-200/60 text-[11px] text-slate-500 flex items-center gap-2">
@@ -390,8 +390,8 @@
 
               <!-- Gradient header -->
               <div class="bg-gradient-to-br from-[#10b981] to-[#059669] p-6 flex flex-col items-center gap-3 text-center">
-                <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <span class="text-[38px] leading-none">🧠</span>
+                <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white">
+                  <AppIcon name="brain" class="w-9 h-9" />
                 </div>
                 <div>
                   <h3 class="text-[18px] font-bold text-white">Help Train Our AI</h3>
@@ -402,7 +402,7 @@
               <!-- Body -->
               <div class="p-6 flex flex-col gap-4">
                 <p class="text-[13.5px] text-[#334155] leading-relaxed">
-                  You just completed your first scan! 🎉
+                  You just completed your first scan!
                   <br><br>
                   Would you like to <strong class="text-[#0f172a]">contribute your scan data</strong> to help improve the mushroom identification AI?
                   Your images and classification results may be used to retrain the model and make it more accurate for all foragers.
@@ -447,7 +447,8 @@
                   @click="submitConsent(true)"
                 >
                   <span v-if="isSubmittingConsent" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  {{ isSubmittingConsent ? 'Saving…' : '🌿 Allow & Contribute' }}
+                  <AppIcon v-else name="leaf" class="w-4 h-4" />
+                  <span>{{ isSubmittingConsent ? 'Saving…' : 'Allow & Contribute' }}</span>
                 </button>
               </div>
 

@@ -29,7 +29,7 @@
       <div v-for="card in statCards" :key="card.label" class="bg-white border border-[#e2e8f0] rounded-[14px] p-4 transition-shadow hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)]">
         <div class="flex items-center justify-between mb-2">
           <p class="text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px]">{{ card.label }}</p>
-          <span class="w-8 h-8 rounded-lg flex items-center justify-center text-[15px]" :class="card.tone">{{ card.icon }}</span>
+          <span class="w-8 h-8 rounded-lg flex items-center justify-center" :class="card.tone"><AppIcon :name="card.icon" class="w-4 h-4" /></span>
         </div>
         <p class="text-[22px] font-bold text-[#0f172a]">{{ card.value }}</p>
         <p class="text-[12px] text-[#64748b] mt-0.5">{{ card.sub }}</p>
@@ -106,11 +106,11 @@
               </td>
               <td class="py-3 px-3.5">
                 <div class="flex gap-1.5">
-                  <button class="act-btn" title="View history" @click="openHistory(s.user)">👁</button>
-                  <button class="act-btn hover:!bg-emerald-50 hover:!border-emerald-200" title="Extend" @click="openAction('extend', s)">⏩</button>
-                  <button v-if="isLive(s) && s.state !== 'cancelling'" class="act-btn hover:!bg-amber-50 hover:!border-amber-200" title="Cancel at period end" @click="openAction('cancel', s)">⏸</button>
-                  <button v-if="isLive(s)" class="act-btn hover:!bg-[#fee2e2] hover:!border-[#fecaca]" title="Revoke now" @click="openAction('revoke', s)">⛔</button>
-                  <button v-if="isRefundable(s)" :id="`refund-sub-${s.id}`" class="act-btn hover:!bg-violet-50 hover:!border-violet-200" title="Open a refund request" @click="openCreateRefund(s)">💸</button>
+                  <button class="act-btn text-[#475569]" title="View history" @click="openHistory(s.user)"><AppIcon name="eye" class="w-3.5 h-3.5" /></button>
+                  <button class="act-btn text-[#059669] hover:!bg-emerald-50 hover:!border-emerald-200" title="Extend" @click="openAction('extend', s)"><AppIcon name="fast-forward" class="w-3.5 h-3.5" /></button>
+                  <button v-if="isLive(s) && s.state !== 'cancelling'" class="act-btn text-[#d97706] hover:!bg-amber-50 hover:!border-amber-200" title="Cancel at period end" @click="openAction('cancel', s)"><AppIcon name="pause" class="w-3.5 h-3.5" /></button>
+                  <button v-if="isLive(s)" class="act-btn text-[#dc2626] hover:!bg-[#fee2e2] hover:!border-[#fecaca]" title="Revoke now" @click="openAction('revoke', s)"><AppIcon name="ban" class="w-3.5 h-3.5" /></button>
+                  <button v-if="isRefundable(s)" :id="`refund-sub-${s.id}`" class="act-btn text-[#7c3aed] hover:!bg-violet-50 hover:!border-violet-200" title="Open a refund request" @click="openCreateRefund(s)"><AppIcon name="banknote" class="w-3.5 h-3.5" /></button>
                 </div>
               </td>
             </tr>
@@ -136,7 +136,10 @@
       <ul class="divide-y divide-[#f8fafc] max-h-[360px] overflow-y-auto">
         <li v-if="events.length === 0" class="py-6 text-center text-[13px] text-[#94a3b8]">No activity yet.</li>
         <li v-for="e in events" :key="e.id" class="flex items-start gap-3 py-3 px-[18px]">
-          <span class="w-8 h-8 rounded-lg flex items-center justify-center text-[14px] shrink-0" :class="eventStyle(e.action).cls">{{ eventStyle(e.action).icon }}</span>
+          <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="eventStyle(e.action).cls">
+            <AppIcon v-if="eventStyle(e.action).icon" :name="eventStyle(e.action).icon" class="w-4 h-4" />
+            <span v-else class="text-[14px]">•</span>
+          </span>
           <div class="flex-1 min-w-0">
             <p class="text-[13px] text-[#334155]"><b class="text-[#0f172a]">{{ e.user?.name ?? 'User' }}</b> — {{ eventStyle(e.action).label }}<span v-if="e.details?.plan"> ({{ e.details.plan }})</span><span v-if="e.details?.days"> · {{ e.details.days }} days</span></p>
             <p class="text-[11.5px] text-[#94a3b8]">{{ e.admin ? `by ${e.admin.name}` : 'System' }} · {{ fmtDateTime(e.created_at) }}<span v-if="e.details?.note"> · “{{ e.details.note }}”</span></p>
@@ -153,7 +156,7 @@
         <div v-for="card in refundCards" :key="card.label" class="bg-white border border-[#e2e8f0] rounded-[14px] p-4">
           <div class="flex items-center justify-between mb-2">
             <p class="text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px]">{{ card.label }}</p>
-            <span class="w-8 h-8 rounded-lg flex items-center justify-center text-[15px]" :class="card.tone">{{ card.icon }}</span>
+            <span class="w-8 h-8 rounded-lg flex items-center justify-center" :class="card.tone"><AppIcon :name="card.icon" class="w-4 h-4" /></span>
           </div>
           <p class="text-[22px] font-bold text-[#0f172a]">{{ card.value }}</p>
         </div>
@@ -471,10 +474,10 @@ const statusTabs = [
 ]
 
 const statCards = computed(() => [
-  { label: 'Active Subscribers', value: stats.value.active ?? 0, sub: `${stats.value.monthly ?? 0} monthly · ${stats.value.annual ?? 0} annual`, icon: '⭐', tone: 'bg-emerald-50 text-emerald-600' },
-  { label: 'Monthly Recurring', value: peso(stats.value.mrr), sub: `${peso(stats.value.revenue_30d)} collected last 30d`, icon: '📈', tone: 'bg-blue-50 text-blue-600' },
-  { label: 'Expiring Soon', value: stats.value.expiring_soon ?? 0, sub: 'Within the next 7 days', icon: '⏳', tone: 'bg-amber-50 text-amber-600' },
-  { label: 'Total Revenue', value: peso(stats.value.total_revenue), sub: `${stats.value.free_users ?? 0} free users · ${stats.value.pending ?? 0} pending`, icon: '💰', tone: 'bg-violet-50 text-violet-600' },
+  { label: 'Active Subscribers', value: stats.value.active ?? 0, sub: `${stats.value.monthly ?? 0} monthly · ${stats.value.annual ?? 0} annual`, icon: 'star', tone: 'bg-emerald-50 text-emerald-600' },
+  { label: 'Monthly Recurring', value: peso(stats.value.mrr), sub: `${peso(stats.value.revenue_30d)} collected last 30d`, icon: 'trending-up', tone: 'bg-blue-50 text-blue-600' },
+  { label: 'Expiring Soon', value: stats.value.expiring_soon ?? 0, sub: 'Within the next 7 days', icon: 'hourglass', tone: 'bg-amber-50 text-amber-600' },
+  { label: 'Total Revenue', value: peso(stats.value.total_revenue), sub: `${stats.value.free_users ?? 0} free users · ${stats.value.pending ?? 0} pending`, icon: 'banknote', tone: 'bg-violet-50 text-violet-600' },
 ])
 
 let timer: any
@@ -614,10 +617,10 @@ const refundTabs = [
   { value: 'failed', label: 'Failed' },
 ]
 const refundCards = computed(() => [
-  { label: 'Pending Review', value: refundStats.value.pending ?? 0, icon: '⏳', tone: 'bg-amber-50 text-amber-600' },
-  { label: 'Processing', value: refundStats.value.processing ?? 0, icon: '🔄', tone: 'bg-blue-50 text-blue-600' },
-  { label: 'Refunded', value: refundStats.value.refunded ?? 0, icon: '✅', tone: 'bg-emerald-50 text-emerald-600' },
-  { label: 'Total Refunded', value: peso(refundStats.value.total_refunded), icon: '💸', tone: 'bg-violet-50 text-violet-600' },
+  { label: 'Pending Review', value: refundStats.value.pending ?? 0, icon: 'hourglass', tone: 'bg-amber-50 text-amber-600' },
+  { label: 'Processing', value: refundStats.value.processing ?? 0, icon: 'refresh', tone: 'bg-blue-50 text-blue-600' },
+  { label: 'Refunded', value: refundStats.value.refunded ?? 0, icon: 'check-circle', tone: 'bg-emerald-50 text-emerald-600' },
+  { label: 'Total Refunded', value: peso(refundStats.value.total_refunded), icon: 'banknote', tone: 'bg-violet-50 text-violet-600' },
 ])
 
 let refundTimer: any
@@ -750,20 +753,20 @@ function stateStyle(state: string) {
 }
 function eventStyle(a: string) {
   const map: Record<string, any> = {
-    activated:      { label: 'Subscription activated', icon: '✅', cls: 'bg-emerald-50' },
-    granted:        { label: 'Complimentary plan granted', icon: '🎁', cls: 'bg-violet-50' },
-    extended:       { label: 'Subscription extended', icon: '⏩', cls: 'bg-blue-50' },
-    cancelled:      { label: 'Renewal cancelled', icon: '⏸', cls: 'bg-amber-50' },
-    revoked:        { label: 'Access revoked', icon: '⛔', cls: 'bg-red-50' },
-    auto_renew_on:  { label: 'Auto-renew turned on', icon: '🔁', cls: 'bg-emerald-50' },
-    auto_renew_off: { label: 'Auto-renew turned off', icon: '⏹', cls: 'bg-slate-100' },
-    synced:         { label: 'Synced with gateway', icon: '🔄', cls: 'bg-slate-100' },
-    refund_requested: { label: 'Refund requested', icon: '💸', cls: 'bg-violet-50' },
-    refunded:         { label: 'Refund issued', icon: '✅', cls: 'bg-emerald-50' },
-    refund_rejected:  { label: 'Refund rejected', icon: '🚫', cls: 'bg-red-50' },
-    refund_failed:    { label: 'Refund failed at gateway', icon: '⚠️', cls: 'bg-red-50' },
+    activated:      { label: 'Subscription activated', icon: 'check-circle', cls: 'bg-emerald-50 text-emerald-600' },
+    granted:        { label: 'Complimentary plan granted', icon: 'gift', cls: 'bg-violet-50 text-violet-600' },
+    extended:       { label: 'Subscription extended', icon: 'fast-forward', cls: 'bg-blue-50 text-blue-600' },
+    cancelled:      { label: 'Renewal cancelled', icon: 'pause', cls: 'bg-amber-50 text-amber-600' },
+    revoked:        { label: 'Access revoked', icon: 'ban', cls: 'bg-red-50 text-red-600' },
+    auto_renew_on:  { label: 'Auto-renew turned on', icon: 'refresh', cls: 'bg-emerald-50 text-emerald-600' },
+    auto_renew_off: { label: 'Auto-renew turned off', icon: 'stop', cls: 'bg-slate-100 text-slate-600' },
+    synced:         { label: 'Synced with gateway', icon: 'refresh', cls: 'bg-slate-100 text-slate-600' },
+    refund_requested: { label: 'Refund requested', icon: 'banknote', cls: 'bg-violet-50 text-violet-600' },
+    refunded:         { label: 'Refund issued', icon: 'check-circle', cls: 'bg-emerald-50 text-emerald-600' },
+    refund_rejected:  { label: 'Refund rejected', icon: 'ban', cls: 'bg-red-50 text-red-600' },
+    refund_failed:    { label: 'Refund failed at gateway', icon: 'warning', cls: 'bg-red-50 text-red-600' },
   }
-  return map[a] ?? { label: a, icon: '•', cls: 'bg-slate-100' }
+  return map[a] ?? { label: a, icon: '', cls: 'bg-slate-100 text-slate-600' }
 }
 </script>
 

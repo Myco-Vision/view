@@ -476,8 +476,8 @@
           
           <!-- Feature 1 -->
           <div class="bg-[#0b211a]/80 border border-emerald-800/30 rounded-2xl p-6 hover:border-emerald-500/50 transition-all duration-300 hover:-translate-y-1 group">
-            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-              👁️
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <AppIcon name="eye" class="w-6 h-6" />
             </div>
             <h3 class="text-lg font-bold text-white mb-2">Neural Visual Recognition</h3>
             <p class="text-xs text-slate-300 leading-relaxed">
@@ -487,8 +487,8 @@
 
           <!-- Feature 2 -->
           <div class="bg-[#0b211a]/80 border border-emerald-800/30 rounded-2xl p-6 hover:border-emerald-500/50 transition-all duration-300 hover:-translate-y-1 group">
-            <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-              ⚠️
+            <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <AppIcon name="warning" class="w-6 h-6" />
             </div>
             <h3 class="text-lg font-bold text-white mb-2">Toxicity &amp; Hazard Screening</h3>
             <p class="text-xs text-slate-300 leading-relaxed">
@@ -498,8 +498,8 @@
 
           <!-- Feature 3 -->
           <div class="bg-[#0b211a]/80 border border-emerald-800/30 rounded-2xl p-6 hover:border-emerald-500/50 transition-all duration-300 hover:-translate-y-1 group">
-            <div class="w-12 h-12 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-              📍
+            <div class="w-12 h-12 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <AppIcon name="map-pin" class="w-6 h-6" />
             </div>
             <h3 class="text-lg font-bold text-white mb-2">GPS Habitat Logging</h3>
             <p class="text-xs text-slate-300 leading-relaxed">
@@ -509,8 +509,8 @@
 
           <!-- Feature 4 -->
           <div class="bg-[#0b211a]/80 border border-emerald-800/30 rounded-2xl p-6 hover:border-emerald-500/50 transition-all duration-300 hover:-translate-y-1 group">
-            <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-              💳
+            <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <AppIcon name="credit-card" class="w-6 h-6" />
             </div>
             <h3 class="text-lg font-bold text-white mb-2">PayMongo GCash Checkout</h3>
             <p class="text-xs text-slate-300 leading-relaxed">
@@ -520,8 +520,8 @@
 
           <!-- Feature 5 -->
           <div class="bg-[#0b211a]/80 border border-emerald-800/30 rounded-2xl p-6 hover:border-emerald-500/50 transition-all duration-300 hover:-translate-y-1 group">
-            <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-              📚
+            <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <AppIcon name="book" class="w-6 h-6" />
             </div>
             <h3 class="text-lg font-bold text-white mb-2">Curated Species Compendium</h3>
             <p class="text-xs text-slate-300 leading-relaxed">
@@ -531,8 +531,8 @@
 
           <!-- Feature 6 -->
           <div class="bg-[#0b211a]/80 border border-emerald-800/30 rounded-2xl p-6 hover:border-emerald-500/50 transition-all duration-300 hover:-translate-y-1 group">
-            <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-              🛡️
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <AppIcon name="shield" class="w-6 h-6" />
             </div>
             <h3 class="text-lg font-bold text-white mb-2">Dedicated Admin Console</h3>
             <p class="text-xs text-slate-300 leading-relaxed">

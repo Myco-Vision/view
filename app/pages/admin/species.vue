@@ -19,7 +19,7 @@
           <option value="poisonous">Poisonous</option>
           <option value="unknown">Unknown</option>
         </select>
-        <button v-if="activeTab === 'verified'" class="py-2 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[#334155] text-[13.5px] font-semibold font-sans cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc] flex items-center gap-1.5" @click="exportCatalogPdf">📄 Export Catalog PDF</button>
+        <button v-if="activeTab === 'verified'" class="py-2 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[#334155] text-[13.5px] font-semibold font-sans cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc] flex items-center gap-1.5" @click="exportCatalogPdf"><AppIcon name="file" class="w-4 h-4 text-[#64748b]" /><span>Export Catalog PDF</span></button>
         <button v-if="activeTab === 'verified'" class="py-2 px-[18px] rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90" @click="openAdd">+ Add Species</button>
       </div>
     </div>
@@ -31,7 +31,7 @@
         :class="activeTab === 'verified' ? 'border-[#10b981] text-[#10b981]' : 'border-transparent text-[#64748b] hover:text-[#0f172a]'"
         @click="activeTab = 'verified'"
       >
-        <span class="whitespace-nowrap">📚 Verified Species (In DB)</span>
+        <span class="whitespace-nowrap inline-flex items-center gap-1.5"><AppIcon name="book" class="w-4 h-4" />Verified Species (In DB)</span>
         <span class="py-0.5 px-2 rounded-full text-[11px] bg-[#f1f5f9] text-[#475569]">{{ species.length }}</span>
       </button>
 
@@ -40,7 +40,7 @@
         :class="activeTab === 'candidates' ? 'border-[#10b981] text-[#10b981]' : 'border-transparent text-[#64748b] hover:text-[#0f172a]'"
         @click="activeTab = 'candidates'"
       >
-        <span class="whitespace-nowrap">🔬 Candidate Scans (New Data - Not in DB)</span>
+        <span class="whitespace-nowrap inline-flex items-center gap-1.5"><AppIcon name="microscope" class="w-4 h-4" />Candidate Scans (New Data - Not in DB)</span>
         <span class="py-0.5 px-2 rounded-full text-[11px] bg-[#d1fae5] text-[#065f46] font-bold">{{ candidateScans.length }}</span>
       </button>
     </div>
@@ -79,9 +79,9 @@
                 <td class="py-2.5 px-3.5 text-[12.5px] text-[#94a3b8] border-b border-[#f8fafc] align-middle whitespace-nowrap group-last:border-none">{{ formatDate(sp.created_at) }}</td>
                 <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
                   <div class="flex gap-1.5">
-                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#e0f2fe] hover:border-[#bae6fd]" title="Generate PDF" @click="exportSpeciesPdf(sp)">📄</button>
-                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" title="Edit" @click="openEdit(sp)">✏️</button>
-                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] cursor-pointer text-[13px] flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#fee2e2] hover:border-[#fecaca]" title="Delete" @click="deleteSpecies(sp)">🗑</button>
+                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] text-[#475569] cursor-pointer flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#e0f2fe] hover:border-[#bae6fd] hover:text-[#0284c7]" title="Generate PDF" @click="exportSpeciesPdf(sp)"><AppIcon name="file" class="w-3.5 h-3.5" /></button>
+                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] text-[#475569] cursor-pointer flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" title="Edit" @click="openEdit(sp)"><AppIcon name="pencil" class="w-3.5 h-3.5" /></button>
+                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] text-[#475569] cursor-pointer flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#fee2e2] hover:border-[#fecaca] hover:text-[#dc2626]" title="Delete" @click="deleteSpecies(sp)"><AppIcon name="trash" class="w-3.5 h-3.5" /></button>
                   </div>
                 </td>
               </tr>
@@ -105,7 +105,7 @@
         <p class="text-[12.5px] text-[#475569]">
           Showing user scans where <strong class="text-[#059669]">Share Data for Research</strong> is enabled. Admins can promote valid candidate scans into official DB species.
         </p>
-        <button class="py-1.5 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12px] font-medium text-[#475569] cursor-pointer hover:bg-[#f1f5f9]" @click="fetchCandidateScans">🔄 Refresh</button>
+        <button class="py-1.5 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12px] font-medium text-[#475569] cursor-pointer hover:bg-[#f1f5f9] inline-flex items-center gap-1.5" @click="fetchCandidateScans"><AppIcon name="refresh" class="w-3.5 h-3.5" /><span>Refresh</span></button>
       </div>
 
       <div class="overflow-x-auto">
@@ -145,7 +145,7 @@
                   <p class="text-[11.5px] text-[#94a3b8]">{{ scan.user?.email }}</p>
                 </td>
                 <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle text-[12px] text-[#64748b]">
-                  <span v-if="scan.latitude && scan.longitude">📍 {{ scan.latitude }}, {{ scan.longitude }}</span>
+                  <span v-if="scan.latitude && scan.longitude" class="inline-flex items-center gap-1"><AppIcon name="map-pin" class="w-3.5 h-3.5" />{{ scan.latitude }}, {{ scan.longitude }}</span>
                   <span v-else class="text-[#94a3b8]">No GPS Data</span>
                 </td>
                 <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
@@ -155,10 +155,10 @@
                 </td>
                 <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
                   <button
-                    class="py-1.5 px-3 rounded-lg bg-[#10b981] text-white text-[12px] font-semibold border-none cursor-pointer hover:bg-[#059669] transition-colors"
+                    class="py-1.5 px-3 rounded-lg bg-[#10b981] text-white text-[12px] font-semibold border-none cursor-pointer hover:bg-[#059669] transition-colors inline-flex items-center gap-1"
                     @click="openPromoteModal(scan)"
                   >
-                    ➕ Add to Species DB
+                    <AppIcon name="plus" class="w-3.5 h-3.5" /><span>Add to Species DB</span>
                   </button>
                 </td>
               </tr>
@@ -215,7 +215,7 @@
             <textarea v-model="form.description" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none resize-y transition-colors duration-[0.18s] focus:border-[#10b981]" rows="3" placeholder="Brief description…" />
           </div>
           <div class="flex justify-between items-center pt-1">
-            <button v-if="editingId" class="py-[9px] px-4 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] text-[13px] font-semibold text-[#0f172a] cursor-pointer hover:bg-[#e2e8f0] flex items-center gap-1.5" @click="exportCurrentFormPdf">📄 Generate PDF</button>
+            <button v-if="editingId" class="py-[9px] px-4 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] text-[13px] font-semibold text-[#0f172a] cursor-pointer hover:bg-[#e2e8f0] flex items-center gap-1.5" @click="exportCurrentFormPdf"><AppIcon name="file" class="w-4 h-4 text-[#64748b]" /><span>Generate PDF</span></button>
             <div v-else></div>
             <div class="flex gap-2.5">
               <button class="py-[9px] px-5 rounded-lg border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans cursor-pointer text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f8fafc]" @click="closeModal">Cancel</button>
@@ -518,6 +518,8 @@ function exportCurrentFormPdf() {
   })
 }
 
+const PRINT_BRAND_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3C7.03 3 3 7.03 3 12c0 1.1.3 2.15.82 3h16.36c.52-.85.82-1.9.82-3 0-4.97-4.03-9-9-9zm-2.5 12v5a1.5 1.5 0 0 0 1.5 1.5h2a1.5 1.5 0 0 0 1.5-1.5v-5h-5z"/></svg>'
+
 function exportSpeciesPdf(sp: Species) {
   const printWindow = window.open('', '_blank', 'width=850,height=950')
   if (!printWindow) {
@@ -567,7 +569,7 @@ function exportSpeciesPdf(sp: Species) {
     </head>
     <body>
       <div class="header">
-        <div class="brand">🍄 MycoVision</div>
+        <div class="brand">${PRINT_BRAND_SVG} MycoVision</div>
         <div class="doc-title">Mushroom Species Datasheet</div>
       </div>
 
@@ -644,7 +646,7 @@ function exportCatalogPdf() {
       <style>
         body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 35px; color: #1e293b; background: #fff; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #10b981; padding-bottom: 12px; margin-bottom: 20px; }
-        .brand { font-size: 22px; font-weight: 800; color: #065f46; }
+        .brand { font-size: 22px; font-weight: 800; color: #065f46; display: flex; align-items: center; gap: 8px; }
         .doc-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
         .summary-bar { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 13.5px; color: #475569; display: flex; justify-content: space-between; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -662,7 +664,7 @@ function exportCatalogPdf() {
     </head>
     <body>
       <div class="header">
-        <div class="brand">🍄 MycoVision Species Catalog</div>
+        <div class="brand">${PRINT_BRAND_SVG} MycoVision Species Catalog</div>
         <div class="doc-title">Official Database Summary</div>
       </div>
       <div class="summary-bar">

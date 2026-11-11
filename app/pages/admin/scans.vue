@@ -98,7 +98,8 @@
                   </div>
                 </td>
                 <td class="py-2.5 px-3.5 text-[12.5px] text-[#64748b] border-b border-[#f8fafc] align-middle group-last:border-none">
-                  {{ hasCoords(scan) ? `📍 ${Number(scan.latitude).toFixed(2)}, ${Number(scan.longitude).toFixed(2)}` : '—' }}
+                  <span v-if="hasCoords(scan)" class="inline-flex items-center gap-1"><AppIcon name="map-pin" class="w-3.5 h-3.5 text-[#64748b]" />{{ Number(scan.latitude).toFixed(2) }}, {{ Number(scan.longitude).toFixed(2) }}</span>
+                  <span v-else>—</span>
                 </td>
                 <td class="py-2.5 px-3.5 text-[12.5px] text-[#94a3b8] border-b border-[#f8fafc] align-middle whitespace-nowrap group-last:border-none">{{ formatDate(scan.created_at) }}</td>
                 <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">

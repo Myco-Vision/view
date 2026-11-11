@@ -13,28 +13,28 @@
     <!-- Stats row -->
     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       <div class="flex items-center gap-3.5 py-3.5 px-[18px] rounded-xl bg-white border border-[#e2e8f0] border-l-[3px] border-l-[#a78bfa]">
-        <span class="text-[26px] leading-none">🍄</span>
+        <AppIcon name="mushroom" class="w-7 h-7 text-[#8b5cf6]" />
         <div class="min-w-0">
           <p class="text-[22px] font-bold text-[#0f172a] leading-none">{{ collection.length }}</p>
           <p class="text-[12px] text-[#64748b] mt-[3px] truncate whitespace-nowrap">Total Collected</p>
         </div>
       </div>
       <div class="flex items-center gap-3.5 py-3.5 px-[18px] rounded-xl bg-white border border-[#e2e8f0] border-l-[3px] border-l-[#22c55e]">
-        <span class="text-[26px] leading-none">✅</span>
+        <AppIcon name="check-circle" class="w-7 h-7 text-[#22c55e]" />
         <div>
           <p class="text-[22px] font-bold text-[#0f172a] leading-none">{{ edibleCount }}</p>
           <p class="text-[12px] text-[#64748b] mt-[3px]">Edible</p>
         </div>
       </div>
       <div class="flex items-center gap-3.5 py-3.5 px-[18px] rounded-xl bg-white border border-[#e2e8f0] border-l-[3px] border-l-[#ef4444]">
-        <span class="text-[26px] leading-none">☠️</span>
+        <AppIcon name="skull" class="w-7 h-7 text-[#ef4444]" />
         <div>
           <p class="text-[22px] font-bold text-[#0f172a] leading-none">{{ poisonousCount }}</p>
           <p class="text-[12px] text-[#64748b] mt-[3px]">Poisonous</p>
         </div>
       </div>
       <div class="flex items-center gap-3.5 py-3.5 px-[18px] rounded-xl bg-white border border-[#e2e8f0] border-l-[3px] border-l-[#ec4899]">
-        <span class="text-[26px] leading-none">❤️</span>
+        <AppIcon name="heart-solid" class="w-7 h-7 text-[#ec4899]" />
         <div>
           <p class="text-[22px] font-bold text-[#0f172a] leading-none">{{ favorites.length }}</p>
           <p class="text-[12px] text-[#64748b] mt-[3px]">Favorites Saved</p>
@@ -58,10 +58,10 @@
         <button
           v-for="f in filters"
           :key="f.value"
-          class="py-[7px] px-3.5 rounded-[20px] border border-[#e2e8f0] bg-white text-[13px] font-sans text-[#64748b] cursor-pointer transition-all duration-[0.18s] font-medium whitespace-nowrap hover:bg-[#f8fafc] hover:text-[#0f172a]"
+          class="py-[7px] px-3.5 rounded-[20px] border border-[#e2e8f0] bg-white text-[13px] font-sans text-[#64748b] cursor-pointer transition-all duration-[0.18s] font-medium whitespace-nowrap hover:bg-[#f8fafc] hover:text-[#0f172a] inline-flex items-center gap-1.5"
           :class="{ 'bg-[#10b981] border-[#10b981] text-white hover:bg-[#10b981] hover:text-white': activeFilter === f.value }"
           @click="activeFilter = f.value"
-        >{{ f.label }}</button>
+        ><AppIcon v-if="f.icon" :name="f.icon" class="w-3.5 h-3.5" :class="activeFilter === f.value ? 'text-white' : f.iconClass" />{{ f.label }}</button>
       </div>
 
       <!-- Sort -->
@@ -84,10 +84,11 @@
           <img :src="item.image" :alt="item.name" class="w-full h-full object-cover block transition-transform duration-300 group-hover:scale-[1.04]" />
           <!-- classification ribbon -->
           <span
-            class="absolute top-2.5 left-2.5 text-[11.5px] font-semibold py-[3px] px-2.5 rounded-[20px] backdrop-blur-[4px]"
+            class="absolute top-2.5 left-2.5 text-[11.5px] font-semibold py-[3px] px-2.5 rounded-[20px] backdrop-blur-[4px] inline-flex items-center gap-1"
             :class="item.classification === 'Edible' ? 'bg-[#dcfce7eb] text-[#166534]' : 'bg-[#fee2e2eb] text-[#991b1b]'"
           >
-            {{ item.classification === 'Edible' ? '✅ Edible' : '☠️ Poisonous' }}
+            <AppIcon :name="item.classification === 'Edible' ? 'check-circle' : 'skull'" class="w-3.5 h-3.5" />
+            <span>{{ item.classification === 'Edible' ? 'Edible' : 'Poisonous' }}</span>
           </span>
           <!-- Heart Button -->
           <button 
@@ -149,7 +150,7 @@
 
           <!-- Footer meta -->
           <div class="flex items-center justify-between text-[11.5px] text-[#94a3b8] pt-1 border-t border-[#f1f5f9] mt-0.5">
-            <span>📍 {{ item.location }}</span>
+            <span class="inline-flex items-center gap-1 truncate"><AppIcon name="map-pin" class="w-3.5 h-3.5" />{{ item.location }}</span>
             <span>{{ item.date }}</span>
           </div>
         </div>
@@ -158,7 +159,7 @@
 
     <!-- Empty state -->
     <div v-else class="flex-1 flex flex-col items-center justify-center gap-2.5 py-[60px] px-5 text-center bg-white border border-[#e2e8f0] rounded-[14px]">
-      <div class="text-[52px] leading-none">🍄</div>
+      <AppIcon name="mushroom" class="w-12 h-12 text-[#10b981]" />
       <p class="text-[17px] font-semibold text-[#0f172a]">No mushrooms found</p>
       <p class="text-[13.5px] text-[#64748b]">Start scanning mushrooms and save them to your collection!</p>
       <NuxtLink to="/users/scan" class="mt-2 py-2.5 px-6 rounded-[10px] bg-[#10b981] text-white text-[14px] font-semibold no-underline transition-colors duration-[0.18s] hover:bg-[#059669]">Scan a Mushroom</NuxtLink>
@@ -176,10 +177,11 @@
               <div class="flex items-end justify-between w-full">
                 <div>
                   <span
-                    class="text-[11.5px] font-bold py-1 px-3 rounded-full mb-1.5 inline-block backdrop-blur-md"
+                    class="text-[11.5px] font-bold py-1 px-3 rounded-full mb-1.5 inline-flex items-center gap-1.5 backdrop-blur-md"
                     :class="selectedItem.classification === 'Edible' ? 'bg-[#dcfce7]/90 text-[#166534]' : 'bg-[#fee2e2]/90 text-[#991b1b]'"
                   >
-                    {{ selectedItem.classification === 'Edible' ? '✅ Edible Species' : '☠️ Poisonous Species' }}
+                    <AppIcon :name="selectedItem.classification === 'Edible' ? 'check-circle' : 'skull'" class="w-3.5 h-3.5" />
+                    <span>{{ selectedItem.classification === 'Edible' ? 'Edible Species' : 'Poisonous Species' }}</span>
                   </span>
                   <h2 class="text-[20px] font-bold text-white italic drop-shadow-md">{{ selectedItem.name }}</h2>
                 </div>
@@ -195,7 +197,7 @@
           <div class="p-5 flex flex-col gap-4">
             <div class="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3.5 flex flex-col gap-2">
               <div class="flex items-center justify-between text-[13px]">
-                <span class="font-semibold text-[#334155]">🎯 AI Confidence Score</span>
+                <span class="font-semibold text-[#334155] inline-flex items-center gap-1.5"><AppIcon name="target" class="w-4 h-4 text-[#10b981]" />AI Confidence Score</span>
                 <span class="font-bold text-[#10b981] text-[14px]">{{ selectedItem.confidence }}%</span>
               </div>
               <div class="w-full bg-[#e2e8f0] h-2.5 rounded-full overflow-hidden">
@@ -205,11 +207,11 @@
 
             <div class="grid grid-cols-2 gap-3">
               <div class="p-3 bg-[#f8fafc] border border-[#f1f5f9] rounded-xl flex flex-col gap-1">
-                <span class="text-[11.5px] font-semibold text-[#94a3b8] uppercase">📅 Collection Date</span>
+                <span class="text-[11.5px] font-semibold text-[#94a3b8] uppercase inline-flex items-center gap-1"><AppIcon name="calendar" class="w-3.5 h-3.5" />Collection Date</span>
                 <span class="text-[13px] font-semibold text-[#0f172a]">{{ selectedItem.date }}</span>
               </div>
               <div class="p-3 bg-[#f8fafc] border border-[#f1f5f9] rounded-xl flex flex-col gap-1">
-                <span class="text-[11.5px] font-semibold text-[#94a3b8] uppercase">📍 Location</span>
+                <span class="text-[11.5px] font-semibold text-[#94a3b8] uppercase inline-flex items-center gap-1"><AppIcon name="map-pin" class="w-3.5 h-3.5" />Location</span>
                 <span class="text-[13px] font-semibold text-[#0f172a] truncate">{{ selectedItem.location }}</span>
               </div>
             </div>
@@ -234,7 +236,10 @@
               :class="isFavorite(selectedItem.id) ? 'bg-[#fef2f2] border-[#fecaca] text-[#ef4444]' : 'bg-white border-[#e2e8f0] text-[#475569] hover:text-[#ef4444]'"
               @click="toggleFavorite(selectedItem)"
             >
-              <span>{{ isFavorite(selectedItem.id) ? '❤️ Favorite' : '🤍 Add to Favorites' }}</span>
+              <span class="inline-flex items-center gap-1.5">
+                <AppIcon :name="isFavorite(selectedItem.id) ? 'heart-solid' : 'heart'" class="w-4 h-4" />
+                {{ isFavorite(selectedItem.id) ? 'Favorite' : 'Add to Favorites' }}
+              </span>
             </button>
             <button class="py-2 px-5 rounded-xl bg-[#0f172a] text-white text-[13px] font-semibold cursor-pointer hover:bg-[#334155]" @click="showModal = false">
               Close
@@ -258,10 +263,10 @@ const firstName = ref('Explorer')
 
 // Filters & sort
 const filters = [
-  { label: 'All',           value: 'all' },
-  { label: '✅ Edible',     value: 'Edible' },
-  { label: '☠️ Poisonous',  value: 'Poisonous' },
-  { label: '❤️ Favorites',  value: 'favorites' },
+  { label: 'All',       value: 'all',       icon: '',             iconClass: '' },
+  { label: 'Edible',    value: 'Edible',    icon: 'check-circle', iconClass: 'text-[#16a34a]' },
+  { label: 'Poisonous', value: 'Poisonous', icon: 'skull',        iconClass: 'text-[#dc2626]' },
+  { label: 'Favorites', value: 'favorites', icon: 'heart-solid',  iconClass: 'text-[#ef4444]' },
 ]
 const activeFilter = ref('all')
 const search = ref('')
