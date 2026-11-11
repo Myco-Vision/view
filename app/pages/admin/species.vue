@@ -3,12 +3,12 @@
     <!-- Page Header -->
     <div class="flex items-end justify-between gap-3 flex-wrap">
       <div>
-        <h1 class="text-[22px] font-bold text-[#0f172a]">Species Database</h1>
+        <h1 class="text-[22px] font-bold text-[#0f172a]">Species DB &amp; AI Retrain</h1>
         <p class="text-[13.5px] text-[#64748b] mt-[3px]">
-          Manage verified database species and review user-scanned research candidate data.
+          Manage verified species, promote consented field scans, and retrain the mushroom classifier.
         </p>
       </div>
-      <div class="flex items-center gap-2.5 flex-wrap w-full sm:w-auto">
+      <div v-if="activeTab !== 'retrain'" class="flex items-center gap-2.5 flex-wrap w-full sm:w-auto">
         <div class="relative w-full sm:w-auto">
           <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input v-model="searchQuery" @input="debouncedFilter" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none w-full sm:w-[200px] transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="Search species…" />
@@ -29,7 +29,7 @@
       <button
         class="shrink-0 py-2.5 px-4 text-[14px] font-semibold transition-colors duration-200 border-b-2 -mb-[1px] cursor-pointer flex items-center gap-2"
         :class="activeTab === 'verified' ? 'border-[#10b981] text-[#10b981]' : 'border-transparent text-[#64748b] hover:text-[#0f172a]'"
-        @click="activeTab = 'verified'"
+        @click="selectTab('verified')"
       >
         <span class="whitespace-nowrap inline-flex items-center gap-1.5"><AppIcon name="book" class="w-4 h-4" />Verified Species (In DB)</span>
         <span class="py-0.5 px-2 rounded-full text-[11px] bg-[#f1f5f9] text-[#475569]">{{ species.length }}</span>
@@ -38,10 +38,21 @@
       <button
         class="shrink-0 py-2.5 px-4 text-[14px] font-semibold transition-colors duration-200 border-b-2 -mb-[1px] cursor-pointer flex items-center gap-2"
         :class="activeTab === 'candidates' ? 'border-[#10b981] text-[#10b981]' : 'border-transparent text-[#64748b] hover:text-[#0f172a]'"
-        @click="activeTab = 'candidates'"
+        @click="selectTab('candidates')"
       >
-        <span class="whitespace-nowrap inline-flex items-center gap-1.5"><AppIcon name="microscope" class="w-4 h-4" />Candidate Scans (New Data - Not in DB)</span>
+        <span class="whitespace-nowrap inline-flex items-center gap-1.5"><AppIcon name="microscope" class="w-4 h-4" />Candidate Scans (Review)</span>
         <span class="py-0.5 px-2 rounded-full text-[11px] bg-[#d1fae5] text-[#065f46] font-bold">{{ candidateScans.length }}</span>
+      </button>
+
+      <button
+        class="shrink-0 py-2.5 px-4 text-[14px] font-semibold transition-colors duration-200 border-b-2 -mb-[1px] cursor-pointer flex items-center gap-2"
+        :class="activeTab === 'retrain' ? 'border-[#10b981] text-[#10b981]' : 'border-transparent text-[#64748b] hover:text-[#0f172a]'"
+        @click="selectTab('retrain')"
+      >
+        <span class="whitespace-nowrap inline-flex items-center gap-1.5"><AppIcon name="brain" class="w-4 h-4" />AI Model Retraining</span>
+        <span class="py-0.5 px-2 rounded-full text-[11px] font-bold" :class="retrainState === 'running' ? 'bg-amber-100 text-amber-800 animate-pulse' : 'bg-[#f1f5f9] text-[#475569]'">
+          {{ retrainState === 'running' ? 'Training…' : retrainCount }}
+        </span>
       </button>
     </div>
 
@@ -168,6 +179,13 @@
       </div>
     </div>
 
+    <!-- Tab 3: AI Model Retraining -->
+    <AdminRetrainPanel
+      v-show="activeTab === 'retrain'"
+      @update:count="retrainCount = $event"
+      @update:state="retrainState = $event"
+    />
+
     <!-- Add / Edit / Promote Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] backdrop-blur-[2px]" @click.self="closeModal">
       <div class="bg-white rounded-2xl w-[560px] max-w-[95vw] shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
@@ -239,11 +257,27 @@ definePageMeta({
 })
 
 const config = useRuntimeConfig()
+const route = useRoute()
+const router = useRouter()
 // Composables must be called synchronously in setup (before any await)
 const toast = useToast()
 const { confirm } = useConfirm()
 
-const activeTab = ref<'verified' | 'candidates'>('verified')
+type SpeciesTab = 'verified' | 'candidates' | 'retrain'
+function parseTab(val: unknown): SpeciesTab {
+  return val === 'candidates' || val === 'retrain' ? val : 'verified'
+}
+const activeTab = ref<SpeciesTab>(parseTab(route.query.tab))
+watch(() => route.query.tab, (t) => {
+  activeTab.value = parseTab(t)
+})
+function selectTab(tab: SpeciesTab) {
+  activeTab.value = tab
+  router.replace({ query: tab === 'verified' ? {} : { tab } })
+}
+
+const retrainCount = ref(0)
+const retrainState = ref('idle')
 const isSaving = ref(false)
 const formError = ref('')
 const page = ref(1)
