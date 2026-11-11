@@ -62,7 +62,7 @@
             <p class="text-[12.5px] text-[#64748b]">Your image result will appear here</p>
           </div>
           <template v-else>
-            <img :src="previewUrl" alt="Mushroom preview" class="absolute inset-0 w-full h-full object-cover" />
+            <img :src="previewUrl" alt="Mushroom preview" class="absolute inset-0 w-full h-full object-cover" @error="onPreviewError" />
             <button class="absolute top-2.5 right-2.5 bg-black/50 text-white border-none rounded-md py-[3px] px-2.5 text-[12px] cursor-pointer font-sans" @click="clearImage">✕ Remove</button>
           </template>
         </div>
@@ -94,7 +94,7 @@
             <input
               ref="fileInput"
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
               class="absolute w-[1px] h-[1px] overflow-hidden [clip:rect(0,0,0,0)]"
               @change="handleFileChange"
             />
@@ -613,6 +613,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('subscription-updated', loadSubscriptionInfo)
   closeCamera()
+  revokePreviewUrl()
 })
 
 // ── Upload state ─────────────────────────────────────
@@ -1005,12 +1006,17 @@ async function saveFinalScan(file: File) {
 }
 
 // ── Upload handlers ───────────────────────────────────
-function handleFileChange(e: Event) {
-  if (!checkScanEligibility()) {
-    if (fileInput.value) fileInput.value.value = ''
-    return
+function revokePreviewUrl() {
+  if (previewUrl.value && previewUrl.value.startsWith('blob:')) {
+    URL.revokeObjectURL(previewUrl.value)
   }
-  const file = (e.target as HTMLInputElement).files?.[0]
+}
+
+function handleFileChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = '' // allow re-selecting the same file cleanly
+  if (!checkScanEligibility()) return
   if (file) {
     uploadError.value = null
     selectedFile.value = file
@@ -1028,11 +1034,32 @@ function handleDrop(e: DragEvent) {
   }
 }
 function loadPreview(file: File) {
-  const reader = new FileReader()
-  reader.onload = ev => { previewUrl.value = ev.target?.result as string }
-  reader.readAsDataURL(file)
+  const objectUrl = URL.createObjectURL(file)
+  const img = new Image()
+  img.onload = () => {
+    revokePreviewUrl()
+    previewUrl.value = objectUrl
+  }
+  img.onerror = () => {
+    URL.revokeObjectURL(objectUrl)
+    revokePreviewUrl()
+    previewUrl.value = null
+    selectedFile.value = null
+    const isHeic = ['image/heic', 'image/heif'].includes(file.type.toLowerCase()) || /\.(heic|heif)$/i.test(file.name)
+    uploadError.value = isHeic
+      ? 'HEIC/HEIF photos are not supported for preview. Please choose a JPG, PNG, or WebP image.'
+      : 'Unable to preview that file. Please choose a valid JPG, PNG, or WebP image.'
+  }
+  img.src = objectUrl
+}
+function onPreviewError() {
+  revokePreviewUrl()
+  previewUrl.value = null
+  selectedFile.value = null
+  uploadError.value = 'Unable to preview that image. Please choose a valid JPG, PNG, or WebP image.'
 }
 function clearImage() {
+  revokePreviewUrl()
   previewUrl.value = null
   selectedFile.value = null
   result.value = null
