@@ -609,6 +609,13 @@ function checkScanEligibility(): boolean {
 onMounted(() => {
   loadSubscriptionInfo()
   window.addEventListener('subscription-updated', loadSubscriptionInfo)
+  // Silently wake Render ML and pre-load models while user picks/captures an image
+  if (localStorage.getItem('token')) {
+    $fetch(`${config.public.apiBase}/scans/warmup`, {
+      method: 'POST',
+      headers: authHeaders(),
+    }).catch(() => {})
+  }
 })
 
 onUnmounted(() => {

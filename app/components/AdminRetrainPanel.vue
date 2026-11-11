@@ -8,7 +8,7 @@
           Improve the mushroom classifier using consented scan images from foragers.
         </p>
       </div>
-      <div class="flex items-center gap-2.5 w-full sm:w-auto">
+      <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
         <button
           type="button"
           class="py-2 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12.5px] font-medium text-[#475569] cursor-pointer hover:bg-[#f1f5f9] inline-flex items-center justify-center gap-1.5"
@@ -17,6 +17,16 @@
         >
           <AppIcon name="refresh" class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
           <span>Refresh</span>
+        </button>
+        <button
+          type="button"
+          class="py-2 px-3 rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] text-[12.5px] font-semibold text-[#047857] cursor-pointer hover:bg-[#dcfce7] inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
+          :disabled="refreshingMl || retrainState === 'running'"
+          title="Reload Stage-1 & Stage-2 ML models on Render so new scans run against the latest weights"
+          @click="refreshMlService"
+        >
+          <AppIcon name="sparkles" class="w-3.5 h-3.5" :class="{ 'animate-pulse': refreshingMl }" />
+          <span>{{ refreshingMl ? 'Warming ML…' : 'Refresh ML' }}</span>
         </button>
         <button
           id="btn-start-retrain"
@@ -387,6 +397,8 @@ const classPanels: Array<{
 
 const loading = ref(true)
 const restoring = ref(false)
+const refreshingMl = ref(false)
+const { success: toastSuccess, error: toastError } = useToast()
 const queueView = ref<'ready' | 'trained'>('ready')
 const brokenImages = ref<Record<number, boolean>>({})
 
@@ -550,6 +562,22 @@ async function fetchStatus() {
 
 async function refreshAll() {
   await Promise.all([fetchCandidates(), fetchStatus()])
+}
+
+async function refreshMlService() {
+  refreshingMl.value = true
+  try {
+    const res = await $fetch<any>(`${api}/admin/retrain/refresh`, {
+      method: 'POST',
+      headers: authHeaders(),
+    })
+    toastSuccess(res?.message || 'ML inference models refreshed and ready for new scans.')
+    await fetchStatus()
+  } catch (err: any) {
+    toastError(err?.data?.message || 'Could not reach ML service on Render.')
+  } finally {
+    refreshingMl.value = false
+  }
 }
 
 async function startRetrain() {
