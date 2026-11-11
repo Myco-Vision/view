@@ -430,17 +430,6 @@ async function saveSpecies() {
   }
   formError.value = ''
 
-  // Promoting a user scan into the official DB is hard to undo — confirm first
-  if (promoteScanId.value) {
-    const ok = await confirm({
-      title: 'Add to Species DB?',
-      message: `"${form.name}" will be added to the official species database as a ${form.classification || 'new'} species.`,
-      tone: 'info',
-      confirmText: 'Add to DB',
-    })
-    if (!ok) return
-  }
-
   isSaving.value = true
 
   // Capture before closeModal() resets them
