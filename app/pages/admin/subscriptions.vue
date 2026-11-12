@@ -142,7 +142,7 @@
           </span>
           <div class="flex-1 min-w-0">
             <p class="text-[13px] text-[#334155]"><b class="text-[#0f172a]">{{ e.user?.name ?? 'User' }}</b> — {{ eventStyle(e.action).label }}<span v-if="e.details?.plan"> ({{ e.details.plan }})</span><span v-if="e.details?.days"> · {{ e.details.days }} days</span></p>
-            <p class="text-[11.5px] text-[#94a3b8]">{{ e.admin ? `by ${e.admin.name}` : 'System' }} · {{ fmtDateTime(e.created_at) }}<span v-if="e.details?.note"> · “{{ e.details.note }}”</span></p>
+            <p class="text-[11.5px] text-[#94a3b8]">{{ e.admin ? `by ${e.admin.name}` : 'System' }} · {{ fmtDateTime(e.created_at) }}<span v-if="e.details?.note || e.details?.reason"> · “{{ e.details.note || e.details.reason }}”</span></p>
           </div>
         </li>
       </ul>
@@ -504,7 +504,12 @@ async function fetchEvents() { try { events.value = (await api('/events?per_page
 function refreshAll() { fetchSubs(pagination.current_page); fetchStats(); fetchEvents(); fetchRefunds(refundPagination.current_page); fetchRefundStats() }
 onMounted(refreshAll)
 
-function notify(msg: string) { toast.value = msg; setTimeout(() => (toast.value = ''), 2800) }
+let toastTimer: any
+function notify(msg: string, duration = 2800) {
+  clearTimeout(toastTimer)
+  toast.value = msg
+  toastTimer = setTimeout(() => (toast.value = ''), duration)
+}
 function errMsg(e: any) {
   const d = e?.data
   return d?.errors ? Object.values(d.errors).flat().join(' ') : d?.message || 'Something went wrong.'
@@ -673,7 +678,7 @@ async function submitCreateRefund() {
   try {
     const res = await api(`/${createRefund.sub.id}/refund`, { method: 'POST', body: { reason_type: createRefund.reason_type, reason: createRefund.reason.trim() } })
     createRefund.sub = null
-    notify(res.message)
+    notify(res.email_warning ? `${res.message} Email notice: ${res.email_warning}` : res.message, res.email_warning ? 7000 : 2800)
     view.value = 'refunds'
     await Promise.all([fetchRefunds(), fetchRefundStats(), fetchEvents()])
     openReview(res.request)
@@ -724,7 +729,7 @@ async function decide(kind: 'approve' | 'reject') {
       : { note: review.note.trim() }
     const res = await rapi(`/${review.r.id}/${kind}`, { method: 'POST', body })
     review.r = null
-    notify(res.message)
+    notify(res.email_warning ? `${res.message} Email notice: ${res.email_warning}` : res.message, res.email_warning ? 7000 : 2800)
   } catch (e) {
     formError.value = errMsg(e)
   } finally {
@@ -761,10 +766,11 @@ function eventStyle(a: string) {
     auto_renew_on:  { label: 'Auto-renew turned on', icon: 'refresh', cls: 'bg-emerald-50 text-emerald-600' },
     auto_renew_off: { label: 'Auto-renew turned off', icon: 'stop', cls: 'bg-slate-100 text-slate-600' },
     synced:         { label: 'Synced with gateway', icon: 'refresh', cls: 'bg-slate-100 text-slate-600' },
-    refund_requested: { label: 'Refund requested', icon: 'banknote', cls: 'bg-violet-50 text-violet-600' },
-    refunded:         { label: 'Refund issued', icon: 'check-circle', cls: 'bg-emerald-50 text-emerald-600' },
-    refund_rejected:  { label: 'Refund rejected', icon: 'ban', cls: 'bg-red-50 text-red-600' },
-    refund_failed:    { label: 'Refund failed at gateway', icon: 'warning', cls: 'bg-red-50 text-red-600' },
+    refund_requested:         { label: 'Refund requested', icon: 'banknote', cls: 'bg-violet-50 text-violet-600' },
+    refunded:                 { label: 'Refund issued', icon: 'check-circle', cls: 'bg-emerald-50 text-emerald-600' },
+    refund_rejected:          { label: 'Refund rejected', icon: 'ban', cls: 'bg-red-50 text-red-600' },
+    refund_failed:            { label: 'Refund failed at gateway', icon: 'warning', cls: 'bg-red-50 text-red-600' },
+    transaction_email_failed: { label: 'Transaction email failed', icon: 'warning', cls: 'bg-amber-50 text-amber-700' },
   }
   return map[a] ?? { label: a, icon: '', cls: 'bg-slate-100 text-slate-600' }
 }

@@ -1022,6 +1022,7 @@ async function submitRefund() {
     })
     refundModalOpen.value = false
     toast.success(res.message || 'Refund request submitted.')
+    if (res.email_warning) toast.warning(res.email_warning, 7000)
     await fetchRefunds()
   } catch (e: any) {
     refundError.value = refundErrMsg(e)
@@ -1046,6 +1047,7 @@ async function withdrawRefund(r: any) {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, Accept: 'application/json' },
     })
     toast.success(res.message || 'Refund request withdrawn.')
+    if (res.email_warning) toast.warning(res.email_warning, 7000)
     await fetchRefunds()
   } catch (e: any) {
     toast.error(refundErrMsg(e))
