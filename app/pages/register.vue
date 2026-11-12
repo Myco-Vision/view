@@ -555,6 +555,13 @@
       </Transition>
     </Teleport>
 
+    <GooglePasswordModal
+      :challenge="googleChallenge"
+      :loading="googlePasswordSubmitting"
+      :error="googlePasswordError"
+      @submit="submitChallengePassword"
+      @close="cancelChallenge"
+    />
   </div>
 </template>
 
@@ -673,6 +680,14 @@ useHead({
 })
 
 const { setSession, getHomeRoute, restoreAndValidateSession } = useAuthSession()
+const {
+  challenge: googleChallenge,
+  passwordSubmitting: googlePasswordSubmitting,
+  passwordError: googlePasswordError,
+  processGoogleAccessToken,
+  submitChallengePassword,
+  cancelChallenge,
+} = useGooglePasswordChallenge()
 
 onMounted(async () => {
   // Init Google client once script is ready
@@ -938,15 +953,7 @@ async function processGoogleToken(accessToken: string) {
   googleLoading.value = true
   error.value = ''
   try {
-    const data = await $fetch<{ user: any; token: string; needs_completion: boolean }>(`${config.public.apiBase}/auth/google`, {
-      method: 'POST',
-      body: { access_token: accessToken },
-    })
-    setSession(data.token, data.user)
-
-    // Full-page redirect (not a client-side route change): the Google popup callback runs outside
-    // Vue's lifecycle, so an SPA transition left the old page stuck under the new layout.
-    await navigateTo(getHomeRoute(data.user, data.needs_completion), { external: true })
+    await processGoogleAccessToken(accessToken)
   } catch (err: any) {
     error.value = err?.data?.message || 'Google sign-up failed. Please try again.'
   } finally {

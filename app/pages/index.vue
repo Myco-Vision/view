@@ -932,6 +932,13 @@
       </div>
     </Teleport>
 
+    <GooglePasswordModal
+      :challenge="googleChallenge"
+      :loading="googlePasswordSubmitting"
+      :error="googlePasswordError"
+      @submit="submitChallengePassword"
+      @close="cancelChallenge"
+    />
   </div>
 </template>
 
@@ -999,6 +1006,18 @@ function scrollToLogin() {
 
 // ── Continue with Google ──
 const googleLoading = ref(false)
+const {
+  challenge: googleChallenge,
+  passwordSubmitting: googlePasswordSubmitting,
+  passwordError: googlePasswordError,
+  processGoogleAccessToken,
+  submitChallengePassword,
+  cancelChallenge,
+} = useGooglePasswordChallenge()
+
+watch(googleChallenge, (val) => {
+  if (val) modalOpen.value = false
+})
 
 useHead({
   script: [{ src: 'https://accounts.google.com/gsi/client', async: true, defer: true }],
@@ -1031,13 +1050,7 @@ function handleGoogleLogin() {
 
 async function processGoogleToken(accessToken: string) {
   try {
-    const data = await $fetch<{ user: any; token: string; needs_completion?: boolean }>(`${config.public.apiBase}/auth/google`, {
-      method: 'POST',
-      body: { access_token: accessToken },
-    })
-    setSession(data.token, data.user)
-    // Full-page redirect: the GSI callback runs outside Vue's lifecycle
-    await navigateTo(getHomeRoute(data.user, data.needs_completion), { external: true })
+    await processGoogleAccessToken(accessToken)
   } catch (err: any) {
     loginError.value = err?.data?.message || 'Google sign-in failed. Please try again.'
   } finally {
