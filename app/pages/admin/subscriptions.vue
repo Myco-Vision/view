@@ -412,8 +412,8 @@
               This sends <b>{{ peso(review.amount) }}</b> back to the customer through PayMongo and ends their Premium access. It cannot be undone.
             </div>
             <div class="flex gap-2.5">
-              <button id="reject-refund" class="flex-1 py-2.5 rounded-lg border border-red-200 bg-white text-red-600 text-[13.5px] font-semibold cursor-pointer hover:bg-red-50 disabled:opacity-50" :disabled="busy" @click="decide('reject')">{{ review.confirmReject ? 'Confirm Reject' : 'Reject' }}</button>
-              <button v-if="canApprove" id="approve-refund" class="flex-1 py-2.5 rounded-lg border-none text-white text-[13.5px] font-semibold cursor-pointer disabled:opacity-50" :class="review.confirmApprove ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-emerald-500 to-emerald-600'" :disabled="busy || !(review.amount > 0)" @click="decide('approve')">{{ busy ? 'Working…' : review.confirmApprove ? 'Yes, Issue Refund' : 'Approve & Refund' }}</button>
+              <button id="reject-refund" class="flex-1 py-2.5 rounded-lg border border-red-200 bg-white text-red-600 text-[13.5px] font-semibold cursor-pointer hover:bg-red-50 disabled:opacity-50" :disabled="busy" @click="decide('reject')">{{ review.pendingAction === 'reject' ? 'Rejecting…' : review.confirmReject ? 'Confirm Reject' : 'Reject' }}</button>
+              <button v-if="canApprove" id="approve-refund" class="flex-1 py-2.5 rounded-lg border-none text-white text-[13.5px] font-semibold cursor-pointer disabled:opacity-50" :class="review.confirmApprove ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-emerald-500 to-emerald-600'" :disabled="busy || !(review.amount > 0)" @click="decide('approve')">{{ review.pendingAction === 'approve' ? 'Working…' : review.confirmApprove ? 'Yes, Issue Refund' : 'Approve & Refund' }}</button>
             </div>
           </template>
 
@@ -686,7 +686,7 @@ async function submitCreateRefund() {
 }
 
 // Review a request: approve (super admin only) or reject
-const review = reactive<any>({ r: null, amount: 0, type: 'full', note: '', confirmApprove: false, confirmReject: false })
+const review = reactive<any>({ r: null, amount: 0, type: 'full', note: '', confirmApprove: false, confirmReject: false, pendingAction: null as 'approve' | 'reject' | null })
 const canApprove = computed(() => isSuperAdmin.value)
 function openReview(r: any) {
   Object.assign(review, {
@@ -696,6 +696,7 @@ function openReview(r: any) {
     note: '',
     confirmApprove: false,
     confirmReject: false,
+    pendingAction: null,
   })
   formError.value = ''
 }
@@ -723,6 +724,7 @@ async function decide(kind: 'approve' | 'reject') {
   }
 
   busy.value = true
+  review.pendingAction = kind
   try {
     const body = kind === 'approve'
       ? { amount: review.amount, refund_type: review.type, note: review.note || null }
@@ -734,6 +736,7 @@ async function decide(kind: 'approve' | 'reject') {
     formError.value = errMsg(e)
   } finally {
     busy.value = false
+    review.pendingAction = null
     // A gateway failure still changes the request (to 'failed'), so always resync
     fetchRefunds(refundPagination.current_page); fetchRefundStats(); fetchSubs(pagination.current_page); fetchEvents()
   }
