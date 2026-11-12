@@ -912,7 +912,7 @@ async function openCamera() {
     mediaStream = stream
     cameraDetectionState.value = 'scanning'
     isCameraOpen.value = true
-    setStatus('Scanning for mushroom...')
+    setStatus('Checking subject...')
 
     // Start fetching GPS in parallel so camera scans get a location too
     // (skipped if the user already pinned a manual location)
@@ -990,18 +990,16 @@ async function runAutoScanCycle(session: number) {
 
     if (session !== cameraSessionId || !isCameraOpen.value || isCapturing.value) return
 
-    if (preview.result_classification === 'not_mushroom') {
+    const isMushroom = typeof preview.is_mushroom === 'boolean'
+      ? preview.is_mushroom
+      : preview.result_classification !== 'not_mushroom'
+
+    if (!isMushroom) {
       cameraDetectionState.value = 'not_mushroom'
-      setStatus('Non-mushroom object detected — point camera at a mushroom', 'error')
+      setStatus(preview.label || 'subject not mushroom', 'error')
     } else {
       cameraDetectionState.value = 'mushroom'
-      const detectedName = typeof preview.result_name === 'string' ? preview.result_name.trim() : ''
-      setStatus(
-        detectedName
-          ? `Mushroom detected (${detectedName}) — tap Capture`
-          : 'Mushroom detected — tap Capture',
-        'info'
-      )
+      setStatus(preview.label || 'subject is mushroom', 'info')
     }
 
     nextDelayMs = 1200
@@ -1075,7 +1073,7 @@ async function captureAndAnalyze() {
     // Backend rejected it (re-check at save time) → nothing saved, resume auto-scan
     if (error?.data?.error === 'NOT_MUSHROOM') {
       cameraDetectionState.value = 'not_mushroom'
-      setStatus('Non-mushroom object detected — point camera at a mushroom', 'error')
+      setStatus('subject not mushroom', 'error')
       return
     }
 
