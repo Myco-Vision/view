@@ -286,13 +286,18 @@
           playsinline
           muted
           class="absolute inset-0 w-full h-full object-cover bg-[#111]"
+          @loadeddata="scheduleAutoScan(150)"
         ></video>
 
         <!-- Status pill -->
         <div v-if="scanStatus" class="absolute left-0 right-0 bottom-[120px] flex justify-center px-4 pointer-events-none">
           <span
-            class="px-4 py-2 rounded-full text-[13px] font-medium text-white backdrop-blur-sm"
-            :class="scanStatusType === 'error' ? 'bg-red-600/85' : 'bg-black/60'"
+            class="px-4 py-2 rounded-full text-[13px] font-medium text-white backdrop-blur-sm text-center shadow-sm transition-colors"
+            :class="{
+              'bg-emerald-600/90': cameraDetectionState === 'mushroom',
+              'bg-red-600/85': scanStatusType === 'error' || cameraDetectionState === 'not_mushroom',
+              'bg-black/65': scanStatusType !== 'error' && cameraDetectionState !== 'mushroom' && cameraDetectionState !== 'not_mushroom',
+            }"
           >{{ scanStatus }}</span>
         </div>
 
@@ -304,10 +309,14 @@
             @click="closeCamera"
           >Cancel</button>
 
-          <!-- Shutter -->
+          <!-- Shutter (enabled automatically once auto-scan identifies a mushroom) -->
           <button
-            class="w-[68px] h-[68px] rounded-full border-4 border-white bg-white/20 flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="isCapturing"
+            class="w-[68px] h-[68px] rounded-full border-4 flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            :class="cameraDetectionState === 'mushroom' && !isCapturing
+              ? 'border-emerald-400 bg-emerald-400/25 shadow-[0_0_0_4px_rgba(16,185,129,0.2)]'
+              : 'border-white/70 bg-white/15'"
+            :disabled="isCapturing || cameraDetectionState !== 'mushroom'"
+            :title="cameraDetectionState === 'mushroom' ? 'Capture mushroom photo' : 'Point camera at a mushroom to enable capture'"
             aria-label="Capture"
             @click="captureAndAnalyze"
           >
@@ -633,14 +642,21 @@ const selectedFile = ref<File | null>(null)
 const result       = ref<any>(null)
 const uploadError  = ref<string | null>(null)
 
-// ── Camera / manual capture state ─────────────────────
+// ── Camera / auto-scan capture state ──────────────────
 const isCameraOpen = ref(false)
 const videoRef = ref<HTMLVideoElement | null>(null)
 let mediaStream: MediaStream | null = null
 
+type CameraDetectionState = 'scanning' | 'not_mushroom' | 'mushroom' | 'error'
+const cameraDetectionState = ref<CameraDetectionState>('scanning')
 const isCapturing = ref(false)
 const scanStatus = ref('')
 const scanStatusType = ref<'info' | 'error'>('info')
+
+let cameraSessionId = 0
+let autoScanTimer: ReturnType<typeof setTimeout> | null = null
+let autoScanAbortController: AbortController | null = null
+let isAutoScanRunning = false
 
 function setStatus(msg: string, type: 'info' | 'error' = 'info') {
   scanStatus.value = msg
@@ -861,6 +877,29 @@ async function saveLocation() {
 }
 
 // ── Camera ────────────────────────────────────────────
+function stopAutoScan() {
+  if (autoScanTimer) {
+    clearTimeout(autoScanTimer)
+    autoScanTimer = null
+  }
+  if (autoScanAbortController) {
+    autoScanAbortController.abort()
+    autoScanAbortController = null
+  }
+  isAutoScanRunning = false
+}
+
+function scheduleAutoScan(delayMs = 1200) {
+  if (!isCameraOpen.value || isCapturing.value || isAutoScanRunning || autoScanTimer !== null) {
+    return
+  }
+  const session = cameraSessionId
+  autoScanTimer = setTimeout(() => {
+    autoScanTimer = null
+    void runAutoScanCycle(session)
+  }, delayMs)
+}
+
 async function openCamera() {
   if (!checkScanEligibility()) return
 
@@ -868,9 +907,12 @@ async function openCamera() {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'environment' }
     })
+    stopAutoScan()
+    cameraSessionId += 1
     mediaStream = stream
+    cameraDetectionState.value = 'scanning'
     isCameraOpen.value = true
-    setStatus('')
+    setStatus('Scanning for mushroom...')
 
     // Start fetching GPS in parallel so camera scans get a location too
     // (skipped if the user already pinned a manual location)
@@ -878,6 +920,7 @@ async function openCamera() {
 
     nextTick(() => {
       if (videoRef.value) videoRef.value.srcObject = stream
+      scheduleAutoScan(300)
     })
   } catch (error) {
     console.error('Error accessing camera:', error)
@@ -886,28 +929,116 @@ async function openCamera() {
 }
 
 function closeCamera() {
+  cameraSessionId += 1
+  stopAutoScan()
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop())
     mediaStream = null
   }
   isCameraOpen.value = false
   isCapturing.value = false
+  cameraDetectionState.value = 'scanning'
   setStatus('')
 }
 
-function grabFrame(video: HTMLVideoElement): Promise<Blob | null> {
+function grabFrame(video: HTMLVideoElement, maxWidth?: number, quality = 0.85): Promise<Blob | null> {
+  const scale = maxWidth && video.videoWidth > maxWidth ? maxWidth / video.videoWidth : 1
   const canvas = document.createElement('canvas')
-  canvas.width = video.videoWidth
-  canvas.height = video.videoHeight
+  canvas.width = Math.max(1, Math.round(video.videoWidth * scale))
+  canvas.height = Math.max(1, Math.round(video.videoHeight * scale))
   const ctx = canvas.getContext('2d')
   if (!ctx) return Promise.resolve(null)
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-  return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85))
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality))
 }
 
-// Shutter button: grab one frame → preview check → save only if it's a mushroom
+// Background loop: checks live frames via /scans/preview (no quota spent)
+async function runAutoScanCycle(session: number) {
+  if (session !== cameraSessionId || !isCameraOpen.value || isCapturing.value || isAutoScanRunning) {
+    return
+  }
+
+  const video = videoRef.value
+  if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+    scheduleAutoScan(250)
+    return
+  }
+
+  isAutoScanRunning = true
+  const controller = new AbortController()
+  autoScanAbortController = controller
+  let nextDelayMs: number | null = null
+
+  try {
+    const blob = await grabFrame(video, 512, 0.75)
+    if (session !== cameraSessionId || !isCameraOpen.value || isCapturing.value) return
+    if (!blob) {
+      nextDelayMs = 500
+      return
+    }
+
+    const file = new File([blob], 'preview.jpg', { type: 'image/jpeg' })
+    const formData = new FormData()
+    formData.append('image', file)
+
+    const preview = await $fetch<any>(`${config.public.apiBase}/scans/preview`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: formData,
+      signal: controller.signal,
+    })
+
+    if (session !== cameraSessionId || !isCameraOpen.value || isCapturing.value) return
+
+    if (preview.result_classification === 'not_mushroom') {
+      cameraDetectionState.value = 'not_mushroom'
+      setStatus('Non-mushroom object detected — point camera at a mushroom', 'error')
+    } else {
+      cameraDetectionState.value = 'mushroom'
+      const detectedName = typeof preview.result_name === 'string' ? preview.result_name.trim() : ''
+      setStatus(
+        detectedName
+          ? `Mushroom detected (${detectedName}) — tap Capture`
+          : 'Mushroom detected — tap Capture',
+        'info'
+      )
+    }
+
+    nextDelayMs = 1200
+  } catch (error: any) {
+    if (controller.signal.aborted || error?.name === 'AbortError') return
+    if (session !== cameraSessionId || !isCameraOpen.value) return
+
+    const status = getErrorStatus(error)
+    if (status === 401) {
+      closeCamera()
+      await handleAuthExpired()
+      return
+    }
+
+    if (!status || status === 502 || status === 503 || status === 504) {
+      cameraDetectionState.value = 'scanning'
+      setStatus('Waking scanner AI... Hold steady')
+      nextDelayMs = 3000
+    } else {
+      cameraDetectionState.value = 'error'
+      setStatus('Auto-scan paused — retrying...', 'error')
+      nextDelayMs = 2500
+    }
+  } finally {
+    if (autoScanAbortController === controller) {
+      autoScanAbortController = null
+    }
+    isAutoScanRunning = false
+    if (nextDelayMs !== null && session === cameraSessionId && isCameraOpen.value && !isCapturing.value) {
+      scheduleAutoScan(nextDelayMs)
+    }
+  }
+}
+
+// Shutter button: enabled once auto-scan confirms a mushroom; saves full-resolution scan
 async function captureAndAnalyze() {
-  if (isCapturing.value) return
+  if (isCapturing.value || cameraDetectionState.value !== 'mushroom') return
 
   const video = videoRef.value
   if (!video || !video.videoWidth) {
@@ -915,33 +1046,17 @@ async function captureAndAnalyze() {
     return
   }
 
+  stopAutoScan()
   isCapturing.value = true
-  setStatus('Checking...')
+  setStatus('Capturing & saving result...')
 
   try {
     const blob = await grabFrame(video)
     if (!blob) throw new Error('Failed to capture frame')
     const file = new File([blob], 'scan.jpg', { type: 'image/jpeg' })
 
-    const formData = new FormData()
-    formData.append('image', file)
-
-    // Preview = classification only, does not use up a scan
-    const preview = await $fetch<any>(`${config.public.apiBase}/scans/preview`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: formData,
-    })
-
-    // User hit Cancel while the request was in flight — don't save or spend quota
     if (!isCameraOpen.value) return
 
-    if (preview.result_classification === 'not_mushroom') {
-      setStatus('No mushroom detected. Adjust and tap capture again.', 'error')
-      return
-    }
-
-    setStatus('Saving result...')
     await saveFinalScan(file)
     closeCamera()
     // Show consent modal once after the first successful scan
@@ -952,13 +1067,15 @@ async function captureAndAnalyze() {
 
     // Token rejected → stop and send to login
     if (status === 401) {
+      closeCamera()
       await handleAuthExpired()
       return
     }
 
-    // Backend rejected it (re-check at save time) → nothing saved, let them retry
+    // Backend rejected it (re-check at save time) → nothing saved, resume auto-scan
     if (error?.data?.error === 'NOT_MUSHROOM') {
-      setStatus('No mushroom detected. Adjust and tap capture again.', 'error')
+      cameraDetectionState.value = 'not_mushroom'
+      setStatus('Non-mushroom object detected — point camera at a mushroom', 'error')
       return
     }
 
@@ -971,9 +1088,13 @@ async function captureAndAnalyze() {
       return
     }
 
-    setStatus('Something went wrong. Tap capture to try again.', 'error')
+    cameraDetectionState.value = 'error'
+    setStatus('Could not save scan. Re-scanning...', 'error')
   } finally {
     isCapturing.value = false
+    if (isCameraOpen.value) {
+      scheduleAutoScan(1200)
+    }
   }
 }
 
