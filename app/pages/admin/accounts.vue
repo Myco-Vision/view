@@ -190,7 +190,11 @@
             <div class="flex flex-col gap-1.5">
               <label class="text-[13px] font-semibold text-[#334155]">Email Address <span class="text-red-500">*</span></label>
               <input v-model="form.email" type="email" class="py-[9px] px-3.5 border border-[#e2e8f0] rounded-[10px] text-[14px] font-sans text-[#0f172a] outline-none transition-colors focus:border-amber-500 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.1)]" placeholder="jane@gmail.com"/>
-              <p class="text-[11px] text-[#64748b]">Must be a legitimate email. A verification link will be sent to confirm it.</p>
+              <p v-if="form.email && emailHint.text" class="text-[11px] font-medium flex items-center gap-1.5" :class="emailHint.color">
+                <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="emailHint.dot" />
+                {{ emailHint.text }}
+              </p>
+              <p v-else class="text-[11px] text-[#64748b]">Must be a legitimate email. A verification link will be sent to confirm it.</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -333,9 +337,15 @@ const isEditing = ref(false)
 const isSubmitting = ref(false)
 const showPassword = ref(false)
 const formError = ref('')
+const originalEmail = ref('')
 const form = reactive<any>({
   id: null, name: '', first_name: '', last_name: '', username: '', email: '', role: 'forager', password: '', contact_number: '', address: ''
 })
+
+const { emailCustomError, emailHint, verifyEmailNow } = useEmailAvailability(
+  () => form.email,
+  { ignoreEmail: () => (isEditing.value ? originalEmail.value : ''), theme: 'light' }
+)
 
 // Philippine mobile format: 09XX XXX XXXX or +63 9XX XXX XXXX
 const phoneValid = computed(() =>
@@ -435,6 +445,7 @@ function openCreateModal() {
   isEditing.value = false
   showPassword.value = false
   formError.value = ''
+  originalEmail.value = ''
   Object.assign(form, { id: null, name: '', first_name: '', last_name: '', username: '', email: '', role: 'forager', password: '', contact_number: '', address: '' })
   isModalOpen.value = true
 }
@@ -442,6 +453,7 @@ function openCreateModal() {
 function openEditModal(user: any) {
   isEditing.value = true
   formError.value = ''
+  originalEmail.value = user.email || ''
   Object.assign(form, {
     id: user.id,
     name: user.name,
@@ -476,6 +488,16 @@ async function saveAccount() {
   }
   if (form.contact_number && !phoneValid.value) {
     formError.value = 'Please enter a valid Philippine mobile number (e.g. 0917 123 4567 or +63 917 123 4567).'
+    return
+  }
+
+  const emailCheck = await verifyEmailNow()
+  if (emailCheck === 'invalid') {
+    formError.value = emailCustomError.value || 'Please enter a valid email address (e.g. name@gmail.com).'
+    return
+  }
+  if (emailCheck === 'taken') {
+    formError.value = 'This email address is already registered. Please use a different email.'
     return
   }
 

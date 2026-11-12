@@ -626,7 +626,6 @@ watch(showTerms, (open) => {
 onMounted(() => window.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown)
-  if (emailCheckTimer) clearTimeout(emailCheckTimer)
   document.body.style.overflow = ''
 })
 
@@ -826,53 +825,10 @@ const form = reactive({
 })
 
 // ── Email & phone format validation ──
-const emailValid = computed(() =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
+const { emailStatus, emailCustomError, emailHint, verifyEmailNow } = useEmailAvailability(
+  () => form.email,
+  { theme: 'dark' }
 )
-
-// Email availability — debounced live check against the backend
-const emailStatus = ref<'empty' | 'invalid' | 'checking' | 'available' | 'taken'>('empty')
-const emailCustomError = ref('')
-let emailCheckTimer: ReturnType<typeof setTimeout> | null = null
-
-const emailHint = computed(() => {
-  switch (emailStatus.value) {
-    case 'invalid':   return { text: emailCustomError.value || 'Enter a valid email (name@example.com)', color: 'text-red-400',     dot: 'bg-red-400' }
-    case 'checking':  return { text: 'Checking email…',                            color: 'text-amber-400',   dot: 'bg-amber-400' }
-    case 'available': return { text: 'Email is valid and available',               color: 'text-emerald-400',  dot: 'bg-emerald-400' }
-    case 'taken':     return { text: 'This email is already registered',           color: 'text-red-400',     dot: 'bg-red-400' }
-    default:          return { text: '', color: '', dot: '' }
-  }
-})
-
-watch(() => form.email, (val) => {
-  if (emailCheckTimer) { clearTimeout(emailCheckTimer); emailCheckTimer = null }
-  emailCustomError.value = ''
-  const v = (val || '').trim()
-  if (!v) { emailStatus.value = 'empty'; return }
-  if (!emailValid.value) { emailStatus.value = 'invalid'; return }
-  emailStatus.value = 'checking'
-  emailCheckTimer = setTimeout(async () => {
-    try {
-      const res = await $fetch<{ available: boolean }>(`${config.public.apiBase}/register/check-email`, {
-        params: { email: v },
-      })
-      // Ignore stale responses if the user kept typing
-      if (form.email.trim() !== v) return
-      emailStatus.value = res.available ? 'available' : 'taken'
-    } catch (err: any) {
-      if (form.email.trim() !== v) return
-      const status = err?.status ?? err?.statusCode ?? err?.response?.status
-      if (status === 422) {
-        emailCustomError.value = err?.data?.errors?.email?.[0] || err?.data?.message || 'Please enter a legitimate email address.'
-        emailStatus.value = 'invalid'
-        return
-      }
-      // Network hiccup — don't block the user; submit-time validation still enforces legitimacy & uniqueness
-      emailStatus.value = 'available'
-    }
-  }, 500)
-})
 
 function normalizePhone(input: string): string {
   return (input || '').replace(/[\s\-()]/g, '')
@@ -882,17 +838,18 @@ const phoneValid = computed(() =>
   /^(\+63|0)9\d{9}$/.test(normalizePhone(form.contact))
 )
 
-function goNext() {
+async function goNext() {
   error.value = ''
   if (!form.firstName || !form.lastName || !form.username || !form.email || !form.contact || !form.password || !form.confirmPassword) {
     error.value = 'Please fill out all required fields.'
     return
   }
-  if (emailStatus.value === 'invalid') {
+  const checkedEmail = await verifyEmailNow()
+  if (checkedEmail === 'invalid') {
     error.value = emailCustomError.value || 'Please enter a valid email address (e.g. name@example.com).'
     return
   }
-  if (emailStatus.value === 'taken') {
+  if (checkedEmail === 'taken') {
     error.value = 'This email is already registered. Please use a different email.'
     return
   }
