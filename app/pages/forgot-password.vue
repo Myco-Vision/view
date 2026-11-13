@@ -23,7 +23,7 @@
             <span class="text-[9px] tracking-wider uppercase text-emerald-400/80 font-semibold">AI Mushroom Intelligence</span>
           </div>
         </NuxtLink>
-        <NuxtLink to="/login" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-700/40 transition">
+        <NuxtLink to="/?login=user" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-700/40 transition">
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
@@ -69,7 +69,7 @@
               <p class="text-sm font-semibold text-white">Check your inbox</p>
               <p class="text-xs text-slate-400 mt-1.5 max-w-xs mx-auto">If an account exists for <span class="text-emerald-300 break-all">{{ form.email }}</span>, a password reset link is on its way. The link expires in 60 minutes.</p>
             </div>
-            <NuxtLink to="/login" class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:underline">
+            <NuxtLink to="/?login=user" class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:underline">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               Back to Login
             </NuxtLink>
@@ -102,7 +102,7 @@
 
           <div class="mt-6 pt-5 border-t border-emerald-900/30 text-center text-xs text-slate-400">
             Remembered it?
-            <NuxtLink to="/login" class="text-emerald-400 hover:underline font-semibold ml-1">Back to login</NuxtLink>
+            <NuxtLink to="/?login=user" class="text-emerald-400 hover:underline font-semibold ml-1">Back to login</NuxtLink>
           </div>
         </div>
       </div>

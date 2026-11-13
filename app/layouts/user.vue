@@ -248,7 +248,7 @@ async function handleLogout() {
     localStorage.removeItem('user')
     localStorage.removeItem('role')
     localStorage.removeItem('uuid')
-    await navigateTo('/login')
+    await navigateTo('/?login=user')
   }
 }
 </script>

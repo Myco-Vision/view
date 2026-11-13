@@ -761,7 +761,7 @@
         </div>
 
         <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs">
-          <NuxtLink to="/login" class="hover:text-emerald-400 transition">Login Page</NuxtLink>
+          <NuxtLink to="/?login=user" class="hover:text-emerald-400 transition">Login</NuxtLink>
           <NuxtLink to="/register" class="hover:text-emerald-400 transition">Register</NuxtLink>
           <NuxtLink to="/refund-policy" class="hover:text-emerald-400 transition">Refund Policy</NuxtLink>
           <button @click="openLoginModal('admin')" class="hover:text-amber-400 transition cursor-pointer">Admin Access</button>
@@ -944,6 +944,15 @@ function openLoginModal(role: 'user' | 'admin') {
   loginError.value = ''
   modalOpen.value = true
 }
+
+// Auto-open modal when redirected from /login (or any link with ?login=user/admin)
+const route = useRoute()
+onMounted(() => {
+  const loginParam = route.query.login as string
+  if (loginParam === 'user' || loginParam === 'admin') {
+    openLoginModal(loginParam)
+  }
+})
 
 function scrollToLogin() {
   const el = document.getElementById('login-hub')
