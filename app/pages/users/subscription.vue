@@ -184,6 +184,36 @@
         </div>
       </div>
 
+      <!-- Reward Points Redemption Bar -->
+      <div
+        v-if="rewardSettings.enabled !== false"
+        class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      >
+        <div>
+          <h3 class="text-xs sm:text-sm font-bold text-emerald-950 flex items-center gap-2">
+            <span>⭐ Reward Points</span>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[11px] font-bold">
+              {{ subscriptionStatus.reward_points ?? 0 }} pts (= ₱{{ Math.floor((subscriptionStatus.reward_points ?? 0) * (rewardSettings.php_per_point ?? 1)) }})
+            </span>
+          </h3>
+          <p class="text-[11.5px] text-emerald-800 mt-0.5">
+            Redeem {{ rewardSettings.min_redeem_points ?? 10 }}+ pts for up to {{ rewardSettings.max_discount_percent ?? 100 }}% off (min. ₱20 GCash checkout{{ rewardSettings.allow_full_redemption ? ', or 100% free with enough points' : '' }}).
+          </p>
+        </div>
+
+        <label class="inline-flex items-center gap-2.5 cursor-pointer select-none shrink-0">
+          <input
+            v-model="useRewardPoints"
+            type="checkbox"
+            :disabled="(subscriptionStatus.reward_points ?? 0) < (rewardSettings.min_redeem_points ?? 10)"
+            class="w-4 h-4 rounded border-emerald-400 text-emerald-600 focus:ring-emerald-500 disabled:opacity-40"
+          />
+          <span class="text-xs font-bold text-emerald-900">
+            {{ (subscriptionStatus.reward_points ?? 0) < (rewardSettings.min_redeem_points ?? 10) ? `Need ${rewardSettings.min_redeem_points ?? 10}+ pts to redeem` : 'Apply my points at checkout' }}
+          </span>
+        </label>
+      </div>
+
       <!-- Pricing Cards Grid -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch mt-3">
 
@@ -295,7 +325,11 @@
             >
               <span v-if="checkoutPlanLoading === 'monthly'" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
               <span>
-                {{ subscriptionStatus.active_subscription?.plan === 'monthly' ? 'Subscribed' : `Subscribe Monthly (₱149 via ${paymentMethodLabel})` }}
+                {{
+                  subscriptionStatus.active_subscription?.plan === 'monthly'
+                    ? 'Subscribed'
+                    : planPriceLabel('monthly', 149)
+                }}
               </span>
             </button>
           </div>
@@ -363,7 +397,11 @@
             >
               <span v-if="checkoutPlanLoading === 'annual'" class="w-3.5 h-3.5 border-2 border-slate-900/40 border-t-slate-950 rounded-full animate-spin"></span>
               <span>
-                {{ subscriptionStatus.active_subscription?.plan === 'annual' ? 'Subscribed' : `Subscribe Annually (₱1,299 via ${paymentMethodLabel})` }}
+                {{
+                  subscriptionStatus.active_subscription?.plan === 'annual'
+                    ? 'Subscribed'
+                    : planPriceLabel('annual', 1299)
+                }}
               </span>
             </button>
           </div>
@@ -619,7 +657,10 @@
             </div>
             <p class="text-xs text-slate-500">Pay to MycoVision</p>
             <p class="text-2xl font-black text-slate-900 mt-1">
-              ₱{{ Number(simulatorData?.plan?.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+              ₱{{ Number(simulatorData?.discount?.final_amount_php ?? simulatorData?.plan?.amount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+            </p>
+            <p v-if="(simulatorData?.discount?.discount_php ?? 0) > 0" class="text-[11px] font-semibold text-emerald-600 mt-0.5">
+              Includes -₱{{ simulatorData.discount.discount_php }} ({{ simulatorData.discount.points_used }} reward pts)
             </p>
             <p class="text-[11px] text-slate-400 mt-0.5 capitalize">{{ simulatorData?.plan?.name }}</p>
           </div>
@@ -678,6 +719,39 @@ const paymentMethodLabel = 'GCash'
 
 const simulatorModalOpen = ref(false)
 const simulatorData      = ref<any>(null)
+const useRewardPoints    = ref(false)
+
+const rewardSettings = computed(() => subscriptionStatus.value.reward_settings ?? {
+  enabled: true,
+  php_per_point: 1,
+  min_redeem_points: 10,
+  allow_full_redemption: true,
+  max_discount_percent: 100,
+})
+
+function planPriceLabel(planKey: 'monthly' | 'annual', basePrice: number): string {
+  const pts = subscriptionStatus.value.reward_points ?? 0
+  const s = rewardSettings.value
+  const minPts = s.min_redeem_points ?? 10
+  const phpPerPt = s.php_per_point ?? 1
+  const maxPct = s.max_discount_percent ?? 100
+
+  if (s.enabled === false || !useRewardPoints.value || pts < minPts) {
+    return planKey === 'monthly'
+      ? `Subscribe Monthly (₱149 via ${paymentMethodLabel.value})`
+      : `Subscribe Annually (₱1,299 via ${paymentMethodLabel.value})`
+  }
+  const fullPtsNeeded = Math.ceil(basePrice / phpPerPt)
+  if (s.allow_full_redemption && maxPct === 100 && pts >= fullPtsNeeded) {
+    return `Redeem Free with ${fullPtsNeeded} Points`
+  }
+  const maxByPct = Math.floor(basePrice * (maxPct / 100))
+  const maxByPaymongo = Math.max(0, basePrice - 20)
+  const discountPhp = Math.min(maxByPct, maxByPaymongo, Math.floor(pts * phpPerPt))
+  const ptsUsed = Math.ceil(discountPhp / phpPerPt)
+  const finalPrice = basePrice - discountPhp
+  return `${planKey === 'monthly' ? 'Subscribe Monthly' : 'Subscribe Annually'} (₱${finalPrice.toLocaleString()} — ${ptsUsed} pts off)`
+}
 
 function confirmSimulatorPayment() {
   if (simulatorData.value?.checkout_url) {
@@ -694,6 +768,14 @@ interface SubscriptionStatus {
   free_limit: number
   scans_used: number
   remaining_scans: number
+  reward_points?: number
+  reward_settings?: {
+    enabled?: boolean
+    php_per_point?: number
+    min_redeem_points?: number
+    allow_full_redemption?: boolean
+    max_discount_percent?: number
+  }
   active_subscription: {
     id: number
     plan: string
@@ -795,10 +877,20 @@ async function initiateCheckout(planKey: 'monthly' | 'annual') {
       body: {
         plan: planKey,
         payment_method: selectedPaymentMethod,
+        points_to_use: useRewardPoints.value ? (subscriptionStatus.value.reward_points ?? 0) : 0,
         success_url: `${redirectBase}?status=success&plan=${planKey}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${redirectBase}?status=cancelled`,
       },
     })
+
+    if (res.redeemed_full) {
+      alertType.value = 'success'
+      alertMessage.value = res.message || 'Subscription activated using reward points!'
+      useRewardPoints.value = false
+      await fetchSubscriptionStatus()
+      window.dispatchEvent(new Event('subscription-updated'))
+      return
+    }
 
     if (res.mode === 'sandbox_simulator') {
       // Show simulated GCash test gateway modal

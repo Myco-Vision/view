@@ -121,6 +121,17 @@
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Subscriptions</span></transition>
         </NuxtLink>
 
+        <NuxtLink v-if="isAdminOrAbove" to="/admin/rewards" :title="(sidebarCollapsed && !mobileOpen) ? 'Rewards' : ''" @click="mobileOpen = false"
+          class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
+          active-class="!bg-emerald-500/15 !text-emerald-500">
+          <span class="flex items-center justify-center shrink-0 w-5">
+            <svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </span>
+          <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Rewards</span></transition>
+        </NuxtLink>
+
         <NuxtLink v-if="isSuperAdmin" to="/admin/species" :title="(sidebarCollapsed && !mobileOpen) ? 'Species DB' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
@@ -181,7 +192,6 @@
           <div class="flex flex-col gap-px overflow-hidden">
             <span class="text-[13px] font-semibold text-slate-200 whitespace-nowrap overflow-hidden text-ellipsis">{{ adminName }}</span>
             <span class="text-[11px] font-medium" :class="userRole === 'super_admin' ? 'text-amber-500' : 'text-emerald-500'">{{ userRole === 'super_admin' ? 'Super Admin' : 'Administrator' }}</span>
-            <span class="text-[11px] text-emerald-500 font-medium">{{ roleLabel }}</span>
           </div>
         </div>
         <div v-else class="w-8 h-8 rounded-lg text-white text-xs font-bold flex items-center justify-center mx-auto" :class="userRole === 'super_admin' ? 'bg-gradient-to-br from-amber-500 to-amber-600' : 'bg-gradient-to-br from-emerald-500 to-emerald-600'">{{ adminInitials }}</div>
@@ -293,6 +303,7 @@ const pageMap: Record<string, string> = {
   '/admin/scans':     'Scans Log',
   '/admin/species':   'Species Database',
   '/admin/subscriptions': 'Subscriptions',
+  '/admin/rewards':   'Reward System',
   '/admin/reports':   'Reports & Analytics',
   '/admin/settings':  'System Settings',
   '/admin/accounts':  'Account Management',

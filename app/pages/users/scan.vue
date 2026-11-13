@@ -1002,6 +1002,9 @@ async function saveFinalScan(file: File) {
   selectedFile.value = null
   loadPreview(file)
   result.value = buildScanResult(data)
+  if (data.reward?.points_earned > 0) {
+    setStatus(`+${data.reward.points_earned} reward points earned for contributing your scan!`)
+  }
 }
 
 // ── Upload handlers ───────────────────────────────────
@@ -1086,6 +1089,9 @@ async function analyzeImage() {
 
     // Map result from backend to UI state
     result.value = buildScanResult(data)
+    if (data.reward?.points_earned > 0) {
+      setStatus(`+${data.reward.points_earned} reward points earned for contributing your scan!`)
+    }
 
     // Show consent modal once after the first successful scan
     setTimeout(maybeShowConsentModal, 800)

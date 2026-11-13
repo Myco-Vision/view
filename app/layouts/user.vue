@@ -79,6 +79,19 @@
         </NuxtLink>
 
         <NuxtLink
+          to="/users/rewards"
+          @click="mobileOpen = false"
+          class="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-slate-400 no-underline text-[13px] font-medium transition-all duration-200 hover:bg-emerald-900/30 hover:text-emerald-300"
+          active-class="!bg-emerald-600/20 !text-emerald-300 !border !border-emerald-500/30 shadow-sm"
+        >
+          <span class="flex items-center justify-center shrink-0 w-4 h-4">
+            <svg class="w-[16px] h-[16px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </span>
+          <span class="whitespace-nowrap flex-1">Rewards</span>
+          <span v-if="rewardPoints !== null" class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">{{ rewardPoints }} pts</span>
+        </NuxtLink>
+
+        <NuxtLink
           to="/users/subscription"
           @click="mobileOpen = false"
           class="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-slate-400 no-underline text-[13px] font-medium transition-all duration-200 hover:bg-emerald-900/30 hover:text-emerald-300"
@@ -163,6 +176,7 @@ const userName       = ref('')
 const userAvatar     = ref('')
 const isSubscribed   = ref(false)
 const remainingScans = ref<number | null>(null)
+const rewardPoints   = ref<number | null>(null)
 
 function photoUrl(path: string) {
   if (/^https?:\/\//i.test(path)) return path // e.g. Google avatar
@@ -206,6 +220,9 @@ async function refreshUserSubscription() {
       })
       isSubscribed.value = !!data.is_subscribed
       remainingScans.value = data.remaining_scans
+      if (typeof data.reward_points === 'number') {
+        rewardPoints.value = data.reward_points
+      }
 
       const latest = localStorage.getItem('user')
       if (latest) {
