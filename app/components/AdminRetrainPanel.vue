@@ -574,7 +574,7 @@ async function refreshMlService() {
     toastSuccess(res?.message || 'ML inference models refreshed and ready for new scans.')
     await fetchStatus()
   } catch (err: any) {
-    toastError(err?.data?.message || 'Could not reach ML service on Render.')
+    toastError(err?.data?.message || 'Could not reach ML service.')
   } finally {
     refreshingMl.value = false
   }
