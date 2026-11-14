@@ -125,7 +125,7 @@
               <p v-if="subscriptionStatus.active_subscription?.expires_at" class="text-slate-500">
                 Valid until: <strong class="text-slate-800">{{ formatDate(subscriptionStatus.active_subscription.expires_at) }}</strong>
                 <span v-if="subscriptionStatus.active_subscription.days_remaining !== null" class="ml-1.5 px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
-                  {{ subscriptionStatus.active_subscription.days_remaining }} days remaining
+                  {{ Math.ceil(subscriptionStatus.active_subscription.days_remaining) }} days remaining
                 </span>
               </p>
               <p v-if="subscriptionStatus.active_subscription?.is_cancelled" class="text-amber-700 font-medium">
