@@ -151,11 +151,13 @@
         <div class="flex items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
-            class="flex-1 sm:flex-initial py-1.5 px-3.5 rounded-lg bg-[#ea580c] hover:bg-[#c2410c] text-white text-[12px] font-semibold transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs"
+            class="flex-1 sm:flex-initial py-1.5 px-3.5 rounded-lg bg-[#ea580c] hover:bg-[#c2410c] text-white text-[12px] font-semibold transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50"
+            :disabled="excludingDuplicates"
+            title="Permanently remove all redundant duplicate images from the active training queue"
             @click="autoDeselectDuplicates"
           >
-            <AppIcon name="sparkles" class="w-3.5 h-3.5" />
-            <span>Auto-Deselect Copies</span>
+            <AppIcon name="trash" class="w-3.5 h-3.5" />
+            <span>{{ excludingDuplicates ? 'Removing Copies…' : 'Deselect & Remove Copies' }}</span>
           </button>
           <button
             type="button"
@@ -346,41 +348,92 @@
         </div>
 
         <div v-else class="overflow-x-auto">
-          <table class="w-full min-w-[680px] text-[13px]">
+          <table class="w-full min-w-[760px] text-[13px]">
             <thead class="bg-[#f8fafc]">
               <tr>
                 <th class="text-left px-5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Date</th>
                 <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Status</th>
+                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Duration</th>
                 <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide"><span class="inline-flex items-center gap-1"><AppIcon name="check-circle" class="w-3.5 h-3.5 text-[#059669]" />Edible</span></th>
                 <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide"><span class="inline-flex items-center gap-1"><AppIcon name="skull" class="w-3.5 h-3.5 text-[#dc2626]" />Poisonous</span></th>
+                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Dataset</th>
                 <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Train Acc.</th>
                 <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Val Acc.</th>
+                <th class="text-right px-5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Report</th>
               </tr>
             </thead>
             <tbody>
               <tr
                 v-for="(run, i) in history"
                 :key="run.id ?? i"
-                class="border-t border-[#f1f5f9] hover:bg-[#f8fafc]"
+                class="border-t border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors cursor-pointer group"
+                @click="openReportModal(run)"
               >
-                <td class="px-5 py-3 text-[#334155]">{{ formatDate(run.started_at) }}</td>
-                <td class="px-4 py-3">
+                <td class="px-5 py-3 text-[#334155] whitespace-nowrap">
+                  <div class="flex items-center gap-1.5">
+                    <AppIcon name="calendar" class="w-3.5 h-3.5 text-[#94a3b8]" />
+                    <span>{{ formatDate(run.started_at) }}</span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
                   <span
-                    class="text-[11.5px] font-semibold px-2.5 py-1 rounded-full"
+                    class="text-[11.5px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
                     :class="{
                       'bg-[#d1fae5] text-[#065f46]': run.status === 'done',
                       'bg-[#fee2e2] text-[#991b1b]': run.status === 'failed',
                       'bg-[#fef9c3] text-[#713f12]': run.status === 'running',
                     }"
-                  >{{ run.status }}</span>
-                  <p v-if="run.status === 'failed' && run.error" class="text-[11px] text-[#dc2626] mt-1 max-w-[260px] truncate" :title="run.error">
+                  >
+                    <span v-if="run.status === 'done'">✓ Completed</span>
+                    <span v-else-if="run.status === 'failed'">✕ Failed</span>
+                    <span v-else class="flex items-center gap-1">
+                      <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                      Running
+                    </span>
+                  </span>
+                  <p v-if="run.status === 'failed' && run.error" class="text-[11px] text-[#dc2626] mt-1 max-w-[200px] truncate" :title="run.error">
                     {{ run.error }}
                   </p>
                 </td>
-                <td class="px-4 py-3 text-[#334155]">{{ run.total_edible ?? run.new_edible ?? '—' }}</td>
-                <td class="px-4 py-3 text-[#334155]">{{ run.total_poisonous ?? run.new_poisonous ?? '—' }}</td>
-                <td class="px-4 py-3 font-semibold text-[#0f172a]">{{ run.train_accuracy != null ? run.train_accuracy + '%' : '—' }}</td>
-                <td class="px-4 py-3 font-semibold text-[#0f172a]">{{ run.val_accuracy != null ? run.val_accuracy + '%' : '—' }}</td>
+                <td class="px-4 py-3 text-[#64748b] whitespace-nowrap">
+                  <span class="inline-flex items-center gap-1">
+                    <AppIcon name="hourglass" class="w-3 h-3 text-[#94a3b8]" />
+                    {{ formatDuration(run) }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-[#334155] whitespace-nowrap">
+                  <span>{{ run.total_edible ?? run.new_edible ?? '—' }}</span>
+                  <span v-if="run.new_edible != null && run.total_edible != null && run.new_edible !== run.total_edible" class="text-[11px] text-[#059669] ml-1 font-medium">
+                    (+{{ run.new_edible }})
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-[#334155] whitespace-nowrap">
+                  <span>{{ run.total_poisonous ?? run.new_poisonous ?? '—' }}</span>
+                  <span v-if="run.new_poisonous != null && run.total_poisonous != null && run.new_poisonous !== run.total_poisonous" class="text-[11px] text-[#dc2626] ml-1 font-medium">
+                    (+{{ run.new_poisonous }})
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-[#475569] whitespace-nowrap">
+                  <span class="font-medium text-[#0f172a]">{{ run.total_images ?? (run.new_edible != null ? (run.new_edible + (run.new_poisonous || 0)) : '—') }}</span>
+                  <span class="text-[11px] text-[#94a3b8] block">{{ (run.new_edible || 0) + (run.new_poisonous || 0) }} new ingested</span>
+                </td>
+                <td class="px-4 py-3 font-semibold text-[#0f172a] whitespace-nowrap">
+                  {{ run.train_accuracy != null ? run.train_accuracy + '%' : '—' }}
+                </td>
+                <td class="px-4 py-3 font-semibold text-[#0f172a] whitespace-nowrap">
+                  {{ run.val_accuracy != null ? run.val_accuracy + '%' : '—' }}
+                </td>
+                <td class="px-5 py-3 text-right whitespace-nowrap" @click.stop>
+                  <button
+                    type="button"
+                    class="py-1 px-2.5 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs"
+                    title="View comprehensive status and performance report for this retraining run"
+                    @click="openReportModal(run)"
+                  >
+                    <AppIcon name="clipboard" class="w-3.5 h-3.5 text-[#059669]" />
+                    <span>View Report</span>
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -468,11 +521,13 @@
             <div class="flex items-center gap-2">
               <button
                 type="button"
-                class="py-1.5 px-3 rounded-lg bg-[#ea580c] hover:bg-[#c2410c] text-white text-[12px] font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
+                class="py-1.5 px-3 rounded-lg bg-[#ea580c] hover:bg-[#c2410c] text-white text-[12px] font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+                :disabled="excludingDuplicates"
+                title="Permanently remove all redundant duplicate copies from training queue"
                 @click="autoDeselectDuplicates"
               >
-                <AppIcon name="sparkles" class="w-3.5 h-3.5" />
-                <span>Auto-Deselect Copies</span>
+                <AppIcon name="trash" class="w-3.5 h-3.5" />
+                <span>{{ excludingDuplicates ? 'Removing Copies…' : 'Deselect & Remove All Copies' }}</span>
               </button>
             </div>
           </div>
@@ -527,20 +582,22 @@
                 <div class="flex items-center gap-2">
                   <button
                     type="button"
-                    class="px-2.5 py-1 text-[11.5px] font-semibold rounded-md border border-[#fed7aa] bg-[#fff7ed] hover:bg-[#ffedd5] text-[#c2410c] cursor-pointer transition-colors"
-                    title="Keep the original primary scan selected and uncheck all duplicate copies"
+                    class="px-2.5 py-1 text-[11.5px] font-semibold rounded-md border border-[#fed7aa] bg-[#fff7ed] hover:bg-[#ffedd5] text-[#c2410c] cursor-pointer transition-colors disabled:opacity-50 inline-flex items-center gap-1"
+                    :disabled="excludingDuplicates"
+                    title="Keep the original primary scan and permanently remove duplicate copies from the training queue"
                     @click="keepOnlyPrimaryInGroup(group)"
                   >
-                    Keep 1 Only
+                    <span>Keep 1 Only</span>
                   </button>
                   <button
                     type="button"
-                    class="px-2.5 py-1 text-[11.5px] font-semibold rounded-md border border-[#cbd5e1] bg-white hover:bg-[#f1f5f9] text-[#475569] cursor-pointer transition-colors disabled:opacity-50"
+                    class="px-2.5 py-1 text-[11.5px] font-semibold rounded-md border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 cursor-pointer transition-colors disabled:opacity-50 inline-flex items-center gap-1"
                     :disabled="excludingDuplicates"
-                    title="Archive non-primary duplicate images so they will not be used in future training runs"
+                    title="Permanently remove non-primary duplicate images from the training queue"
                     @click="excludeScanIds(group.scans.filter(s => !s.is_primary).map(s => s.id))"
                   >
-                    Archive Copies
+                    <AppIcon name="trash" class="w-3 h-3" />
+                    <span>Deselect Copies</span>
                   </button>
                 </div>
               </div>
@@ -580,17 +637,30 @@
                     <p class="text-[10px] text-[#64748b] truncate">By {{ scan.user }}</p>
                     <p class="text-[10px] text-[#94a3b8]">{{ scan.scanned_at }}</p>
 
-                    <label class="flex items-center gap-1.5 pt-1 border-t border-[#f1f5f9] cursor-pointer mt-1">
-                      <input
-                        type="checkbox"
-                        class="rounded text-[#ea580c] focus:ring-orange-500 w-3.5 h-3.5"
-                        :checked="isScanSelected(scan.id, scan.classification)"
-                        @change="toggleScanInRetrain(scan.id, scan.classification)"
-                      />
-                      <span class="text-[10.5px] font-semibold" :class="isScanSelected(scan.id, scan.classification) ? 'text-[#0f172a]' : 'text-[#94a3b8]'">
-                        {{ isScanSelected(scan.id, scan.classification) ? 'Included' : 'Excluded' }}
-                      </span>
-                    </label>
+                    <div class="pt-1 border-t border-[#f1f5f9] mt-1">
+                      <button
+                        v-if="!scan.is_primary"
+                        type="button"
+                        class="w-full py-1 px-1.5 rounded text-[10px] font-semibold border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                        :disabled="excludingDuplicates"
+                        title="Permanently remove this duplicate from the active training queue"
+                        @click.stop="excludeScanIds([scan.id])"
+                      >
+                        <AppIcon name="trash" class="w-3 h-3" />
+                        <span>Deselect & Remove</span>
+                      </button>
+                      <label v-else class="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          class="rounded text-[#ea580c] focus:ring-orange-500 w-3.5 h-3.5"
+                          :checked="isScanSelected(scan.id, scan.classification)"
+                          @change="toggleScanInRetrain(scan.id, scan.classification)"
+                        />
+                        <span class="text-[10.5px] font-semibold" :class="isScanSelected(scan.id, scan.classification) ? 'text-[#0f172a]' : 'text-[#94a3b8]'">
+                          {{ isScanSelected(scan.id, scan.classification) ? 'Included (Primary)' : 'Excluded' }}
+                        </span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -608,6 +678,210 @@
               @click="closeDuplicatesModal"
             >
               Done Reviewing
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Retraining Run Status Report Modal -->
+      <div
+        v-if="showReportModal && selectedReportRun"
+        class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs"
+        @click.self="closeReportModal"
+      >
+        <div class="bg-white rounded-2xl shadow-2xl border border-[#e2e8f0] w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <!-- Report Header -->
+          <div class="px-6 py-4.5 border-b border-[#e2e8f0] flex items-center justify-between gap-3 bg-[#f8fafc]">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                :class="{
+                  'bg-[#d1fae5] text-[#059669]': selectedReportRun.status === 'done',
+                  'bg-[#fee2e2] text-[#dc2626]': selectedReportRun.status === 'failed',
+                  'bg-[#fef9c3] text-[#d97706]': selectedReportRun.status === 'running',
+                }"
+              >
+                <AppIcon
+                  :name="selectedReportRun.status === 'done' ? 'check-circle' : selectedReportRun.status === 'failed' ? 'x-circle' : 'cog'"
+                  class="w-5 h-5"
+                  :class="{ 'animate-spin': selectedReportRun.status === 'running' }"
+                />
+              </div>
+              <div>
+                <h3 class="text-[16px] font-bold text-[#0f172a] flex items-center gap-2">
+                  <span>Retraining Run Report {{ selectedReportRun.id ? `#${selectedReportRun.id}` : '' }}</span>
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider"
+                    :class="{
+                      'bg-[#d1fae5] text-[#065f46]': selectedReportRun.status === 'done',
+                      'bg-[#fee2e2] text-[#991b1b]': selectedReportRun.status === 'failed',
+                      'bg-[#fef9c3] text-[#713f12]': selectedReportRun.status === 'running',
+                    }"
+                  >
+                    {{ selectedReportRun.status }}
+                  </span>
+                </h3>
+                <p class="text-[12px] text-[#64748b] mt-0.5">
+                  MobileNetV2 Fine-Tuning Execution & Model Performance Audit
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="w-8 h-8 rounded-lg hover:bg-[#e2e8f0] text-[#64748b] flex items-center justify-center transition-colors cursor-pointer text-[18px]"
+              @click="closeReportModal"
+            >
+              ✕
+            </button>
+          </div>
+
+          <!-- Report Body -->
+          <div class="flex-1 overflow-y-auto p-6 space-y-5 text-[#0f172a]">
+            <!-- Meta Timeline Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3.5 text-[12px]">
+              <div>
+                <span class="text-[#64748b] block text-[11px]">Started</span>
+                <strong class="text-[#0f172a]">{{ formatDate(selectedReportRun.started_at) }}</strong>
+              </div>
+              <div>
+                <span class="text-[#64748b] block text-[11px]">Finished</span>
+                <strong class="text-[#0f172a]">{{ selectedReportRun.finished_at ? formatDate(selectedReportRun.finished_at) : (selectedReportRun.status === 'running' ? 'In progress…' : '—') }}</strong>
+              </div>
+              <div>
+                <span class="text-[#64748b] block text-[11px]">Duration</span>
+                <strong class="text-[#0f172a]">{{ formatDuration(selectedReportRun) }}</strong>
+              </div>
+              <div>
+                <span class="text-[#64748b] block text-[11px]">Triggered By</span>
+                <strong class="text-[#0f172a]">{{ selectedReportRun.triggered_by_name || 'Super Admin' }}</strong>
+              </div>
+            </div>
+
+            <!-- Accuracy KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="rounded-xl border p-4 bg-white border-[#e2e8f0]">
+                <div class="flex items-center justify-between text-[12px] text-[#64748b] mb-1">
+                  <span>Validation Accuracy</span>
+                  <AppIcon name="target" class="w-4 h-4 text-[#059669]" />
+                </div>
+                <div class="text-[24px] font-extrabold text-[#059669]">
+                  {{ selectedReportRun.val_accuracy != null ? `${selectedReportRun.val_accuracy}%` : '—' }}
+                </div>
+                <div class="w-full bg-[#f1f5f9] h-2 rounded-full mt-2 overflow-hidden">
+                  <div
+                    class="bg-[#059669] h-full rounded-full transition-all duration-500"
+                    :style="{ width: `${Math.min(100, selectedReportRun.val_accuracy || 0)}%` }"
+                  />
+                </div>
+                <p class="text-[10.5px] text-[#64748b] mt-1.5">Evaluated on 20% clean holdout images</p>
+              </div>
+
+              <div class="rounded-xl border p-4 bg-white border-[#e2e8f0]">
+                <div class="flex items-center justify-between text-[12px] text-[#64748b] mb-1">
+                  <span>Training Accuracy</span>
+                  <AppIcon name="chart" class="w-4 h-4 text-[#0284c7]" />
+                </div>
+                <div class="text-[24px] font-extrabold text-[#0284c7]">
+                  {{ selectedReportRun.train_accuracy != null ? `${selectedReportRun.train_accuracy}%` : '—' }}
+                </div>
+                <div class="w-full bg-[#f1f5f9] h-2 rounded-full mt-2 overflow-hidden">
+                  <div
+                    class="bg-[#0284c7] h-full rounded-full transition-all duration-500"
+                    :style="{ width: `${Math.min(100, selectedReportRun.train_accuracy || 0)}%` }"
+                  />
+                </div>
+                <p class="text-[10.5px] text-[#64748b] mt-1.5">Evaluated on 80% augmented field set</p>
+              </div>
+
+              <div class="rounded-xl border p-4 bg-white border-[#e2e8f0]">
+                <div class="flex items-center justify-between text-[12px] text-[#64748b] mb-1">
+                  <span>Total Training Dataset</span>
+                  <AppIcon name="mushroom" class="w-4 h-4 text-[#7c3aed]" />
+                </div>
+                <div class="text-[24px] font-extrabold text-[#7c3aed]">
+                  {{ selectedReportRun.total_images ?? ((selectedReportRun.new_edible || 0) + (selectedReportRun.new_poisonous || 0)) }}
+                </div>
+                <p class="text-[11px] font-medium text-[#475569] mt-2">
+                  {{ (selectedReportRun.new_edible || 0) + (selectedReportRun.new_poisonous || 0) }} new candidate photos added
+                </p>
+                <p class="text-[10.5px] text-[#64748b] mt-0.5">3 Classes: Edible, Poisonous, Non-Mushroom</p>
+              </div>
+            </div>
+
+            <!-- Dataset Breakdown -->
+            <div class="rounded-xl border border-[#e2e8f0] p-4 bg-white">
+              <h4 class="text-[13px] font-bold text-[#0f172a] mb-3 flex items-center gap-2">
+                <AppIcon name="chart" class="w-4 h-4 text-[#64748b]" />
+                <span>Class Distribution & Ingestion Breakdown</span>
+              </h4>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px]">
+                <div class="p-3 rounded-lg bg-[#f0fdf4] border border-[#bbf7d0]">
+                  <span class="text-[#065f46] block text-[11px] font-semibold">Edible Class</span>
+                  <strong class="text-[18px] text-[#065f46]">{{ selectedReportRun.total_edible ?? selectedReportRun.new_edible ?? '—' }}</strong>
+                  <span v-if="selectedReportRun.new_edible != null" class="block text-[10.5px] text-[#059669] mt-0.5">+{{ selectedReportRun.new_edible }} new</span>
+                </div>
+                <div class="p-3 rounded-lg bg-[#fef2f2] border border-[#fecaca]">
+                  <span class="text-[#991b1b] block text-[11px] font-semibold">Poisonous Class</span>
+                  <strong class="text-[18px] text-[#991b1b]">{{ selectedReportRun.total_poisonous ?? selectedReportRun.new_poisonous ?? '—' }}</strong>
+                  <span v-if="selectedReportRun.new_poisonous != null" class="block text-[10.5px] text-[#dc2626] mt-0.5">+{{ selectedReportRun.new_poisonous }} new</span>
+                </div>
+                <div class="p-3 rounded-lg bg-[#f8fafc] border border-[#e2e8f0]">
+                  <span class="text-[#475569] block text-[11px] font-semibold">Non-Mushroom Class</span>
+                  <strong class="text-[18px] text-[#0f172a]">{{ selectedReportRun.total_not_mushroom ?? 409 }}</strong>
+                  <span class="block text-[10.5px] text-[#64748b] mt-0.5">Negative baseline</span>
+                </div>
+                <div class="p-3 rounded-lg bg-[#f8fafc] border border-[#e2e8f0]">
+                  <span class="text-[#475569] block text-[11px] font-semibold">Retrained Candidates</span>
+                  <strong class="text-[18px] text-[#0f172a]">{{ (selectedReportRun.new_edible || 0) + (selectedReportRun.new_poisonous || 0) }}</strong>
+                  <span class="block text-[10.5px] text-[#64748b] mt-0.5">{{ selectedReportRun.scans_marked_retrained ? 'Stroked to Already Trained' : 'Queued' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Error diagnostics if failed -->
+            <div v-if="selectedReportRun.status === 'failed'" class="rounded-xl border border-rose-300 bg-rose-50 p-4">
+              <h4 class="text-[13px] font-bold text-rose-900 flex items-center gap-2 mb-2">
+                <AppIcon name="warning" class="w-4 h-4 text-rose-600" />
+                <span>Failure Diagnostic Analysis</span>
+              </h4>
+              <div class="bg-white border border-rose-200 rounded-lg p-3 text-[11.5px] font-mono text-rose-800 break-all overflow-x-auto whitespace-pre-wrap">
+                {{ selectedReportRun.error || 'Unknown training error occurred.' }}
+              </div>
+              <p class="text-[11.5px] text-rose-700 mt-2">
+                Note: Serverless container memory has been upgraded to 4 GB RAM and the full baseline dataset has been baked in to prevent missing class errors on future runs.
+              </p>
+            </div>
+
+            <!-- Pipeline Specifications -->
+            <div class="rounded-xl border border-[#e2e8f0] p-4 bg-[#f8fafc] text-[12px] space-y-2">
+              <h4 class="text-[13px] font-bold text-[#0f172a] flex items-center gap-2">
+                <AppIcon name="brain" class="w-4 h-4 text-[#64748b]" />
+                <span>Model Architecture & Training Parameters</span>
+              </h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[#475569] pt-1">
+                <div>• <strong>Backbone:</strong> MobileNetV2 (ImageNet weights, frozen)</div>
+                <div>• <strong>Input Size:</strong> 224 × 224 pixels (RGB)</div>
+                <div>• <strong>Top Layers:</strong> GAP → Dense(64, ReLU) → Dropout(0.5) → Dense(3, Softmax)</div>
+                <div>• <strong>Epochs:</strong> 10 with EarlyStopping (patience: 3)</div>
+                <div>• <strong>Batch Size:</strong> 8 | Optimizer: Adam</div>
+                <div>• <strong>Augmentations:</strong> Reflect mirror, Cutout (p=0.5), Photometry, Blur</div>
+                <div>• <strong>Validation Split:</strong> 20% clean holdout (unaugmented)</div>
+                <div>• <strong>Storage Volume:</strong> <code>mycovision-models-volume</code> (Modal)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Report Footer -->
+          <div class="px-6 py-3.5 border-t border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-between">
+            <span class="text-[12px] text-[#64748b]">
+              Status: <strong class="text-[#0f172a] capitalize">{{ selectedReportRun.status }}</strong>
+            </span>
+            <button
+              type="button"
+              class="px-4 py-2 rounded-lg bg-[#0f172a] hover:bg-[#1e293b] text-white text-[12.5px] font-semibold transition-colors cursor-pointer"
+              @click="closeReportModal"
+            >
+              Close Report
             </button>
           </div>
         </div>
@@ -765,6 +1039,8 @@ const retrainState = ref<'idle' | 'running' | 'done' | 'failed' | 'unknown'>('id
 const lastResult = ref<any>(null)
 const statusError = ref<string | null>(null)
 const history = ref<any[]>([])
+const selectedReportRun = ref<any>(null)
+const showReportModal = ref(false)
 let statusInterval: ReturnType<typeof setInterval> | null = null
 
 watch(() => summary.value.total, n => emit('update:count', n), { immediate: true })
@@ -999,40 +1275,56 @@ function toggleScanInRetrain(id: number, classification: string) {
   }
 }
 
-function keepOnlyPrimaryInGroup(group: DuplicateGroup) {
-  for (const scan of group.scans) {
-    if (scan.is_primary) {
-      if (!isScanSelected(scan.id, scan.classification)) {
-        toggleScanInRetrain(scan.id, scan.classification)
-      }
-    } else {
-      if (isScanSelected(scan.id, scan.classification)) {
-        toggleScanInRetrain(scan.id, scan.classification)
-      }
-    }
+async function keepOnlyPrimaryInGroup(group: DuplicateGroup) {
+  const redundantIds = group.scans.filter(s => !s.is_primary).map(s => s.id)
+  if (redundantIds.length === 0) {
+    toastSuccess('This set already has only the primary scan selected.')
+    return
   }
-  const primaryId = group.primary_scan_id ?? group.scans[0]?.id ?? 'primary'
-  toastSuccess(`Kept primary scan #${primaryId} and unselected duplicate copies.`)
+  await excludeScanIds(redundantIds)
 }
 
-function autoDeselectDuplicates() {
-  const unselectSet = new Set(recommendedUnselectIds.value)
-  const initialCount = edibleSelected.value.length + poisonousSelected.value.length
+async function autoDeselectDuplicates() {
+  const unselectSet = Array.from(new Set(recommendedUnselectIds.value))
+  if (unselectSet.length === 0) {
+    toastSuccess('No redundant duplicate copies found to remove.')
+    return
+  }
 
-  edibleSelected.value = edibleSelected.value.filter(id => !unselectSet.has(id))
-  poisonousSelected.value = poisonousSelected.value.filter(id => !unselectSet.has(id))
+  const ok = await confirm({
+    title: 'Permanently Remove Duplicate Images?',
+    message: `Remove ${unselectSet.length} redundant duplicate image${unselectSet.length !== 1 ? 's' : ''} from the active training candidates? (Original photos remain stored safely in scan logs; only duplicates are removed from the training queue).`,
+    tone: 'warning',
+    confirmText: 'Remove Duplicates',
+  })
+  if (!ok) return
 
-  const deselected = initialCount - (edibleSelected.value.length + poisonousSelected.value.length)
-  toastSuccess(`Deselected ${deselected} redundant duplicate images from the retraining queue.`)
+  excludingDuplicates.value = true
+  try {
+    const res = await $fetch<any>(`${api}/admin/retrain/exclude`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: { scan_ids: unselectSet },
+    })
+    toastSuccess(res?.message || `Permanently removed ${unselectSet.length} duplicate copy/copies from the training candidates.`)
+    await refreshAll()
+    hasScannedDuplicates.value = false
+    duplicateGroups.value = []
+    closeDuplicatesModal()
+  } catch (err: any) {
+    toastError(err?.data?.message || 'Failed to remove duplicate images.')
+  } finally {
+    excludingDuplicates.value = false
+  }
 }
 
 async function excludeScanIds(ids: number[]) {
   if (!ids || ids.length === 0) return
   const ok = await confirm({
-    title: 'Archive Duplicate Images?',
-    message: `Mark ${ids.length} duplicate image${ids.length !== 1 ? 's' : ''} as archived so they will not be used in future model training? (Original photos will not be deleted from scans).`,
+    title: 'Remove Duplicate Images from Queue?',
+    message: `Permanently remove ${ids.length} duplicate image${ids.length !== 1 ? 's' : ''} from the images to be trained? (They can be reviewed or restored anytime from the Already Trained tab).`,
     tone: 'warning',
-    confirmText: 'Archive Duplicates',
+    confirmText: 'Remove Duplicates',
   })
   if (!ok) return
 
@@ -1043,18 +1335,49 @@ async function excludeScanIds(ids: number[]) {
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body: { scan_ids: ids },
     })
-    toastSuccess(res?.message || 'Duplicates archived successfully.')
+    toastSuccess(res?.message || 'Duplicates permanently removed from the training queue.')
     await refreshAll()
     await runManualDuplicateScan(false)
   } catch (err: any) {
-    toastError(err?.data?.message || 'Failed to archive duplicates.')
+    toastError(err?.data?.message || 'Failed to remove duplicates.')
   } finally {
     excludingDuplicates.value = false
   }
 }
 
-watch(queueView, () => {
-  // Do NOT auto-scan when switching queue tabs; reset state so user triggers manually if desired
+function openReportModal(run: any) {
+  selectedReportRun.value = run
+  showReportModal.value = true
+}
+
+function closeReportModal() {
+  showReportModal.value = false
+  selectedReportRun.value = null
+}
+
+function formatDuration(run: any): string {
+  if (!run) return '—'
+  if (run.duration_seconds != null) {
+    const s = Number(run.duration_seconds)
+    if (s < 60) return `${s}s`
+    const m = Math.floor(s / 60)
+    const rem = s % 60
+    return `${m}m ${rem}s`
+  }
+  if (run.started_at && run.finished_at) {
+    const s = Math.round((new Date(run.finished_at).getTime() - new Date(run.started_at).getTime()) / 1000)
+    if (s >= 0) {
+      if (s < 60) return `${s}s`
+      return `${Math.floor(s / 60)}m ${s % 60}s`
+    }
+  }
+  if (run.status === 'running') return 'In progress…'
+  return '—'
+}
+
+watch(queueView, async () => {
+  // Always fetch fresh candidates and retrained images when switching tabs
+  await fetchCandidates()
   hasScannedDuplicates.value = false
   duplicateGroups.value = []
   duplicateSummary.value = {
