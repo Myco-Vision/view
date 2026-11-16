@@ -38,6 +38,10 @@ const ICONS: Record<string, IconDef> = {
       'M12 17h.01',
     ],
   },
+  copy: {
+    rects: [[9, 9, 13, 13, 2]],
+    paths: ['M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'],
+  },
   'map-pin': {
     paths: ['M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z'],
     circles: [[12, 10, 3]],

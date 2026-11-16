@@ -20,6 +20,22 @@
         </button>
         <button
           type="button"
+          class="py-2 px-3 rounded-lg border border-[#fed7aa] bg-[#fff7ed] text-[12.5px] font-semibold text-[#c2410c] cursor-pointer hover:bg-[#ffedd5] inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+          :disabled="scanningDuplicates || loading"
+          title="Review candidate images and detect exact or near-duplicate copies"
+          @click="openDuplicatesModal()"
+        >
+          <AppIcon name="copy" class="w-3.5 h-3.5" :class="{ 'animate-spin': scanningDuplicates }" />
+          <span>{{ scanningDuplicates ? 'Scanning…' : 'Find Duplicates' }}</span>
+          <span
+            v-if="duplicateSummary.redundant_scans_count > 0"
+            class="px-1.5 py-0.5 rounded-full text-[10.5px] font-bold bg-[#ea580c] text-white leading-none"
+          >
+            {{ duplicateSummary.redundant_scans_count }}
+          </span>
+        </button>
+        <button
+          type="button"
           class="py-2 px-3 rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] text-[12.5px] font-semibold text-[#047857] cursor-pointer hover:bg-[#dcfce7] inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
           :disabled="refreshingMl || retrainState === 'running'"
           title="Reload Stage-1 & Stage-2 ML models on Render so new scans run against the latest weights"
@@ -105,6 +121,49 @@
             We recommend at least <strong>20</strong> images (10 per class) for meaningful retraining.
             Fewer images may reduce model accuracy.
           </p>
+        </div>
+      </div>
+
+      <!-- Duplicate Detection Banner -->
+      <div
+        v-if="duplicateSummary.redundant_scans_count > 0"
+        class="rounded-[14px] bg-[#fff7ed] border border-[#fed7aa] px-5 py-4 flex flex-wrap items-center justify-between gap-3 shadow-xs"
+      >
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-[#ffedd5] text-[#ea580c] flex items-center justify-center shrink-0 mt-0.5">
+            <AppIcon name="copy" class="w-5 h-5" />
+          </div>
+          <div>
+            <p class="text-[13.5px] font-bold text-[#9a3412] flex items-center gap-2 flex-wrap">
+              <span>{{ duplicateSummary.duplicate_groups_count }} Duplicate Set{{ duplicateSummary.duplicate_groups_count !== 1 ? 's' : '' }} Found ({{ duplicateSummary.redundant_scans_count }} redundant photo{{ duplicateSummary.redundant_scans_count !== 1 ? 's' : '' }})</span>
+              <span
+                v-if="duplicateSummary.conflict_groups_count > 0"
+                class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800"
+              >
+                ⚠️ {{ duplicateSummary.conflict_groups_count }} conflicting label{{ duplicateSummary.conflict_groups_count !== 1 ? 's' : '' }}!
+              </span>
+            </p>
+            <p class="text-[12px] text-[#78350f] mt-0.5">
+              Identical images cause model overfitting and inflate validation accuracy. Keeping only 1 verified original per set ensures fair class representation.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            type="button"
+            class="flex-1 sm:flex-initial py-1.5 px-3.5 rounded-lg bg-[#ea580c] hover:bg-[#c2410c] text-white text-[12px] font-semibold transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs"
+            @click="autoDeselectDuplicates"
+          >
+            <AppIcon name="sparkles" class="w-3.5 h-3.5" />
+            <span>Auto-Deselect Copies</span>
+          </button>
+          <button
+            type="button"
+            class="flex-1 sm:flex-initial py-1.5 px-3.5 rounded-lg border border-[#fed7aa] bg-white hover:bg-[#fff7ed] text-[#9a3412] text-[12px] font-semibold transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+            @click="openDuplicatesModal()"
+          >
+            <span>Review Sets</span>
+          </button>
         </div>
       </div>
 
@@ -237,6 +296,20 @@
                 class="w-full h-[100px] object-cover bg-[#f8fafc]"
                 @error="brokenImages[scan.id] = true"
               />
+              <!-- Duplicate badge pill -->
+              <div
+                v-if="duplicateScanMap[scan.id]"
+                class="absolute top-1.5 left-1.5 z-10 px-1.5 py-0.5 rounded-md text-[10px] font-bold shadow-xs flex items-center gap-1 cursor-pointer transition-transform hover:scale-105"
+                :class="duplicateScanMap[scan.id].has_conflict
+                  ? 'bg-rose-600 text-white animate-pulse'
+                  : duplicateScanMap[scan.id].is_primary
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-amber-500 text-white'"
+                :title="duplicateScanMap[scan.id].has_conflict ? 'Conflicting label duplicate! Click to review' : duplicateScanMap[scan.id].is_primary ? 'Original image' : 'Duplicate copy — unselected'"
+                @click.stop="openDuplicatesModal(duplicateScanMap[scan.id].group_id)"
+              >
+                <span>{{ duplicateScanMap[scan.id].has_conflict ? '⚠️ Conflict' : duplicateScanMap[scan.id].is_primary ? '★ Primary' : 'Duplicate' }}</span>
+              </div>
               <div
                 class="absolute inset-0 flex items-center justify-center transition-opacity duration-200"
                 :class="isSelected(panel.cls, scan.id) ? panel.selectedOverlay : 'opacity-0 group-hover:opacity-100 bg-black/20'"
@@ -319,6 +392,226 @@
         <AppIcon name="lock" class="w-3.5 h-3.5 text-[#64748b]" />
         <span>Only scan images from foragers who have opted in to data sharing (<code>allow_data_training = true</code>) are used for retraining.</span>
       </p>
+
+      <!-- Duplicate Review & Management Modal -->
+      <div
+        v-if="showDuplicatesModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs"
+        @click.self="closeDuplicatesModal"
+      >
+        <div class="bg-white rounded-2xl shadow-2xl border border-[#e2e8f0] w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <!-- Modal Header -->
+          <div class="px-6 py-4.5 border-b border-[#e2e8f0] flex items-center justify-between gap-3 bg-[#f8fafc]">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-[#ffedd5] text-[#ea580c] flex items-center justify-center shrink-0">
+                <AppIcon name="copy" class="w-5 h-5" />
+              </div>
+              <div>
+                <h3 class="text-[16px] font-bold text-[#0f172a] flex items-center gap-2">
+                  <span>Review Candidate Image Duplicates</span>
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#ffedd5] text-[#c2410c]">
+                    {{ duplicateSummary.duplicate_groups_count }} sets · {{ duplicateSummary.redundant_scans_count }} redundant
+                  </span>
+                </h3>
+                <p class="text-[12px] text-[#64748b] mt-0.5">
+                  Clusters grouped by MD5 exact hash and 64-bit dHash perceptual fingerprint. Keep only 1 verified photo per set to avoid dataset skew.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="w-8 h-8 rounded-lg hover:bg-[#e2e8f0] text-[#64748b] flex items-center justify-center transition-colors cursor-pointer text-[18px]"
+              @click="closeDuplicatesModal"
+            >
+              ✕
+            </button>
+          </div>
+
+          <!-- Filter & Action Toolbar -->
+          <div class="px-6 py-3 border-b border-[#e2e8f0] flex flex-wrap items-center justify-between gap-2.5 bg-white">
+            <div class="flex items-center gap-1.5 bg-[#f1f5f9] p-1 rounded-lg text-[12px] font-medium">
+              <button
+                type="button"
+                class="px-2.5 py-1 rounded-md transition-colors"
+                :class="duplicateFilter === 'all' ? 'bg-white text-[#0f172a] shadow-xs font-semibold' : 'text-[#64748b] hover:text-[#0f172a]'"
+                @click="duplicateFilter = 'all'"
+              >
+                All Sets ({{ duplicateGroups.length }})
+              </button>
+              <button
+                v-if="duplicateSummary.conflict_groups_count > 0"
+                type="button"
+                class="px-2.5 py-1 rounded-md transition-colors flex items-center gap-1"
+                :class="duplicateFilter === 'conflicts' ? 'bg-rose-50 text-rose-700 shadow-xs font-bold border border-rose-200' : 'text-rose-600 hover:text-rose-700'"
+                @click="duplicateFilter = 'conflicts'"
+              >
+                <span>⚠️ Conflicts ({{ duplicateSummary.conflict_groups_count }})</span>
+              </button>
+              <button
+                type="button"
+                class="px-2.5 py-1 rounded-md transition-colors"
+                :class="duplicateFilter === 'exact' ? 'bg-white text-[#0f172a] shadow-xs font-semibold' : 'text-[#64748b] hover:text-[#0f172a]'"
+                @click="duplicateFilter = 'exact'"
+              >
+                Exact Hash
+              </button>
+              <button
+                type="button"
+                class="px-2.5 py-1 rounded-md transition-colors"
+                :class="duplicateFilter === 'near' ? 'bg-white text-[#0f172a] shadow-xs font-semibold' : 'text-[#64748b] hover:text-[#0f172a]'"
+                @click="duplicateFilter = 'near'"
+              >
+                Perceptual Similarity
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="py-1.5 px-3 rounded-lg bg-[#ea580c] hover:bg-[#c2410c] text-white text-[12px] font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
+                @click="autoDeselectDuplicates"
+              >
+                <AppIcon name="sparkles" class="w-3.5 h-3.5" />
+                <span>Auto-Deselect Copies</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Groups Content List -->
+          <div class="flex-1 overflow-y-auto p-6 space-y-4">
+            <div
+              v-if="filteredDuplicateGroups.length === 0"
+              class="py-12 text-center text-[#64748b]"
+            >
+              <div class="w-12 h-12 rounded-full bg-[#f1f5f9] text-[#94a3b8] flex items-center justify-center mx-auto mb-2">
+                <AppIcon name="check-circle" class="w-6 h-6 text-emerald-500" />
+              </div>
+              <p class="text-[14px] font-semibold text-[#0f172a]">No duplicate images found matching this filter</p>
+              <p class="text-[12px] text-[#94a3b8] mt-1">Every candidate scan photo is unique in this view.</p>
+            </div>
+
+            <div
+              v-for="group in filteredDuplicateGroups"
+              :key="group.group_id"
+              :id="`dup-group-${group.group_id}`"
+              class="rounded-xl border p-4.5 transition-all"
+              :class="group.has_conflict ? 'border-rose-300 bg-rose-50/40' : 'border-[#e2e8f0] bg-white hover:border-[#cbd5e1]'"
+            >
+              <!-- Group Subheader -->
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-[#f1f5f9]">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-[13px] font-bold text-[#0f172a]">
+                    Set #{{ group.group_id.slice(-6) }}
+                  </span>
+                  <span class="text-[11.5px] text-[#64748b]">({{ group.total_count }} identical photos)</span>
+                  <span
+                    v-if="group.match_types.includes('exact_md5')"
+                    class="px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#e0f2fe] text-[#0369a1]"
+                  >
+                    Exact MD5
+                  </span>
+                  <span
+                    v-else
+                    class="px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#f3e8ff] text-[#7e22ce]"
+                  >
+                    dHash Distance ≤ 5
+                  </span>
+                  <span
+                    v-if="group.has_conflict"
+                    class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500 text-white animate-pulse"
+                  >
+                    ⚠️ LABEL CONFLICT ({{ group.classifications.join(' vs ') }})
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="px-2.5 py-1 text-[11.5px] font-semibold rounded-md border border-[#fed7aa] bg-[#fff7ed] hover:bg-[#ffedd5] text-[#c2410c] cursor-pointer transition-colors"
+                    title="Keep the original primary scan selected and uncheck all duplicate copies"
+                    @click="keepOnlyPrimaryInGroup(group)"
+                  >
+                    Keep 1 Only
+                  </button>
+                  <button
+                    type="button"
+                    class="px-2.5 py-1 text-[11.5px] font-semibold rounded-md border border-[#cbd5e1] bg-white hover:bg-[#f1f5f9] text-[#475569] cursor-pointer transition-colors disabled:opacity-50"
+                    :disabled="excludingDuplicates"
+                    title="Archive non-primary duplicate images so they will not be used in future training runs"
+                    @click="excludeScanIds(group.scans.filter(s => !s.is_primary).map(s => s.id))"
+                  >
+                    Archive Copies
+                  </button>
+                </div>
+              </div>
+
+              <!-- Scans Grid in Group -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                <div
+                  v-for="scan in group.scans"
+                  :key="scan.id"
+                  class="relative rounded-lg border overflow-hidden p-2 flex flex-col justify-between transition-all"
+                  :class="isScanSelected(scan.id, scan.classification)
+                    ? (scan.classification === 'edible' ? 'border-emerald-500 bg-emerald-50/50 shadow-xs' : 'border-rose-500 bg-rose-50/50 shadow-xs')
+                    : 'border-[#e2e8f0] bg-white opacity-70'"
+                >
+                  <div class="relative w-full h-[90px] rounded-md overflow-hidden bg-[#f8fafc] mb-2">
+                    <img
+                      :src="getImageUrl(scan.image_url || scan.image_path)"
+                      :alt="scan.result_name"
+                      class="w-full h-full object-cover"
+                    />
+                    <div
+                      v-if="scan.is_primary"
+                      class="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-600 text-white shadow-xs"
+                    >
+                      ★ Primary
+                    </div>
+                    <div
+                      class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold capitalize shadow-xs"
+                      :class="scan.classification === 'edible' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'"
+                    >
+                      {{ scan.classification }}
+                    </div>
+                  </div>
+
+                  <div class="space-y-1">
+                    <p class="text-[11px] font-semibold text-[#0f172a] truncate italic">{{ scan.result_name }}</p>
+                    <p class="text-[10px] text-[#64748b] truncate">By {{ scan.user }}</p>
+                    <p class="text-[10px] text-[#94a3b8]">{{ scan.scanned_at }}</p>
+
+                    <label class="flex items-center gap-1.5 pt-1 border-t border-[#f1f5f9] cursor-pointer mt-1">
+                      <input
+                        type="checkbox"
+                        class="rounded text-[#ea580c] focus:ring-orange-500 w-3.5 h-3.5"
+                        :checked="isScanSelected(scan.id, scan.classification)"
+                        @change="toggleScanInRetrain(scan.id, scan.classification)"
+                      />
+                      <span class="text-[10.5px] font-semibold" :class="isScanSelected(scan.id, scan.classification) ? 'text-[#0f172a]' : 'text-[#94a3b8]'">
+                        {{ isScanSelected(scan.id, scan.classification) ? 'Included' : 'Excluded' }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="px-6 py-3.5 border-t border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-between">
+            <span class="text-[12px] text-[#64748b]">
+              Selected for training: <strong class="text-[#0f172a]">{{ totalSelected }}</strong> images
+            </span>
+            <button
+              type="button"
+              class="px-4 py-2 rounded-lg bg-[#0f172a] hover:bg-[#1e293b] text-white text-[12.5px] font-semibold transition-colors cursor-pointer"
+              @click="closeDuplicatesModal"
+            >
+              Done Reviewing
+            </button>
+          </div>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -334,6 +627,30 @@ interface ScanCandidate {
   user: string
   scanned_at: string
   retrained_at?: string | null
+}
+
+interface DuplicateScan {
+  id: number
+  image_url: string
+  image_path?: string
+  result_name: string
+  classification: 'edible' | 'poisonous'
+  confidence: number
+  user: string
+  scanned_at: string
+  is_primary: boolean
+  match_type: 'exact_md5' | 'near_duplicate_dhash'
+  hamming_distance: number
+}
+
+interface DuplicateGroup {
+  group_id: string
+  representative_id: number
+  total_count: number
+  has_conflict: boolean
+  classifications: string[]
+  match_types: string[]
+  scans: DuplicateScan[]
 }
 
 const emit = defineEmits<{
@@ -412,6 +729,21 @@ const retrainedCandidates = ref<{ edible: ScanCandidate[]; poisonous: ScanCandid
 })
 const summary = ref({ total: 0, edible_count: 0, poisonous_count: 0 })
 const retrainedSummary = ref({ total: 0, edible_count: 0, poisonous_count: 0 })
+
+const scanningDuplicates = ref(false)
+const showDuplicatesModal = ref(false)
+const selectedGroupId = ref<string | null>(null)
+const duplicateFilter = ref<'all' | 'conflicts' | 'exact' | 'near'>('all')
+const duplicateGroups = ref<DuplicateGroup[]>([])
+const duplicateSummary = ref({
+  total_scans_analyzed: 0,
+  duplicate_groups_count: 0,
+  redundant_scans_count: 0,
+  conflict_groups_count: 0,
+})
+const recommendedUnselectIds = ref<number[]>([])
+const duplicateScanMap = ref<Record<number, { group_id: string; is_primary: boolean; has_conflict: boolean }>>({})
+const excludingDuplicates = ref(false)
 
 const edibleSelected = ref<number[]>([])
 const poisonousSelected = ref<number[]>([])
@@ -560,8 +892,138 @@ async function fetchStatus() {
   }
 }
 
+const filteredDuplicateGroups = computed(() => {
+  if (duplicateFilter.value === 'conflicts') {
+    return duplicateGroups.value.filter(g => g.has_conflict)
+  }
+  if (duplicateFilter.value === 'exact') {
+    return duplicateGroups.value.filter(g => g.match_types.includes('exact_md5'))
+  }
+  if (duplicateFilter.value === 'near') {
+    return duplicateGroups.value.filter(g => g.match_types.includes('near_duplicate_dhash'))
+  }
+  return duplicateGroups.value
+})
+
+async function fetchDuplicates() {
+  scanningDuplicates.value = true
+  try {
+    const data = await $fetch<any>(`${api}/admin/retrain/duplicates`, {
+      headers: authHeaders(),
+      query: { scope: queueView.value === 'trained' ? 'all' : 'ready' },
+    })
+    duplicateGroups.value = data.groups || []
+    duplicateSummary.value = {
+      total_scans_analyzed: data.total_scans_analyzed || 0,
+      duplicate_groups_count: data.duplicate_groups_count || 0,
+      redundant_scans_count: data.redundant_scans_count || 0,
+      conflict_groups_count: data.conflict_groups_count || 0,
+    }
+    recommendedUnselectIds.value = data.recommended_unselect_ids || []
+    duplicateScanMap.value = data.duplicate_scan_ids_map || {}
+  } catch (err) {
+    console.warn('Failed to fetch duplicate scans:', err)
+  } finally {
+    scanningDuplicates.value = false
+  }
+}
+
+function openDuplicatesModal(targetGroupId?: string) {
+  if (targetGroupId) {
+    selectedGroupId.value = targetGroupId
+    setTimeout(() => {
+      const el = document.getElementById(`dup-group-${targetGroupId}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
+  }
+  showDuplicatesModal.value = true
+}
+
+function closeDuplicatesModal() {
+  showDuplicatesModal.value = false
+  selectedGroupId.value = null
+}
+
+function isScanSelected(id: number, classification: string): boolean {
+  return classification === 'edible'
+    ? edibleSelected.value.includes(id)
+    : poisonousSelected.value.includes(id)
+}
+
+function toggleScanInRetrain(id: number, classification: string) {
+  if (classification === 'edible') {
+    if (edibleSelected.value.includes(id)) {
+      edibleSelected.value = edibleSelected.value.filter(x => x !== id)
+    } else {
+      edibleSelected.value.push(id)
+    }
+  } else {
+    if (poisonousSelected.value.includes(id)) {
+      poisonousSelected.value = poisonousSelected.value.filter(x => x !== id)
+    } else {
+      poisonousSelected.value.push(id)
+    }
+  }
+}
+
+function keepOnlyPrimaryInGroup(group: DuplicateGroup) {
+  for (const scan of group.scans) {
+    if (scan.is_primary) {
+      if (!isScanSelected(scan.id, scan.classification)) {
+        toggleScanInRetrain(scan.id, scan.classification)
+      }
+    } else {
+      if (isScanSelected(scan.id, scan.classification)) {
+        toggleScanInRetrain(scan.id, scan.classification)
+      }
+    }
+  }
+  toastSuccess(`Kept primary scan #${group.representative_id} and unselected duplicate copies.`)
+}
+
+function autoDeselectDuplicates() {
+  const unselectSet = new Set(recommendedUnselectIds.value)
+  const initialCount = edibleSelected.value.length + poisonousSelected.value.length
+
+  edibleSelected.value = edibleSelected.value.filter(id => !unselectSet.has(id))
+  poisonousSelected.value = poisonousSelected.value.filter(id => !unselectSet.has(id))
+
+  const deselected = initialCount - (edibleSelected.value.length + poisonousSelected.value.length)
+  toastSuccess(`Deselected ${deselected} redundant duplicate images from the retraining queue.`)
+}
+
+async function excludeScanIds(ids: number[]) {
+  if (!ids || ids.length === 0) return
+  const ok = await confirm({
+    title: 'Archive Duplicate Images?',
+    message: `Mark ${ids.length} duplicate image${ids.length !== 1 ? 's' : ''} as archived so they will not be used in future model training? (Original photos will not be deleted from scans).`,
+    tone: 'warning',
+    confirmText: 'Archive Duplicates',
+  })
+  if (!ok) return
+
+  excludingDuplicates.value = true
+  try {
+    const res = await $fetch<any>(`${api}/admin/retrain/exclude`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: { scan_ids: ids },
+    })
+    toastSuccess(res?.message || 'Duplicates archived successfully.')
+    await refreshAll()
+  } catch (err: any) {
+    toastError(err?.data?.message || 'Failed to archive duplicates.')
+  } finally {
+    excludingDuplicates.value = false
+  }
+}
+
+watch(queueView, () => {
+  fetchDuplicates()
+})
+
 async function refreshAll() {
-  await Promise.all([fetchCandidates(), fetchStatus()])
+  await Promise.all([fetchCandidates(), fetchStatus(), fetchDuplicates()])
 }
 
 async function refreshMlService() {
