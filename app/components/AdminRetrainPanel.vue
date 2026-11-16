@@ -375,34 +375,34 @@
         </div>
 
         <div v-else class="overflow-x-auto history-scroll-container pb-2">
-          <table class="w-full min-w-[980px] text-[13px]">
+          <table class="w-full text-[13px] border-separate border-spacing-0">
             <thead class="bg-[#f8fafc]">
               <tr>
-                <th class="text-left px-5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[170px]">Date</th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[130px]">Status</th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[85px]">Duration</th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[90px]"><span class="inline-flex items-center gap-1"><AppIcon name="check-circle" class="w-3.5 h-3.5 text-[#059669]" />Edible</span></th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[90px]"><span class="inline-flex items-center gap-1"><AppIcon name="skull" class="w-3.5 h-3.5 text-[#dc2626]" />Poisonous</span></th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[125px]">Dataset</th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[90px]">Train Acc.</th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[90px]">Val Acc.</th>
-                <th class="text-right px-6 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[145px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)]">Report</th>
+                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[155px] border-b border-[#f1f5f9]">Date</th>
+                <th class="text-left px-3.5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[125px] border-b border-[#f1f5f9]">Status</th>
+                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Duration</th>
+                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="check-circle" class="w-3.5 h-3.5 text-[#059669]" />Edible</span></th>
+                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[80px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="skull" class="w-3.5 h-3.5 text-[#dc2626]" />Poisonous</span></th>
+                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[105px] border-b border-[#f1f5f9]">Dataset</th>
+                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Train Acc.</th>
+                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Val Acc.</th>
+                <th class="text-right px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[130px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]">Report</th>
               </tr>
             </thead>
             <tbody>
               <tr
                 v-for="(run, i) in history"
                 :key="run.id ?? i"
-                class="border-t border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors cursor-pointer group"
+                class="hover:bg-[#f8fafc] transition-colors cursor-pointer group"
                 @click="openReportModal(run)"
               >
-                <td class="px-5 py-3 text-[#334155] whitespace-nowrap">
+                <td class="px-4 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
                   <div class="flex items-center gap-1.5">
                     <AppIcon name="calendar" class="w-3.5 h-3.5 text-[#94a3b8]" />
                     <span>{{ formatDate(run.started_at) }}</span>
                   </div>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap">
+                <td class="px-3.5 py-3 whitespace-nowrap border-b border-[#f1f5f9]">
                   <span
                     class="text-[11.5px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
                     :class="{
@@ -418,29 +418,29 @@
                       Running
                     </span>
                   </span>
-                  <p v-if="run.status === 'failed' && run.error" class="text-[11px] text-[#dc2626] mt-1 max-w-[200px] truncate" :title="run.error">
+                  <p v-if="run.status === 'failed' && run.error" class="text-[11px] text-[#dc2626] mt-1 max-w-[180px] truncate" :title="run.error">
                     {{ run.error }}
                   </p>
                 </td>
-                <td class="px-4 py-3 text-[#64748b] whitespace-nowrap">
+                <td class="px-3 py-3 text-[#64748b] whitespace-nowrap border-b border-[#f1f5f9]">
                   <span class="inline-flex items-center gap-1">
                     <AppIcon name="hourglass" class="w-3 h-3 text-[#94a3b8]" />
                     {{ formatDuration(run) }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-[#334155] whitespace-nowrap">
+                <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
                   <span>{{ run.total_edible ?? run.new_edible ?? '—' }}</span>
                   <span v-if="run.new_edible != null && run.total_edible != null && run.new_edible !== run.total_edible" class="text-[11px] text-[#059669] ml-1 font-medium">
                     (+{{ run.new_edible }})
                   </span>
                 </td>
-                <td class="px-4 py-3 text-[#334155] whitespace-nowrap">
+                <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
                   <span>{{ run.total_poisonous ?? run.new_poisonous ?? '—' }}</span>
                   <span v-if="run.new_poisonous != null && run.total_poisonous != null && run.new_poisonous !== run.total_poisonous" class="text-[11px] text-[#dc2626] ml-1 font-medium">
                     (+{{ run.new_poisonous }})
                   </span>
                 </td>
-                <td class="px-4 py-3 text-[#475569] whitespace-nowrap">
+                <td class="px-3 py-3 text-[#475569] whitespace-nowrap border-b border-[#f1f5f9]">
                   <span class="font-medium text-[#0f172a]">{{ run.total_images ?? (run.new_edible != null ? (run.new_edible + (run.new_poisonous || 0)) : '—') }}</span>
                   <span v-if="(run.new_edible || 0) + (run.new_poisonous || 0) > 0" class="text-[11px] text-[#059669] font-medium block">
                     {{ (run.new_edible || 0) + (run.new_poisonous || 0) }} new ingested
@@ -452,16 +452,16 @@
                     0 new ingested
                   </span>
                 </td>
-                <td class="px-4 py-3 font-semibold text-[#0f172a] whitespace-nowrap">
+                <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
                   {{ run.train_accuracy != null ? run.train_accuracy + '%' : '—' }}
                 </td>
-                <td class="px-4 py-3 font-semibold text-[#0f172a] whitespace-nowrap">
+                <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
                   {{ run.val_accuracy != null ? run.val_accuracy + '%' : '—' }}
                 </td>
-                <td class="px-6 py-3 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f8fafc] transition-colors z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)]" @click.stop>
+                <td class="px-4 py-3 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f8fafc] transition-colors z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]" @click.stop>
                   <button
                     type="button"
-                    class="py-1.5 px-3 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs"
+                    class="py-1.5 px-3 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
                     title="View comprehensive status and performance report for this retraining run"
                     @click="openReportModal(run)"
                   >
@@ -1535,28 +1535,32 @@ onUnmounted(() => stopPolling())
 <style scoped>
 .history-scroll-container {
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: thin;
   scrollbar-color: #94a3b8 #f1f5f9;
+  -webkit-overflow-scrolling: touch;
 }
 
+/* Force visible, smooth custom horizontal scrollbar */
 .history-scroll-container::-webkit-scrollbar {
   height: 9px;
+  background-color: #f1f5f9;
 }
 
 .history-scroll-container::-webkit-scrollbar-track {
   background: #f1f5f9;
   border-radius: 9999px;
-  margin: 0 12px;
+  margin: 0 8px;
 }
 
 .history-scroll-container::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #94a3b8;
   border-radius: 9999px;
   border: 2px solid #f1f5f9;
 }
 
 .history-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #64748b;
 }
 </style>
 
