@@ -347,19 +347,19 @@
           <p class="text-[13px] text-[#94a3b8]">No retraining runs yet.</p>
         </div>
 
-        <div v-else class="overflow-x-auto">
-          <table class="w-full min-w-[760px] text-[13px]">
+        <div v-else class="overflow-x-auto history-scroll-container pb-2">
+          <table class="w-full min-w-[980px] text-[13px]">
             <thead class="bg-[#f8fafc]">
               <tr>
-                <th class="text-left px-5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Date</th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Status</th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Duration</th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide"><span class="inline-flex items-center gap-1"><AppIcon name="check-circle" class="w-3.5 h-3.5 text-[#059669]" />Edible</span></th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide"><span class="inline-flex items-center gap-1"><AppIcon name="skull" class="w-3.5 h-3.5 text-[#dc2626]" />Poisonous</span></th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Dataset</th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Train Acc.</th>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Val Acc.</th>
-                <th class="text-right px-5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide">Report</th>
+                <th class="text-left px-5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[170px]">Date</th>
+                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[130px]">Status</th>
+                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[85px]">Duration</th>
+                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[90px]"><span class="inline-flex items-center gap-1"><AppIcon name="check-circle" class="w-3.5 h-3.5 text-[#059669]" />Edible</span></th>
+                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[90px]"><span class="inline-flex items-center gap-1"><AppIcon name="skull" class="w-3.5 h-3.5 text-[#dc2626]" />Poisonous</span></th>
+                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[125px]">Dataset</th>
+                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[90px]">Train Acc.</th>
+                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[90px]">Val Acc.</th>
+                <th class="text-right px-6 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[145px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)]">Report</th>
               </tr>
             </thead>
             <tbody>
@@ -423,10 +423,10 @@
                 <td class="px-4 py-3 font-semibold text-[#0f172a] whitespace-nowrap">
                   {{ run.val_accuracy != null ? run.val_accuracy + '%' : '—' }}
                 </td>
-                <td class="px-5 py-3 text-right whitespace-nowrap" @click.stop>
+                <td class="px-6 py-3 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f8fafc] transition-colors z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)]" @click.stop>
                   <button
                     type="button"
-                    class="py-1 px-2.5 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs"
+                    class="py-1.5 px-3 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs"
                     title="View comprehensive status and performance report for this retraining run"
                     @click="openReportModal(run)"
                   >
@@ -1468,4 +1468,32 @@ onMounted(async () => {
 
 onUnmounted(() => stopPolling())
 </script>
+
+<style scoped>
+.history-scroll-container {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+
+.history-scroll-container::-webkit-scrollbar {
+  height: 9px;
+}
+
+.history-scroll-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+  margin: 0 12px;
+}
+
+.history-scroll-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 2px solid #f1f5f9;
+}
+
+.history-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+</style>
 
