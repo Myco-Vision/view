@@ -258,10 +258,23 @@
                 {{ selectedIds(panel.cls).length }} / {{ visibleList(panel.cls).length }} selected
               </span>
             </div>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
               <button class="text-[12px] font-semibold hover:underline cursor-pointer" :class="panel.selectBtnClass" @click="selectAll(panel.cls)">Select All</button>
               <span class="text-[#cbd5e1]">|</span>
               <button class="text-[12px] font-semibold text-[#64748b] hover:underline cursor-pointer" @click="deselectAll(panel.cls)">Clear</button>
+              <template v-if="queueView === 'ready' && visibleList(panel.cls).length > selectedIds(panel.cls).length">
+                <span class="text-[#cbd5e1]">|</span>
+                <button
+                  type="button"
+                  class="text-[12px] font-semibold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer inline-flex items-center gap-1"
+                  :disabled="excludingDuplicates"
+                  title="Permanently remove all unselected/deselected scans in this category from the training queue"
+                  @click="excludeUnselected(panel.cls)"
+                >
+                  <AppIcon name="trash" class="w-3 h-3" />
+                  <span>Remove Deselected ({{ visibleList(panel.cls).length - selectedIds(panel.cls).length }})</span>
+                </button>
+              </template>
             </div>
           </div>
 
@@ -298,19 +311,33 @@
                 class="w-full h-[100px] object-cover bg-[#f8fafc]"
                 @error="brokenImages[scan.id] = true"
               />
-              <!-- Duplicate badge pill -->
+              <!-- Duplicate badge pill + quick remove button -->
               <div
                 v-if="hasScannedDuplicates && duplicateScanMap[scan.id]"
-                class="absolute top-1.5 left-1.5 z-10 px-1.5 py-0.5 rounded-md text-[10px] font-bold shadow-xs flex items-center gap-1 cursor-pointer transition-transform hover:scale-105"
-                :class="duplicateScanMap[scan.id].has_conflict
-                  ? 'bg-rose-600 text-white animate-pulse'
-                  : duplicateScanMap[scan.id].is_primary
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-amber-500 text-white'"
-                :title="duplicateScanMap[scan.id].has_conflict ? 'Conflicting label duplicate! Click to review' : duplicateScanMap[scan.id].is_primary ? 'Original image' : 'Duplicate copy — unselected'"
-                @click.stop="openDuplicatesModal(duplicateScanMap[scan.id].group_id)"
+                class="absolute top-1.5 left-1.5 z-10 flex items-center gap-1"
               >
-                <span>{{ duplicateScanMap[scan.id].has_conflict ? '⚠️ Conflict' : duplicateScanMap[scan.id].is_primary ? '★ Primary' : 'Duplicate' }}</span>
+                <div
+                  class="px-1.5 py-0.5 rounded-md text-[10px] font-bold shadow-xs flex items-center gap-1 cursor-pointer transition-transform hover:scale-105"
+                  :class="duplicateScanMap[scan.id].has_conflict
+                    ? 'bg-rose-600 text-white animate-pulse'
+                    : duplicateScanMap[scan.id].is_primary
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-amber-500 text-white'"
+                  :title="duplicateScanMap[scan.id].has_conflict ? 'Conflicting label duplicate! Click to review' : duplicateScanMap[scan.id].is_primary ? 'Original image' : 'Duplicate copy — click to review set'"
+                  @click.stop="openDuplicatesModal(duplicateScanMap[scan.id].group_id)"
+                >
+                  <span>{{ duplicateScanMap[scan.id].has_conflict ? '⚠️ Conflict' : duplicateScanMap[scan.id].is_primary ? '★ Primary' : 'Duplicate' }}</span>
+                </div>
+                <button
+                  v-if="!duplicateScanMap[scan.id].is_primary && queueView === 'ready'"
+                  type="button"
+                  class="px-1.5 py-0.5 rounded-md text-[9.5px] font-bold shadow-xs bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer"
+                  :disabled="excludingDuplicates"
+                  title="Permanently remove this duplicate copy from the training queue"
+                  @click.stop="excludeScanIds([scan.id])"
+                >
+                  ✕ Remove
+                </button>
               </div>
               <div
                 class="absolute inset-0 flex items-center justify-center transition-opacity duration-200"
@@ -415,7 +442,15 @@
                 </td>
                 <td class="px-4 py-3 text-[#475569] whitespace-nowrap">
                   <span class="font-medium text-[#0f172a]">{{ run.total_images ?? (run.new_edible != null ? (run.new_edible + (run.new_poisonous || 0)) : '—') }}</span>
-                  <span class="text-[11px] text-[#94a3b8] block">{{ (run.new_edible || 0) + (run.new_poisonous || 0) }} new ingested</span>
+                  <span v-if="(run.new_edible || 0) + (run.new_poisonous || 0) > 0" class="text-[11px] text-[#059669] font-medium block">
+                    {{ (run.new_edible || 0) + (run.new_poisonous || 0) }} new ingested
+                  </span>
+                  <span v-else-if="run.status === 'done'" class="text-[10.5px] text-[#64748b] block font-medium">
+                    Baseline test (0 new scans)
+                  </span>
+                  <span v-else class="text-[11px] text-[#94a3b8] block">
+                    0 new ingested
+                  </span>
                 </td>
                 <td class="px-4 py-3 font-semibold text-[#0f172a] whitespace-nowrap">
                   {{ run.train_accuracy != null ? run.train_accuracy + '%' : '—' }}
@@ -1217,6 +1252,13 @@ async function runManualDuplicateScan(openModalIfFound = true) {
     duplicateScanMap.value = data.duplicate_scan_ids_map || {}
     hasScannedDuplicates.value = true
 
+    // Auto-uncheck redundant duplicate copies from current selection so they are not sent to retrain
+    if (recommendedUnselectIds.value.length > 0) {
+      const unselectSet = new Set(recommendedUnselectIds.value)
+      edibleSelected.value = edibleSelected.value.filter(id => !unselectSet.has(id))
+      poisonousSelected.value = poisonousSelected.value.filter(id => !unselectSet.has(id))
+    }
+
     if (duplicateSummary.value.duplicate_groups_count > 0) {
       toastSuccess(`Scan complete: Found ${duplicateSummary.value.duplicate_groups_count} duplicate set(s) (${duplicateSummary.value.redundant_scans_count} redundant copy/copies).`)
       if (openModalIfFound) {
@@ -1306,6 +1348,10 @@ async function autoDeselectDuplicates() {
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body: { scan_ids: unselectSet },
     })
+    const idSet = new Set(unselectSet)
+    edibleSelected.value = edibleSelected.value.filter(id => !idSet.has(id))
+    poisonousSelected.value = poisonousSelected.value.filter(id => !idSet.has(id))
+
     toastSuccess(res?.message || `Permanently removed ${unselectSet.length} duplicate copy/copies from the training candidates.`)
     await refreshAll()
     hasScannedDuplicates.value = false
@@ -1316,6 +1362,13 @@ async function autoDeselectDuplicates() {
   } finally {
     excludingDuplicates.value = false
   }
+}
+
+async function excludeUnselected(cls: 'edible' | 'poisonous') {
+  const selected = new Set(selectionBucket(cls))
+  const unselectedIds = visibleList(cls).filter(s => !selected.has(s.id)).map(s => s.id)
+  if (unselectedIds.length === 0) return
+  await excludeScanIds(unselectedIds)
 }
 
 async function excludeScanIds(ids: number[]) {
@@ -1335,6 +1388,10 @@ async function excludeScanIds(ids: number[]) {
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body: { scan_ids: ids },
     })
+    const idSet = new Set(ids)
+    edibleSelected.value = edibleSelected.value.filter(id => !idSet.has(id))
+    poisonousSelected.value = poisonousSelected.value.filter(id => !idSet.has(id))
+
     toastSuccess(res?.message || 'Duplicates permanently removed from the training queue.')
     await refreshAll()
     await runManualDuplicateScan(false)
@@ -1412,9 +1469,15 @@ async function refreshMlService() {
 
 async function startRetrain() {
   if (totalSelected.value === 0) return
+  const totalAvailable = candidates.value.edible.length + candidates.value.poisonous.length
+  const unselectedCount = totalAvailable - totalSelected.value
+  const unselectedNote = unselectedCount > 0
+    ? ` Note: ${unselectedCount} unselected candidate image${unselectedCount !== 1 ? 's' : ''} (including duplicate copies) will remain in the queue unless permanently excluded.`
+    : ''
+
   const ok = await confirm({
     title: 'Start AI Model Retraining?',
-    message: `Train the model using ${edibleSelected.value.length} edible and ${poisonousSelected.value.length} poisonous scan images.`,
+    message: `Train the model using ${edibleSelected.value.length} edible and ${poisonousSelected.value.length} poisonous scan images.${unselectedNote}`,
     tone: 'info',
     confirmText: 'Start Retrain',
   })
