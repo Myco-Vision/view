@@ -501,11 +501,11 @@
               <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-[#f1f5f9]">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-[13px] font-bold text-[#0f172a]">
-                    Set #{{ group.group_id.slice(-6) }}
+                    Set #{{ group.group_id }}
                   </span>
                   <span class="text-[11.5px] text-[#64748b]">({{ group.total_count }} identical photos)</span>
                   <span
-                    v-if="group.match_types.includes('exact_md5')"
+                    v-if="group.match_type === 'exact' || (group.match_types && group.match_types.includes('exact'))"
                     class="px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#e0f2fe] text-[#0369a1]"
                   >
                     Exact MD5
@@ -514,13 +514,13 @@
                     v-else
                     class="px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#f3e8ff] text-[#7e22ce]"
                   >
-                    dHash Distance ≤ 5
+                    Visual Similarity ({{ group.similarity ?? 95 }}%)
                   </span>
                   <span
                     v-if="group.has_conflict"
                     class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500 text-white animate-pulse"
                   >
-                    ⚠️ LABEL CONFLICT ({{ group.classifications.join(' vs ') }})
+                    ⚠️ LABEL CONFLICT ({{ (group.classifications || []).join(' vs ') || 'Edible vs Poisonous' }})
                   </span>
                 </div>
 
@@ -638,18 +638,22 @@ interface DuplicateScan {
   confidence: number
   user: string
   scanned_at: string
+  retrained_at?: string | null
   is_primary: boolean
-  match_type: 'exact_md5' | 'near_duplicate_dhash'
-  hamming_distance: number
+  file_size?: number | null
 }
 
 interface DuplicateGroup {
-  group_id: string
-  representative_id: number
-  total_count: number
+  group_id: number | string
+  match_type?: 'exact' | 'perceptual'
+  match_types?: string[]
+  similarity?: number
   has_conflict: boolean
-  classifications: string[]
-  match_types: string[]
+  classification?: string
+  classifications?: string[]
+  total_count: number
+  primary_scan_id?: number
+  recommended_unselect_ids?: number[]
   scans: DuplicateScan[]
 }
 
@@ -898,10 +902,10 @@ const filteredDuplicateGroups = computed(() => {
     return duplicateGroups.value.filter(g => g.has_conflict)
   }
   if (duplicateFilter.value === 'exact') {
-    return duplicateGroups.value.filter(g => g.match_types.includes('exact_md5'))
+    return duplicateGroups.value.filter(g => g.match_type === 'exact' || (Array.isArray(g.match_types) && g.match_types.includes('exact')))
   }
   if (duplicateFilter.value === 'near') {
-    return duplicateGroups.value.filter(g => g.match_types.includes('near_duplicate_dhash'))
+    return duplicateGroups.value.filter(g => g.match_type === 'perceptual' || (Array.isArray(g.match_types) && g.match_types.includes('perceptual')))
   }
   return duplicateGroups.value
 })
@@ -1007,7 +1011,8 @@ function keepOnlyPrimaryInGroup(group: DuplicateGroup) {
       }
     }
   }
-  toastSuccess(`Kept primary scan #${group.representative_id} and unselected duplicate copies.`)
+  const primaryId = group.primary_scan_id ?? group.scans[0]?.id ?? 'primary'
+  toastSuccess(`Kept primary scan #${primaryId} and unselected duplicate copies.`)
 }
 
 function autoDeselectDuplicates() {
@@ -1040,6 +1045,7 @@ async function excludeScanIds(ids: number[]) {
     })
     toastSuccess(res?.message || 'Duplicates archived successfully.')
     await refreshAll()
+    await runManualDuplicateScan(false)
   } catch (err: any) {
     toastError(err?.data?.message || 'Failed to archive duplicates.')
   } finally {
