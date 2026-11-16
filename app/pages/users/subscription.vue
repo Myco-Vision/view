@@ -859,7 +859,7 @@ async function fetchSubscriptionStatus() {
 async function initiateCheckout(planKey: 'monthly' | 'annual') {
   const token = localStorage.getItem('token')
   if (!token) {
-    await navigateTo('/login')
+    await navigateTo('/?login=user')
     return
   }
 

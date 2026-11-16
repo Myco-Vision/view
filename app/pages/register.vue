@@ -395,7 +395,7 @@
       <!-- Footer -->
       <div class="relative mt-6 pt-5 border-t border-emerald-900/30 text-center text-xs text-slate-400">
         Already have an account?
-        <NuxtLink to="/login" class="text-emerald-400 hover:underline font-semibold ml-1">Sign in here</NuxtLink>
+        <NuxtLink to="/?login=user" class="text-emerald-400 hover:underline font-semibold ml-1">Sign in here</NuxtLink>
       </div>
 
       <!-- Google Sign-In Alternative (Step 1 only) -->

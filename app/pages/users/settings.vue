@@ -94,20 +94,6 @@
               <AppIcon name="key" class="w-4 h-4 text-[#64748b]" />
               <span>Change Password</span>
             </button>
-            <button class="flex items-center justify-between gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-not-allowed opacity-60 w-full text-left">
-              <div class="flex items-center gap-2.5">
-                <AppIcon name="smartphone" class="w-4 h-4 text-[#64748b]" />
-                <span>Two-Factor Auth (2FA)</span>
-              </div>
-              <span class="text-[11px] font-semibold bg-[#f1f5f9] text-[#94a3b8] px-2 py-0.5 rounded-full">Coming Soon</span>
-            </button>
-            <button class="flex items-center justify-between gap-2.5 py-[11px] px-3.5 rounded-[10px] border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans text-[#0f172a] cursor-not-allowed opacity-60 w-full text-left">
-              <div class="flex items-center gap-2.5">
-                <AppIcon name="mail" class="w-4 h-4 text-[#64748b]" />
-                <span>Email Settings</span>
-              </div>
-              <span class="text-[11px] font-semibold bg-[#f1f5f9] text-[#94a3b8] px-2 py-0.5 rounded-full">Coming Soon</span>
-            </button>
           </div>
         </div>
 
@@ -133,15 +119,6 @@
             </div>
             <div class="flex items-center justify-between gap-3">
               <div class="flex-1 min-w-0">
-                <p class="text-[13.5px] font-medium text-[#0f172a]">Dark Mode</p>
-                <p class="text-[12px] text-[#64748b] mt-0.5">Switch to dark interface</p>
-              </div>
-              <button class="relative w-[42px] h-6 rounded-full border-none cursor-pointer shrink-0 transition-colors duration-200" :class="quick.darkMode ? 'bg-[#10b981]' : 'bg-[#d1d5db]'" @click="quick.darkMode = !quick.darkMode">
-                <div class="absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-transform duration-200" :class="quick.darkMode ? 'translate-x-[18px]' : ''"></div>
-              </button>
-            </div>
-            <div class="flex items-center justify-between gap-3">
-              <div class="flex-1 min-w-0">
                 <p class="text-[13.5px] font-medium text-[#0f172a]">Location Access</p>
                 <p class="text-[12px] text-[#64748b] mt-0.5">Required for pinning mushroom locations</p>
               </div>
@@ -152,21 +129,6 @@
           </div>
         </div>
 
-        <!-- Storage -->
-        <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">
-          <p class="text-[14px] font-bold text-[#0f172a] flex items-center gap-[7px]">
-            <AppIcon name="save" class="w-4 h-4 text-[#64748b]" /> Storage
-          </p>
-          <p class="text-[13.5px] font-medium text-[#0f172a]">{{ storageUsed }}MB of {{ storageTotal }}MB used</p>
-          <div class="h-2 bg-[#e5e7eb] rounded-[10px] overflow-hidden">
-            <div class="h-full bg-[#10b981] rounded-[10px] transition-[width] duration-400 ease-in-out" :style="{ width: storagePercent + '%' }" />
-          </div>
-          <p class="text-[12px] text-[#64748b] -mt-1.5">Scan images and history data</p>
-          <div class="flex flex-col sm:flex-row gap-2">
-            <button class="w-full sm:w-auto py-2 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc] text-center" @click="clearCache">Clear Cache</button>
-            <button class="w-full sm:w-auto py-2 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-medium font-sans text-[#0f172a] cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc] text-center" @click="exportData">Export My Data</button>
-          </div>
-        </div>
 
         <!-- Privacy -->
         <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">

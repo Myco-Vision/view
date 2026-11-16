@@ -328,7 +328,7 @@ const googleUser = computed(() => {
 // Redirect if not logged in or profile already complete
 onMounted(() => {
   const token = getToken()
-  if (!token) { navigateTo('/login'); return }
+  if (!token) { navigateTo('/?login=user'); return }
 
   const user = getUser()
   if (!user.needs_profile_completion) {
@@ -502,6 +502,6 @@ async function handleSubmit() {
 // ── Sign out ──
 function signOut() {
   clearSession()
-  navigateTo('/login')
+  navigateTo('/?login=user')
 }
 </script>

@@ -301,7 +301,7 @@ async function handleLogout() {
     console.error('Logout error:', error)
   } finally {
     clearSession()
-    await navigateTo('/login')
+    await navigateTo('/?login=user')
   }
 }
 </script>
