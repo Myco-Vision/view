@@ -22,13 +22,13 @@
           type="button"
           class="py-2 px-3 rounded-lg border border-[#fed7aa] bg-[#fff7ed] text-[12.5px] font-semibold text-[#c2410c] cursor-pointer hover:bg-[#ffedd5] inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
           :disabled="scanningDuplicates || loading"
-          title="Review candidate images and detect exact or near-duplicate copies"
-          @click="openDuplicatesModal()"
+          title="Scan candidate images to detect exact or near-duplicate copies"
+          @click="handleDuplicateButtonClick"
         >
           <AppIcon name="copy" class="w-3.5 h-3.5" :class="{ 'animate-spin': scanningDuplicates }" />
-          <span>{{ scanningDuplicates ? 'Scanning…' : 'Find Duplicates' }}</span>
+          <span>{{ scanningDuplicates ? 'Scanning…' : (hasScannedDuplicates ? (duplicateSummary.redundant_scans_count > 0 ? 'Review Duplicates' : 'Re-scan Duplicates') : 'Scan for Duplicates') }}</span>
           <span
-            v-if="duplicateSummary.redundant_scans_count > 0"
+            v-if="hasScannedDuplicates && duplicateSummary.redundant_scans_count > 0"
             class="px-1.5 py-0.5 rounded-full text-[10.5px] font-bold bg-[#ea580c] text-white leading-none"
           >
             {{ duplicateSummary.redundant_scans_count }}
@@ -126,7 +126,7 @@
 
       <!-- Duplicate Detection Banner -->
       <div
-        v-if="duplicateSummary.redundant_scans_count > 0"
+        v-if="hasScannedDuplicates && duplicateSummary.redundant_scans_count > 0"
         class="rounded-[14px] bg-[#fff7ed] border border-[#fed7aa] px-5 py-4 flex flex-wrap items-center justify-between gap-3 shadow-xs"
       >
         <div class="flex items-start gap-3">
@@ -298,7 +298,7 @@
               />
               <!-- Duplicate badge pill -->
               <div
-                v-if="duplicateScanMap[scan.id]"
+                v-if="hasScannedDuplicates && duplicateScanMap[scan.id]"
                 class="absolute top-1.5 left-1.5 z-10 px-1.5 py-0.5 rounded-md text-[10px] font-bold shadow-xs flex items-center gap-1 cursor-pointer transition-transform hover:scale-105"
                 :class="duplicateScanMap[scan.id].has_conflict
                   ? 'bg-rose-600 text-white animate-pulse'
@@ -743,6 +743,7 @@ const duplicateSummary = ref({
 })
 const recommendedUnselectIds = ref<number[]>([])
 const duplicateScanMap = ref<Record<number, { group_id: string; is_primary: boolean; has_conflict: boolean }>>({})
+const hasScannedDuplicates = ref(false)
 const excludingDuplicates = ref(false)
 
 const edibleSelected = ref<number[]>([])
@@ -905,7 +906,20 @@ const filteredDuplicateGroups = computed(() => {
   return duplicateGroups.value
 })
 
-async function fetchDuplicates() {
+async function handleDuplicateButtonClick() {
+  if (scanningDuplicates.value) return
+
+  // If already scanned and found duplicate sets, open the review modal directly
+  if (hasScannedDuplicates.value && duplicateSummary.value.duplicate_groups_count > 0) {
+    openDuplicatesModal()
+    return
+  }
+
+  // Otherwise, run manual duplicate scan
+  await runManualDuplicateScan(true)
+}
+
+async function runManualDuplicateScan(openModalIfFound = true) {
   scanningDuplicates.value = true
   try {
     const data = await $fetch<any>(`${api}/admin/retrain/duplicates`, {
@@ -921,11 +935,26 @@ async function fetchDuplicates() {
     }
     recommendedUnselectIds.value = data.recommended_unselect_ids || []
     duplicateScanMap.value = data.duplicate_scan_ids_map || {}
-  } catch (err) {
+    hasScannedDuplicates.value = true
+
+    if (duplicateSummary.value.duplicate_groups_count > 0) {
+      toastSuccess(`Scan complete: Found ${duplicateSummary.value.duplicate_groups_count} duplicate set(s) (${duplicateSummary.value.redundant_scans_count} redundant copy/copies).`)
+      if (openModalIfFound) {
+        openDuplicatesModal()
+      }
+    } else {
+      toastSuccess('Scan complete: No duplicate images found. All candidate images are unique.')
+    }
+  } catch (err: any) {
     console.warn('Failed to fetch duplicate scans:', err)
+    toastError(err?.data?.message || 'Failed to scan for duplicate images.')
   } finally {
     scanningDuplicates.value = false
   }
+}
+
+async function fetchDuplicates() {
+  await runManualDuplicateScan(false)
 }
 
 function openDuplicatesModal(targetGroupId?: string) {
@@ -1019,11 +1048,21 @@ async function excludeScanIds(ids: number[]) {
 }
 
 watch(queueView, () => {
-  fetchDuplicates()
+  // Do NOT auto-scan when switching queue tabs; reset state so user triggers manually if desired
+  hasScannedDuplicates.value = false
+  duplicateGroups.value = []
+  duplicateSummary.value = {
+    total_scans_analyzed: 0,
+    duplicate_groups_count: 0,
+    redundant_scans_count: 0,
+    conflict_groups_count: 0,
+  }
+  duplicateScanMap.value = {}
+  recommendedUnselectIds.value = []
 })
 
 async function refreshAll() {
-  await Promise.all([fetchCandidates(), fetchStatus(), fetchDuplicates()])
+  await Promise.all([fetchCandidates(), fetchStatus()])
 }
 
 async function refreshMlService() {
