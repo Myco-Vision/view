@@ -4,3 +4,4 @@ await navigateTo('/mycodex', { replace: true })
 <template>
   <div />
 </template>
+
