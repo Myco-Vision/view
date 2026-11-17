@@ -105,6 +105,16 @@
             ({{ lastResult.total_edible }} edible, {{ lastResult.total_poisonous }} poisonous)
           </p>
           <p v-if="statusError" class="text-[12.5px] text-[#ef4444] font-mono">{{ statusError }}</p>
+          <div v-if="retrainState === 'unknown'" class="mt-2">
+            <button
+              type="button"
+              class="py-1 px-3 rounded-lg border border-[#fecaca] bg-white hover:bg-[#fef2f2] text-[12px] font-semibold text-[#dc2626] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs"
+              @click="fetchStatus"
+            >
+              <AppIcon name="refresh" class="w-3.5 h-3.5" />
+              <span>Retry Connection</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1199,6 +1209,9 @@ async function fetchStatus() {
 
     if (current.state === 'done' || current.state === 'failed') {
       stopPolling()
+    }
+    if (current.state === 'unknown' && previousState !== 'unknown') {
+      setTimeout(() => fetchStatus(), 3500)
     }
     if (data.scans_updated || (previousState === 'running' && current.state === 'done')) {
       await fetchCandidates()
