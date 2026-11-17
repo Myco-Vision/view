@@ -91,6 +91,19 @@
         </NuxtLink>
 
         <NuxtLink
+          to="/mycodex"
+          @click="mobileOpen = false"
+          class="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-slate-400 no-underline text-[13px] font-medium transition-all duration-200 hover:bg-emerald-900/30 hover:text-emerald-300"
+          active-class="!bg-emerald-600/20 !text-emerald-300 !border !border-emerald-500/30 shadow-sm"
+        >
+          <span class="flex items-center justify-center shrink-0 w-4 h-4">
+            <AppIcon name="sparkles" class="w-4 h-4" />
+          </span>
+          <span class="whitespace-nowrap flex-1">MycoDex</span>
+          <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Pro Pass</span>
+        </NuxtLink>
+
+        <NuxtLink
           to="/users/rewards"
           @click="mobileOpen = false"
           class="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-slate-400 no-underline text-[13px] font-medium transition-all duration-200 hover:bg-emerald-900/30 hover:text-emerald-300"

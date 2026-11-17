@@ -122,6 +122,29 @@
       <!-- ── RIGHT: Result Panel ───────── -->
       <div v-if="result" class="p-4 sm:p-6 flex flex-col gap-3 overflow-y-auto">
 
+        <!-- Gamified MycoDex & Crowdsourcing Reward Banner -->
+        <div v-if="mycodexReward && mycodexReward.eligible" class="p-3.5 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 flex flex-col gap-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold text-emerald-800 bg-emerald-200/60 border border-emerald-300">
+              <AppIcon name="sparkles" class="w-3.5 h-3.5 text-emerald-600" />
+              {{ mycodexReward.is_new_species ? '🌟 Unlocked in MycoDex!' : '🍄 Specimen Count +1' }}
+            </span>
+            <span class="text-xs font-extrabold text-emerald-700 bg-white/80 px-2 py-0.5 rounded-md border border-emerald-200">
+              +{{ mycodexReward.points_awarded }} Pending Pts
+            </span>
+          </div>
+          <div class="text-[12px] text-slate-700 flex flex-col gap-0.5">
+            <p class="font-medium">
+              <span v-if="mycodexReward.is_borderline" class="text-amber-700 font-bold">Active Learning Bonus (+10 pts)! </span>
+              <span v-else>Standard Scan (+2 pts). </span>
+              <span v-if="mycodexReward.is_new_species" class="text-emerald-700 font-bold">New Species Discovery Bonus (+5 pts)!</span>
+            </p>
+            <p class="text-[11px] text-slate-500">
+              Points are pending review by expert verifiers. Once approved, they convert to Verified Points for 7-Day Pro Passes!
+            </p>
+          </div>
+        </div>
+
         <!-- Info card -->
         <div class="py-3.5 px-4 border border-[#e2e8f0] rounded-xl bg-[#fafdfa] flex flex-col gap-1.5">
           <div class="flex items-center gap-2 text-[13px]">
@@ -641,6 +664,7 @@ const isAnalyzing  = ref(false)
 const selectedFile = ref<File | null>(null)
 const result       = ref<any>(null)
 const uploadError  = ref<string | null>(null)
+const mycodexReward = ref<any>(null)
 
 // ── Camera / auto-scan capture state ──────────────────
 const isCameraOpen = ref(false)
@@ -1130,6 +1154,7 @@ async function saveFinalScan(file: File) {
   selectedFile.value = null
   loadPreview(file)
   result.value = buildScanResult(data)
+  mycodexReward.value = data.mycodex_reward || null
   if (data.reward?.points_earned > 0) {
     setStatus(`+${data.reward.points_earned} reward points earned for contributing your scan!`)
   }
@@ -1193,6 +1218,7 @@ function clearImage() {
   previewUrl.value = null
   selectedFile.value = null
   result.value = null
+  mycodexReward.value = null
   uploadError.value = null
   lastScanId.value = null
   locationSaved.value = false
@@ -1205,6 +1231,7 @@ async function analyzeImage() {
 
   isAnalyzing.value = true
   result.value = null
+  mycodexReward.value = null
   uploadError.value = null
   lastScanId.value = null
   locationSaved.value = false
@@ -1243,6 +1270,7 @@ async function analyzeImage() {
 
     // Map result from backend to UI state
     result.value = buildScanResult(data)
+    mycodexReward.value = data.mycodex_reward || null
     if (data.reward?.points_earned > 0) {
       setStatus(`+${data.reward.points_earned} reward points earned for contributing your scan!`)
     }

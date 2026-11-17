@@ -312,6 +312,20 @@ const ICONS: Record<string, IconDef> = {
     filled: true,
     circles: [[12, 12, 6]],
   },
+  download: {
+    paths: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M7 10l5 5 5-5', 'M12 15V3'],
+  },
+  clock: {
+    circles: [[12, 12, 10]],
+    paths: ['M12 6v6l4 2'],
+  },
+  database: {
+    paths: [
+      'M3 5c0 1.66 4.03 3 9 3s9-1.34 9-3-4.03-3-9-3-9 1.34-9 3z',
+      'M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5',
+      'M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3',
+    ],
+  },
 }
 
 const props = defineProps<{ name: string }>()

@@ -1,64 +1,307 @@
 <template>
   <div class="flex flex-col gap-[22px]">
-    <!-- Action bar -->
-    <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h2 class="text-[15px] font-bold text-[#0f172a]">AI Model Retraining</h2>
-        <p class="text-[12.5px] text-[#64748b] mt-0.5">
-          Improve the mushroom classifier using consented scan images from foragers.
-        </p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-        <button
-          type="button"
-          class="py-2 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12.5px] font-medium text-[#475569] cursor-pointer hover:bg-[#f1f5f9] inline-flex items-center justify-center gap-1.5"
-          :disabled="loading"
-          @click="refreshAll"
+    <!-- Top Section Switcher: Pending Queue vs Verified Retraining Dataset -->
+    <div class="flex items-center gap-2 border-b border-[#e2e8f0] pb-2 overflow-x-auto">
+      <button
+        type="button"
+        class="py-2.5 px-4 rounded-xl text-[13.5px] font-bold cursor-pointer transition-all flex items-center gap-2 shrink-0"
+        :class="retrainSectionTab === 'pending'
+          ? 'bg-amber-500 text-white shadow-sm'
+          : 'bg-white border border-[#e2e8f0] text-[#64748b] hover:text-[#0f172a] hover:bg-[#f8fafc]'"
+        @click="retrainSectionTab = 'pending'"
+      >
+        <AppIcon name="clock" class="w-4 h-4" />
+        <span>Pending Annotation Queue</span>
+        <span
+          class="px-2 py-0.5 rounded-full text-[11px] font-extrabold"
+          :class="retrainSectionTab === 'pending' ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-800'"
         >
-          <AppIcon name="refresh" class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
-          <span>Refresh</span>
-        </button>
-        <button
-          type="button"
-          class="py-2 px-3 rounded-lg border border-[#fed7aa] bg-[#fff7ed] text-[12.5px] font-semibold text-[#c2410c] cursor-pointer hover:bg-[#ffedd5] inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-          :disabled="scanningDuplicates || loading"
-          title="Scan candidate images to detect exact or near-duplicate copies"
-          @click="handleDuplicateButtonClick"
+          {{ pendingCount }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="py-2.5 px-4 rounded-xl text-[13.5px] font-bold cursor-pointer transition-all flex items-center gap-2 shrink-0"
+        :class="retrainSectionTab === 'verified'
+          ? 'bg-[#0f172a] text-white shadow-sm'
+          : 'bg-white border border-[#e2e8f0] text-[#64748b] hover:text-[#0f172a] hover:bg-[#f8fafc]'"
+        @click="retrainSectionTab = 'verified'"
+      >
+        <AppIcon name="database" class="w-4 h-4" />
+        <span>Verified Dataset & Retraining</span>
+        <span
+          class="px-2 py-0.5 rounded-full text-[11px] font-extrabold"
+          :class="retrainSectionTab === 'verified' ? 'bg-white/20 text-white' : 'bg-[#e2e8f0] text-[#334155]'"
         >
-          <AppIcon name="copy" class="w-3.5 h-3.5" :class="{ 'animate-spin': scanningDuplicates }" />
-          <span>{{ scanningDuplicates ? 'Scanning…' : (hasScannedDuplicates ? (duplicateSummary.redundant_scans_count > 0 ? 'Review Duplicates' : 'Re-scan Duplicates') : 'Scan for Duplicates') }}</span>
-          <span
-            v-if="hasScannedDuplicates && duplicateSummary.redundant_scans_count > 0"
-            class="px-1.5 py-0.5 rounded-full text-[10.5px] font-bold bg-[#ea580c] text-white leading-none"
+          {{ summary.total }}
+        </span>
+      </button>
+    </div>
+
+    <!-- TAB 1: Pending Annotation Queue (HITL Crowdsourcing) -->
+    <div v-if="retrainSectionTab === 'pending'" class="flex flex-col gap-5">
+      <!-- Action Bar -->
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+        <div>
+          <h2 class="text-[15px] font-bold text-[#0f172a] flex items-center gap-2">
+            <span>Human-in-the-Loop Annotation Queue</span>
+            <span v-if="pendingCount > 0" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+              {{ pendingCount }} pending review
+            </span>
+          </h2>
+          <p class="text-[12.5px] text-[#64748b] mt-0.5">
+            Review crowd-contributed mushroom scans, correct AI classifications, and approve to award verified points & add to retraining data.
+          </p>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <button
+            type="button"
+            class="py-2 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12.5px] font-medium text-[#475569] cursor-pointer hover:bg-[#f1f5f9] inline-flex items-center gap-1.5 shadow-2xs"
+            :disabled="pendingLoading"
+            @click="fetchPendingAnnotations(pendingPagination.current_page)"
           >
-            {{ duplicateSummary.redundant_scans_count }}
-          </span>
-        </button>
+            <AppIcon name="refresh" class="w-3.5 h-3.5" :class="{ 'animate-spin': pendingLoading }" />
+            <span>Refresh Queue</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pending Loading -->
+      <div v-if="pendingLoading" class="flex items-center justify-center py-20 bg-white border border-[#e2e8f0] rounded-[14px]">
+        <div class="w-8 h-8 border-[3px] border-[#e2e8f0] border-t-amber-500 rounded-full animate-spin" />
+      </div>
+
+      <!-- Empty State -->
+      <div
+        v-else-if="pendingList.length === 0"
+        class="bg-white border border-[#e2e8f0] rounded-[14px] p-12 text-center flex flex-col items-center justify-center gap-3 shadow-xs"
+      >
+        <div class="w-14 h-14 rounded-2xl bg-[#f0fdf4] text-[#059669] flex items-center justify-center text-[26px]">
+          🍄
+        </div>
+        <div>
+          <p class="text-[15px] font-bold text-[#0f172a]">Queue is Clear!</p>
+          <p class="text-[13px] text-[#64748b] max-w-[420px] mt-1">
+            There are no crowd scans waiting for expert verification right now. New scans with data-sharing consent will appear here automatically.
+          </p>
+        </div>
         <button
           type="button"
-          class="py-2 px-3 rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] text-[12.5px] font-semibold text-[#047857] cursor-pointer hover:bg-[#dcfce7] inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
-          :disabled="refreshingMl || retrainState === 'running'"
-          title="Reload Stage-1 & Stage-2 ML models on Render so new scans run against the latest weights"
-          @click="refreshMlService"
+          class="mt-2 py-2 px-4 rounded-xl bg-[#0f172a] text-white text-[12.5px] font-semibold hover:bg-[#1e293b] cursor-pointer inline-flex items-center gap-1.5"
+          @click="retrainSectionTab = 'verified'"
         >
-          <AppIcon name="sparkles" class="w-3.5 h-3.5" :class="{ 'animate-pulse': refreshingMl }" />
-          <span>{{ refreshingMl ? 'Warming ML…' : 'Refresh ML' }}</span>
+          <AppIcon name="database" class="w-4 h-4" />
+          <span>Go to Verified Retraining Dataset</span>
         </button>
-        <button
-          id="btn-start-retrain"
-          :disabled="retrainState === 'running' || totalSelected === 0"
-          class="flex-1 sm:flex-initial justify-center py-2 px-[22px] rounded-lg text-[13.5px] font-semibold text-white transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-          :class="retrainState === 'running'
-            ? 'bg-[#64748b] cursor-not-allowed'
-            : 'bg-gradient-to-br from-[#10b981] to-[#059669] hover:opacity-90'"
-          @click="startRetrain"
+      </div>
+
+      <!-- Pending List Items -->
+      <div v-else class="grid grid-cols-1 gap-4">
+        <div
+          v-for="item in pendingList"
+          :key="item.id"
+          class="bg-white border border-[#e2e8f0] rounded-[14px] p-4 sm:p-5 flex flex-col md:flex-row gap-5 items-start md:items-center justify-between shadow-xs hover:border-[#cbd5e1] transition-all"
         >
-          <span v-if="retrainState === 'running'" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
-          <AppIcon v-else name="brain" class="w-4 h-4" />
-          <span>{{ retrainState === 'running' ? 'Training in progress…' : `Retrain with ${totalSelected} image${totalSelected !== 1 ? 's' : ''}` }}</span>
-        </button>
+          <!-- Left: Image Thumbnail & Specimen Details -->
+          <div class="flex items-start gap-4 flex-1 min-w-0">
+            <div
+              class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 cursor-pointer group"
+              @click="previewScan = item"
+            >
+              <img
+                :src="getImageUrl(item.image_url || item.image_path)"
+                :alt="item.predicted_species"
+                class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                @error="brokenImages[item.id] = true"
+              />
+              <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                <AppIcon name="eye" class="w-4 h-4" />
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-1.5 min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-[14.5px] font-bold text-[#0f172a] truncate">
+                  {{ item.predicted_species }}
+                </span>
+
+                <!-- Borderline Active Learning Badge vs Standard Confidence -->
+                <span
+                  v-if="item.is_borderline || (item.confidence_score >= 0.60 && item.confidence_score < 0.80)"
+                  class="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 inline-flex items-center gap-1"
+                  title="Confidence between 0.60 - 0.79: Priority active learning edge case (+10 pts bonus)"
+                >
+                  <AppIcon name="bolt" class="w-3 h-3 text-amber-600" />
+                  <span>{{ Math.round(item.confidence_score * 100) }}% (Borderline / Active Learning)</span>
+                </span>
+                <span
+                  v-else
+                  class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200"
+                >
+                  {{ Math.round(item.confidence_score * 100) }}% Confidence
+                </span>
+
+                <span
+                  v-if="item.is_new_species_for_user"
+                  class="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                >
+                  🌟 New Species Unlock (+5 pts)
+                </span>
+              </div>
+
+              <!-- Contributor & Points Meta -->
+              <p class="text-[12px] text-[#64748b]">
+                Forager: <strong class="text-[#334155]">{{ item.user?.name || item.user?.email || 'Anonymous Forager' }}</strong>
+                · <span class="font-semibold text-amber-700">+{{ item.points_awarded }} Pending Pts</span>
+                <span v-if="item.created_at"> · {{ formatDate(item.created_at) }}</span>
+              </p>
+
+              <!-- Relabel Dropdown -->
+              <div class="flex flex-wrap items-center gap-2 mt-1">
+                <label class="text-[11.5px] font-bold text-[#475569]">Verified Label:</label>
+                <select
+                  v-model="selectedRelabels[item.id]"
+                  class="py-1 px-2.5 rounded-lg border border-[#cbd5e1] bg-[#f8fafc] text-[12.5px] font-medium text-[#0f172a] outline-none focus:border-emerald-500 focus:bg-white transition-colors max-w-[320px]"
+                >
+                  <option :value="item.predicted_species">
+                    Keep Prediction ({{ item.predicted_species }})
+                  </option>
+                  <option disabled>──────────</option>
+                  <option
+                    v-for="sp in speciesCatalog"
+                    :key="sp.id"
+                    :value="sp.name"
+                  >
+                    {{ sp.name }} ({{ sp.classification }})
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Action Buttons -->
+          <div class="flex items-center gap-2 w-full md:w-auto shrink-0 justify-end pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+            <button
+              type="button"
+              class="flex-1 md:flex-initial py-2 px-3.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-[12.5px] font-bold cursor-pointer transition-colors inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
+              :disabled="actionLoading[item.id]"
+              @click="rejectContribution(item.id)"
+            >
+              <AppIcon name="x-circle" class="w-4 h-4" />
+              <span>Reject</span>
+            </button>
+            <button
+              type="button"
+              class="flex-1 md:flex-initial py-2 px-4 rounded-xl bg-gradient-to-br from-[#10b981] to-[#059669] hover:opacity-90 text-white text-[12.5px] font-bold cursor-pointer transition-all inline-flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50"
+              :disabled="actionLoading[item.id]"
+              @click="approveContribution(item.id)"
+            >
+              <span v-if="actionLoading[item.id]" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              <AppIcon v-else name="check-circle" class="w-4 h-4" />
+              <span>Approve Scan</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="pendingPagination.last_page > 1" class="flex items-center justify-between pt-2">
+          <p class="text-[12px] text-[#64748b]">
+            Page {{ pendingPagination.current_page }} of {{ pendingPagination.last_page }} ({{ pendingPagination.total }} items)
+          </p>
+          <div class="flex gap-1.5">
+            <button
+              type="button"
+              class="py-1 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12px] font-medium disabled:opacity-50"
+              :disabled="pendingPagination.current_page <= 1"
+              @click="fetchPendingAnnotations(pendingPagination.current_page - 1)"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              class="py-1 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12px] font-medium disabled:opacity-50"
+              :disabled="pendingPagination.current_page >= pendingPagination.last_page"
+              @click="fetchPendingAnnotations(pendingPagination.current_page + 1)"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- TAB 2: Verified Retraining Dataset -->
+    <div v-show="retrainSectionTab === 'verified'" class="flex flex-col gap-[22px]">
+      <!-- Action bar -->
+      <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+        <div>
+          <h2 class="text-[15px] font-bold text-[#0f172a]">AI Model Retraining</h2>
+          <p class="text-[12.5px] text-[#64748b] mt-0.5">
+            Improve the mushroom classifier using human-verified scan images from foragers.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <button
+            type="button"
+            class="py-2 px-3 rounded-lg border border-[#38bdf8] bg-[#f0f9ff] text-[12.5px] font-semibold text-[#0369a1] cursor-pointer hover:bg-[#e0f2fe] inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 shadow-2xs"
+            :disabled="isExporting"
+            title="Export all verified images organized in folders by species + metadata.csv"
+            @click="exportDatasetZip"
+          >
+            <AppIcon name="download" class="w-3.5 h-3.5" :class="{ 'animate-bounce': isExporting }" />
+            <span>{{ isExporting ? 'Exporting…' : 'Export Dataset (ZIP)' }}</span>
+          </button>
+          <button
+            type="button"
+            class="py-2 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12.5px] font-medium text-[#475569] cursor-pointer hover:bg-[#f1f5f9] inline-flex items-center justify-center gap-1.5"
+            :disabled="loading"
+            @click="refreshAll"
+          >
+            <AppIcon name="refresh" class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
+            <span>Refresh</span>
+          </button>
+          <button
+            type="button"
+            class="py-2 px-3 rounded-lg border border-[#fed7aa] bg-[#fff7ed] text-[12.5px] font-semibold text-[#c2410c] cursor-pointer hover:bg-[#ffedd5] inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+            :disabled="scanningDuplicates || loading"
+            title="Scan candidate images to detect exact or near-duplicate copies"
+            @click="handleDuplicateButtonClick"
+          >
+            <AppIcon name="copy" class="w-3.5 h-3.5" :class="{ 'animate-spin': scanningDuplicates }" />
+            <span>{{ scanningDuplicates ? 'Scanning…' : (hasScannedDuplicates ? (duplicateSummary.redundant_scans_count > 0 ? 'Review Duplicates' : 'Re-scan Duplicates') : 'Scan for Duplicates') }}</span>
+            <span
+              v-if="hasScannedDuplicates && duplicateSummary.redundant_scans_count > 0"
+              class="px-1.5 py-0.5 rounded-full text-[10.5px] font-bold bg-[#ea580c] text-white leading-none"
+            >
+              {{ duplicateSummary.redundant_scans_count }}
+            </span>
+          </button>
+          <button
+            type="button"
+            class="py-2 px-3 rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] text-[12.5px] font-semibold text-[#047857] cursor-pointer hover:bg-[#dcfce7] inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
+            :disabled="refreshingMl || retrainState === 'running'"
+            title="Reload Stage-1 & Stage-2 ML models on Render so new scans run against the latest weights"
+            @click="refreshMlService"
+          >
+            <AppIcon name="sparkles" class="w-3.5 h-3.5" :class="{ 'animate-pulse': refreshingMl }" />
+            <span>{{ refreshingMl ? 'Warming ML…' : 'Refresh ML' }}</span>
+          </button>
+          <button
+            id="btn-start-retrain"
+            :disabled="retrainState === 'running' || totalSelected === 0"
+            class="flex-1 sm:flex-initial justify-center py-2 px-[22px] rounded-lg text-[13.5px] font-semibold text-white transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            :class="retrainState === 'running'
+              ? 'bg-[#64748b] cursor-not-allowed'
+              : 'bg-gradient-to-br from-[#10b981] to-[#059669] hover:opacity-90'"
+            @click="startRetrain"
+          >
+            <span v-if="retrainState === 'running'" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+            <AppIcon v-else name="brain" class="w-4 h-4" />
+            <span>{{ retrainState === 'running' ? 'Training in progress…' : `Retrain with ${totalSelected} image${totalSelected !== 1 ? 's' : ''}` }}</span>
+          </button>
+        </div>
+      </div>
 
     <!-- Loading candidates -->
     <div v-if="loading" class="flex items-center justify-center py-20">
@@ -975,7 +1218,50 @@
         </div>
       </div>
     </template>
+  </div> <!-- /TAB 2 Verified Retraining Dataset -->
+
+  <!-- Modal: Full Image Preview for Pending Scan Inspection -->
+  <div
+    v-if="previewScan"
+    class="fixed inset-0 bg-black/60 flex items-center justify-center z-[110] backdrop-blur-[2px] p-4"
+    @click.self="previewScan = null"
+  >
+    <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 bg-[#f8fafc]">
+        <div>
+          <p class="text-[14px] font-bold text-slate-800">{{ previewScan.predicted_species }}</p>
+          <p class="text-[12px] text-slate-500">Contributed by {{ previewScan.user?.name || previewScan.user?.email || 'Anonymous Forager' }}</p>
+        </div>
+        <button
+          type="button"
+          class="text-slate-400 hover:text-slate-600 text-lg font-bold px-2 cursor-pointer"
+          @click="previewScan = null"
+        >
+          ✕
+        </button>
+      </div>
+      <div class="p-4 bg-slate-950 flex items-center justify-center max-h-[70vh]">
+        <img
+          :src="getImageUrl(previewScan.image_url || previewScan.image_path)"
+          :alt="previewScan.predicted_species"
+          class="max-h-[60vh] max-w-full object-contain rounded-lg"
+        />
+      </div>
+      <div class="p-4 bg-slate-50 flex items-center justify-between">
+        <span class="text-[12px] text-slate-600 font-medium">
+          Confidence: {{ Math.round(previewScan.confidence_score * 100) }}% · Reward: +{{ previewScan.points_awarded }} pts
+        </span>
+        <button
+          type="button"
+          class="py-1.5 px-4 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-[12px] font-semibold cursor-pointer"
+          @click="previewScan = null"
+        >
+          Close
+        </button>
+      </div>
+    </div>
   </div>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -1084,6 +1370,19 @@ const refreshingMl = ref(false)
 const { success: toastSuccess, error: toastError } = useToast()
 const queueView = ref<'ready' | 'trained'>('ready')
 const brokenImages = ref<Record<number, boolean>>({})
+
+// Human-in-the-Loop Annotation Queue & Section Tab State
+const retrainSectionTab = ref<'pending' | 'verified'>('pending')
+const pendingList = ref<any[]>([])
+const pendingCount = ref(0)
+const approvedCount = ref(0)
+const speciesCatalog = ref<any[]>([])
+const selectedRelabels = ref<Record<number, string>>({})
+const pendingLoading = ref(false)
+const actionLoading = ref<Record<number, boolean>>({})
+const previewScan = ref<any | null>(null)
+const pendingPagination = ref({ current_page: 1, last_page: 1, total: 0 })
+const isExporting = ref(false)
 
 const candidates = ref<{ edible: ScanCandidate[]; poisonous: ScanCandidate[] }>({
   edible: [],
@@ -1521,8 +1820,113 @@ watch(queueView, async () => {
   recommendedUnselectIds.value = []
 })
 
+async function fetchPendingAnnotations(page = 1) {
+  pendingLoading.value = true
+  try {
+    const data = await $fetch<any>(`${api}/admin/annotations/pending?page=${page}`, {
+      headers: authHeaders(),
+    })
+    const list = data?.contributions?.data || []
+    pendingList.value = list
+    pendingCount.value = Number(data?.pending_count || 0)
+    approvedCount.value = Number(data?.approved_count || 0)
+    speciesCatalog.value = data?.species_list || []
+    pendingPagination.value = {
+      current_page: data?.contributions?.current_page || 1,
+      last_page: data?.contributions?.last_page || 1,
+      total: data?.contributions?.total || 0,
+    }
+
+    // Default relabel dropdown to current verified species or prediction
+    list.forEach((item: any) => {
+      if (!selectedRelabels.value[item.id]) {
+        selectedRelabels.value[item.id] = item.verified_species || item.predicted_species
+      }
+    })
+  } catch (err: any) {
+    console.error('Failed to fetch pending annotations:', err)
+  } finally {
+    pendingLoading.value = false
+  }
+}
+
+async function approveContribution(id: number) {
+  actionLoading.value[id] = true
+  try {
+    const verifiedSpecies = selectedRelabels.value[id] || undefined
+    const res = await $fetch<any>(`${api}/admin/annotations/${id}/approve`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: { verified_species: verifiedSpecies },
+    })
+    toastSuccess(res?.message || 'Scan approved and points awarded to user!')
+    await Promise.all([
+      fetchPendingAnnotations(pendingPagination.value.current_page),
+      fetchCandidates(),
+    ])
+  } catch (err: any) {
+    toastError(err?.data?.message || err?.message || 'Failed to approve scan.')
+  } finally {
+    actionLoading.value[id] = false
+  }
+}
+
+async function rejectContribution(id: number) {
+  const ok = await confirm({
+    title: 'Reject Contribution?',
+    message: 'This will reject the scan, forfeit pending reward points, and exclude this photo from model retraining.',
+    tone: 'danger',
+    confirmText: 'Reject Scan',
+  })
+  if (!ok) return
+
+  actionLoading.value[id] = true
+  try {
+    const res = await $fetch<any>(`${api}/admin/annotations/${id}/reject`, {
+      method: 'POST',
+      headers: authHeaders(),
+    })
+    toastSuccess(res?.message || 'Scan rejected.')
+    await Promise.all([
+      fetchPendingAnnotations(pendingPagination.value.current_page),
+      fetchCandidates(),
+    ])
+  } catch (err: any) {
+    toastError(err?.data?.message || err?.message || 'Failed to reject scan.')
+  } finally {
+    actionLoading.value[id] = false
+  }
+}
+
+async function exportDatasetZip() {
+  isExporting.value = true
+  try {
+    const response = await fetch(`${api}/admin/annotations/export`, {
+      headers: authHeaders(),
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(err.message || `Export failed with status ${response.status}`)
+    }
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `mycovision_verified_dataset_${new Date().toISOString().slice(0, 10)}.zip`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    toastSuccess('Verified dataset ZIP downloaded successfully!')
+  } catch (err: any) {
+    toastError(err.message || 'Failed to export verified dataset.')
+  } finally {
+    isExporting.value = false
+  }
+}
+
 async function refreshAll() {
-  await Promise.all([fetchCandidates(), fetchStatus()])
+  await Promise.all([fetchCandidates(), fetchStatus(), fetchPendingAnnotations()])
 }
 
 async function refreshMlService() {
@@ -1600,6 +2004,9 @@ function formatDate(iso: string | null): string {
 
 onMounted(async () => {
   await refreshAll()
+  if (pendingCount.value === 0 && summary.value.total > 0) {
+    retrainSectionTab.value = 'verified'
+  }
   if (retrainState.value === 'running') startPolling()
 })
 
