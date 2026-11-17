@@ -384,104 +384,147 @@
           <p class="text-[13px] text-[#94a3b8]">No retraining runs yet.</p>
         </div>
 
-        <div v-else class="overflow-x-auto history-scroll-container pb-2">
-          <table class="w-full text-[13px] border-separate border-spacing-0">
-            <thead class="bg-[#f8fafc]">
-              <tr>
-                <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[155px] border-b border-[#f1f5f9]">Date</th>
-                <th class="text-left px-3.5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[125px] border-b border-[#f1f5f9]">Status</th>
-                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Duration</th>
-                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="check-circle" class="w-3.5 h-3.5 text-[#059669]" />Edible</span></th>
-                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[80px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="skull" class="w-3.5 h-3.5 text-[#dc2626]" />Poisonous</span></th>
-                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[105px] border-b border-[#f1f5f9]">Dataset</th>
-                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Train Acc.</th>
-                <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Val Acc.</th>
-                <th class="text-right px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[130px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]">Report</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(run, i) in history"
-                :key="run.id ?? i"
-                class="hover:bg-[#f8fafc] transition-colors cursor-pointer group"
-                @click="openReportModal(run)"
-              >
-                <td class="px-4 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
-                  <div class="flex items-center gap-1.5">
-                    <AppIcon name="calendar" class="w-3.5 h-3.5 text-[#94a3b8]" />
-                    <span>{{ formatDate(run.started_at) }}</span>
-                  </div>
-                </td>
-                <td class="px-3.5 py-3 whitespace-nowrap border-b border-[#f1f5f9]">
-                  <span
-                    class="text-[11.5px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
-                    :class="{
-                      'bg-[#d1fae5] text-[#065f46]': run.status === 'done',
-                      'bg-[#fee2e2] text-[#991b1b]': run.status === 'failed',
-                      'bg-[#fef9c3] text-[#713f12]': run.status === 'running',
-                    }"
-                  >
-                    <span v-if="run.status === 'done'">✓ Completed</span>
-                    <span v-else-if="run.status === 'failed'">✕ Failed</span>
-                    <span v-else class="flex items-center gap-1">
-                      <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                      Running
+        <div v-else>
+          <div class="overflow-x-auto history-scroll-container pb-2">
+            <table class="w-full text-[13px] border-separate border-spacing-0">
+              <thead class="bg-[#f8fafc]">
+                <tr>
+                  <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[155px] border-b border-[#f1f5f9]">Date</th>
+                  <th class="text-left px-3.5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[125px] border-b border-[#f1f5f9]">Status</th>
+                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Duration</th>
+                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="check-circle" class="w-3.5 h-3.5 text-[#059669]" />Edible</span></th>
+                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[80px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="skull" class="w-3.5 h-3.5 text-[#dc2626]" />Poisonous</span></th>
+                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[105px] border-b border-[#f1f5f9]">Dataset</th>
+                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Train Acc.</th>
+                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Val Acc.</th>
+                  <th class="text-right px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[130px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]">Report</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(run, i) in paginatedHistory"
+                  :key="run.id ?? (historyStartIndex + i)"
+                  class="hover:bg-[#f8fafc] transition-colors cursor-pointer group"
+                  @click="openReportModal(run)"
+                >
+                  <td class="px-4 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
+                    <div class="flex items-center gap-1.5">
+                      <AppIcon name="calendar" class="w-3.5 h-3.5 text-[#94a3b8]" />
+                      <span>{{ formatDate(run.started_at) }}</span>
+                    </div>
+                  </td>
+                  <td class="px-3.5 py-3 whitespace-nowrap border-b border-[#f1f5f9]">
+                    <span
+                      class="text-[11.5px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
+                      :class="{
+                        'bg-[#d1fae5] text-[#065f46]': run.status === 'done',
+                        'bg-[#fee2e2] text-[#991b1b]': run.status === 'failed',
+                        'bg-[#fef9c3] text-[#713f12]': run.status === 'running',
+                      }"
+                    >
+                      <span v-if="run.status === 'done'">✓ Completed</span>
+                      <span v-else-if="run.status === 'failed'">✕ Failed</span>
+                      <span v-else class="flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                        Running
+                      </span>
                     </span>
-                  </span>
-                  <p v-if="run.status === 'failed' && run.error" class="text-[11px] text-[#dc2626] mt-1 max-w-[180px] truncate" :title="run.error">
-                    {{ run.error }}
-                  </p>
-                </td>
-                <td class="px-3 py-3 text-[#64748b] whitespace-nowrap border-b border-[#f1f5f9]">
-                  <span class="inline-flex items-center gap-1">
-                    <AppIcon name="hourglass" class="w-3 h-3 text-[#94a3b8]" />
-                    {{ formatDuration(run) }}
-                  </span>
-                </td>
-                <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
-                  <span>{{ run.total_edible ?? run.new_edible ?? '—' }}</span>
-                  <span v-if="run.new_edible != null && run.total_edible != null && run.new_edible !== run.total_edible" class="text-[11px] text-[#059669] ml-1 font-medium">
-                    (+{{ run.new_edible }})
-                  </span>
-                </td>
-                <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
-                  <span>{{ run.total_poisonous ?? run.new_poisonous ?? '—' }}</span>
-                  <span v-if="run.new_poisonous != null && run.total_poisonous != null && run.new_poisonous !== run.total_poisonous" class="text-[11px] text-[#dc2626] ml-1 font-medium">
-                    (+{{ run.new_poisonous }})
-                  </span>
-                </td>
-                <td class="px-3 py-3 text-[#475569] whitespace-nowrap border-b border-[#f1f5f9]">
-                  <span class="font-medium text-[#0f172a]">{{ run.total_images ?? (run.new_edible != null ? (run.new_edible + (run.new_poisonous || 0)) : '—') }}</span>
-                  <span v-if="(run.new_edible || 0) + (run.new_poisonous || 0) > 0" class="text-[11px] text-[#059669] font-medium block">
-                    {{ (run.new_edible || 0) + (run.new_poisonous || 0) }} new ingested
-                  </span>
-                  <span v-else-if="run.status === 'done'" class="text-[10.5px] text-[#64748b] block font-medium">
-                    Baseline test (0 new scans)
-                  </span>
-                  <span v-else class="text-[11px] text-[#94a3b8] block">
-                    0 new ingested
-                  </span>
-                </td>
-                <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
-                  {{ run.train_accuracy != null ? run.train_accuracy + '%' : '—' }}
-                </td>
-                <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
-                  {{ run.val_accuracy != null ? run.val_accuracy + '%' : '—' }}
-                </td>
-                <td class="px-4 py-3 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f8fafc] transition-colors z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]" @click.stop>
-                  <button
-                    type="button"
-                    class="py-1.5 px-3 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
-                    title="View comprehensive status and performance report for this retraining run"
-                    @click="openReportModal(run)"
-                  >
-                    <AppIcon name="clipboard" class="w-3.5 h-3.5 text-[#059669]" />
-                    <span>View Report</span>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    <p v-if="run.status === 'failed' && run.error" class="text-[11px] text-[#dc2626] mt-1 max-w-[180px] truncate" :title="run.error">
+                      {{ run.error }}
+                    </p>
+                  </td>
+                  <td class="px-3 py-3 text-[#64748b] whitespace-nowrap border-b border-[#f1f5f9]">
+                    <span class="inline-flex items-center gap-1">
+                      <AppIcon name="hourglass" class="w-3 h-3 text-[#94a3b8]" />
+                      {{ formatDuration(run) }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
+                    <span>{{ run.total_edible ?? run.new_edible ?? '—' }}</span>
+                    <span v-if="run.new_edible != null && run.total_edible != null && run.new_edible !== run.total_edible" class="text-[11px] text-[#059669] ml-1 font-medium">
+                      (+{{ run.new_edible }})
+                    </span>
+                  </td>
+                  <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
+                    <span>{{ run.total_poisonous ?? run.new_poisonous ?? '—' }}</span>
+                    <span v-if="run.new_poisonous != null && run.total_poisonous != null && run.new_poisonous !== run.total_poisonous" class="text-[11px] text-[#dc2626] ml-1 font-medium">
+                      (+{{ run.new_poisonous }})
+                    </span>
+                  </td>
+                  <td class="px-3 py-3 text-[#475569] whitespace-nowrap border-b border-[#f1f5f9]">
+                    <span class="font-medium text-[#0f172a]">{{ run.total_images ?? (run.new_edible != null ? (run.new_edible + (run.new_poisonous || 0)) : '—') }}</span>
+                    <span v-if="(run.new_edible || 0) + (run.new_poisonous || 0) > 0" class="text-[11px] text-[#059669] font-medium block">
+                      {{ (run.new_edible || 0) + (run.new_poisonous || 0) }} new ingested
+                    </span>
+                    <span v-else-if="run.status === 'done'" class="text-[10.5px] text-[#64748b] block font-medium">
+                      Baseline test (0 new scans)
+                    </span>
+                    <span v-else class="text-[11px] text-[#94a3b8] block">
+                      0 new ingested
+                    </span>
+                  </td>
+                  <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
+                    {{ run.train_accuracy != null ? run.train_accuracy + '%' : '—' }}
+                  </td>
+                  <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
+                    {{ run.val_accuracy != null ? run.val_accuracy + '%' : '—' }}
+                  </td>
+                  <td class="px-4 py-3 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f8fafc] transition-colors z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]" @click.stop>
+                    <button
+                      type="button"
+                      class="py-1.5 px-3 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
+                      title="View comprehensive status and performance report for this retraining run"
+                      @click="openReportModal(run)"
+                    >
+                      <AppIcon name="clipboard" class="w-3.5 h-3.5 text-[#059669]" />
+                      <span>View Report</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- History Pagination Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-3 py-3 px-5 border-t border-[#f1f5f9] bg-[#f8fafc]/50">
+            <div class="flex items-center gap-3">
+              <span class="text-[12.5px] text-[#64748b]">
+                Showing <strong class="text-[#334155]">{{ historyStartIndex + 1 }}</strong>–<strong class="text-[#334155]">{{ historyEndIndex }}</strong> of <strong class="text-[#334155]">{{ history.length }}</strong> runs
+              </span>
+              <div class="flex items-center gap-1.5 ml-1">
+                <span class="text-[11.5px] text-[#94a3b8]">Per page:</span>
+                <select
+                  v-model.number="historyPerPage"
+                  class="text-[12px] text-[#334155] bg-white border border-[#e2e8f0] rounded-md px-2 py-1 focus:outline-none focus:border-[#059669] cursor-pointer"
+                >
+                  <option :value="5">5</option>
+                  <option :value="10">10</option>
+                  <option :value="20">20</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <button
+                type="button"
+                class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center font-bold"
+                :disabled="historyPage <= 1"
+                @click="historyPage--"
+                title="Previous page"
+              >
+                ‹
+              </button>
+              <span class="text-[12.5px] text-[#475569] font-medium">Page {{ historyPage }} of {{ historyTotalPages }}</span>
+              <button
+                type="button"
+                class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center font-bold"
+                :disabled="historyPage >= historyTotalPages"
+                @click="historyPage++"
+                title="Next page"
+              >
+                ›
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1084,6 +1127,24 @@ const retrainState = ref<'idle' | 'running' | 'done' | 'failed' | 'unknown'>('id
 const lastResult = ref<any>(null)
 const statusError = ref<string | null>(null)
 const history = ref<any[]>([])
+const historyPage = ref(1)
+const historyPerPage = ref(5)
+
+const historyTotalPages = computed(() => Math.max(1, Math.ceil(history.value.length / historyPerPage.value)))
+const paginatedHistory = computed(() => {
+  const start = (historyPage.value - 1) * historyPerPage.value
+  return history.value.slice(start, start + historyPerPage.value)
+})
+const historyStartIndex = computed(() => (history.value.length === 0 ? 0 : (historyPage.value - 1) * historyPerPage.value))
+const historyEndIndex = computed(() => Math.min(history.value.length, historyPage.value * historyPerPage.value))
+
+watch(historyTotalPages, (t) => {
+  if (historyPage.value > t) historyPage.value = t
+})
+watch(historyPerPage, () => {
+  historyPage.value = 1
+})
+
 const selectedReportRun = ref<any>(null)
 const showReportModal = ref(false)
 let statusInterval: ReturnType<typeof setInterval> | null = null
