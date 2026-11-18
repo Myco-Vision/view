@@ -76,6 +76,14 @@
           </div>
         </div>
         <div class="flex items-center gap-2.5 shrink-0 relative z-10 sm:self-center">
+          <button
+            type="button"
+            @click="openSpecimenDossier(mycodex.latest_specimen)"
+            class="px-3.5 py-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-400/30 text-emerald-300 hover:text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+          >
+            <AppIcon name="book" class="w-3.5 h-3.5" />
+            <span>View Full Dossier</span>
+          </button>
           <NuxtLink
             to="/users/scan"
             class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold shadow-sm transition no-underline flex items-center gap-1.5"
@@ -87,7 +95,7 @@
             @click="dismissNewSpecimenNotice"
             class="px-3 py-2 rounded-xl border border-emerald-500/30 bg-emerald-950/40 hover:bg-emerald-900/60 text-slate-300 hover:text-white text-xs font-medium transition cursor-pointer"
           >
-            Acknowledge
+            ✕
           </button>
         </div>
       </div>
@@ -224,10 +232,11 @@
           <div
             v-for="species in filteredSpeciesGrid"
             :key="species.id"
-            class="group rounded-2xl border transition-all duration-200 overflow-hidden flex flex-col bg-white"
+            @click="openSpecimenDossier(species)"
+            class="group rounded-2xl border transition-all duration-200 overflow-hidden flex flex-col bg-white cursor-pointer select-none"
             :class="species.is_discovered
-              ? 'border-slate-200 hover:border-emerald-300 hover:shadow-md'
-              : 'border-dashed border-slate-300 bg-slate-50/70 opacity-90'"
+              ? 'border-slate-200 hover:border-emerald-400 hover:shadow-lg'
+              : 'border-slate-200 hover:border-emerald-300 hover:shadow-md bg-slate-50/70'"
           >
             <!-- Card Image Area -->
             <div class="relative h-44 bg-slate-100 overflow-hidden flex items-center justify-center">
@@ -372,22 +381,232 @@
 
               <!-- Footer tag -->
               <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span v-if="species.is_discovered && species.first_scanned_at" class="text-slate-400">
-                  Found {{ new Date(species.first_scanned_at).toLocaleDateString() }}
-                </span>
-                <span v-else class="text-emerald-600 font-bold">
-                  +{{ species.unlock_points || 5 }} Pts on unlock
-                </span>
-
-                <NuxtLink
-                  to="/users/scan"
-                  class="font-bold text-emerald-600 hover:text-emerald-800 no-underline inline-flex items-center gap-0.5"
+                <button
+                  type="button"
+                  @click.stop="openSpecimenDossier(species)"
+                  class="font-bold text-slate-600 hover:text-emerald-700 bg-transparent border-none p-0 cursor-pointer inline-flex items-center gap-1 transition"
                 >
-                  <span>Scan</span>
-                  <span>→</span>
-                </NuxtLink>
+                  <AppIcon name="book" class="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Field Dossier</span>
+                </button>
+
+                <div class="flex items-center gap-2">
+                  <span v-if="species.is_discovered && species.first_scanned_at" class="text-slate-400">
+                    Found {{ new Date(species.first_scanned_at).toLocaleDateString() }}
+                  </span>
+                  <span v-else class="text-emerald-600 font-bold">
+                    +{{ species.unlock_points || 5 }} Pts
+                  </span>
+
+                  <NuxtLink
+                    to="/users/scan"
+                    @click.stop
+                    class="font-bold text-emerald-600 hover:text-emerald-800 no-underline inline-flex items-center gap-0.5"
+                  >
+                    <span>Scan</span>
+                    <span>→</span>
+                  </NuxtLink>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Specimen Field Dossier Modal ─────────────────────────────────────── -->
+      <div
+        v-if="activeSpecimen"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+        @click.self="closeSpecimenDossier"
+      >
+        <div class="relative w-full max-w-xl max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-slate-200">
+          
+          <!-- Header Image / Silhouette Section -->
+          <div class="relative h-56 bg-slate-900 overflow-hidden shrink-0 flex items-center justify-center">
+            <!-- Discovered Full Color Photo -->
+            <template v-if="activeSpecimen.is_discovered">
+              <img
+                v-if="activeSpecimen.cover_image_url"
+                :src="activeSpecimen.cover_image_url"
+                :alt="activeSpecimen.common_name"
+                class="w-full h-full object-cover"
+              />
+              <div v-else class="w-full h-full bg-emerald-950 flex items-center justify-center">
+                <AppIcon name="leaf" class="w-16 h-16 text-emerald-400" />
+              </div>
+              
+              <div class="absolute top-3.5 left-3.5 flex items-center gap-2">
+                <span class="px-3 py-1 rounded-full text-xs font-black bg-black/75 text-white backdrop-blur-sm shadow-sm">
+                  x{{ activeSpecimen.scan_count }} Found
+                </span>
+              </div>
+              <div class="absolute bottom-3.5 left-3.5">
+                <span
+                  class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider backdrop-blur-md shadow-sm"
+                  :class="activeSpecimen.classification === 'edible'
+                    ? 'bg-emerald-600 text-white'
+                    : (activeSpecimen.classification === 'poisonous' ? 'bg-red-600 text-white' : 'bg-slate-800 text-white')"
+                >
+                  {{ activeSpecimen.classification }}
+                </span>
+              </div>
+            </template>
+
+            <!-- Locked Silhouette State -->
+            <template v-else>
+              <div v-if="activeSpecimen.reference_image_url" class="w-full h-full relative overflow-hidden bg-slate-950 flex items-center justify-center">
+                <img
+                  :src="activeSpecimen.reference_image_url"
+                  class="w-full h-full object-cover filter brightness-0 contrast-200 opacity-25 select-none pointer-events-none"
+                  alt="Silhouette"
+                />
+                <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white">
+                  <div class="w-14 h-14 rounded-2xl bg-black/70 backdrop-blur-md flex items-center justify-center text-white border border-white/10 shadow-lg">
+                    <AppIcon name="lock" class="w-7 h-7 text-emerald-400" />
+                  </div>
+                  <span class="text-xs font-extrabold tracking-widest uppercase text-emerald-400">Locked Target Specimen</span>
+                </div>
+              </div>
+              <div v-else class="w-full h-full bg-gradient-to-b from-slate-900 to-slate-950 flex flex-col items-center justify-center gap-2 text-slate-400">
+                <div class="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-400 shadow-inner">
+                  <AppIcon name="lock" class="w-7 h-7" />
+                </div>
+                <span class="text-xs font-extrabold tracking-widest uppercase text-slate-400">Locked Target Specimen</span>
+              </div>
+
+              <!-- Rarity badge on image -->
+              <div class="absolute top-3.5 left-3.5">
+                <span
+                  class="capitalize px-3 py-1 rounded-full text-xs font-bold shadow-md tracking-wider text-white"
+                  :class="{
+                    'bg-slate-700': !activeSpecimen.rarity || activeSpecimen.rarity === 'common',
+                    'bg-blue-600': activeSpecimen.rarity === 'uncommon',
+                    'bg-purple-600': activeSpecimen.rarity === 'rare',
+                    'bg-amber-400 text-slate-950 font-black': activeSpecimen.rarity === 'legendary',
+                  }"
+                >
+                  {{ activeSpecimen.rarity || 'Common' }}
+                </span>
+              </div>
+
+              <div class="absolute top-3.5 right-14">
+                <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white shadow-md">
+                  +{{ activeSpecimen.unlock_points || 5 }} Pts Bounty
+                </span>
+              </div>
+            </template>
+
+            <!-- Close Modal Button -->
+            <button
+              @click="closeSpecimenDossier"
+              class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center text-sm transition shadow-md z-20 cursor-pointer border-none"
+            >
+              ✕
+            </button>
+          </div>
+
+          <!-- Modal Body (Scrollable) -->
+          <div class="p-6 overflow-y-auto space-y-4 flex-1">
+            
+            <!-- Title & Scientific Name Header -->
+            <div class="border-b border-slate-100 pb-3">
+              <div class="flex items-center gap-2">
+                <h2 class="text-xl font-black text-slate-900 leading-tight">
+                  {{ activeSpecimen.common_name }}
+                </h2>
+                <span
+                  v-if="!activeSpecimen.is_discovered"
+                  class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200"
+                >
+                  Undiscovered
+                </span>
+                <span
+                  v-else
+                  class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200"
+                >
+                  Cataloged
+                </span>
+              </div>
+              <p class="text-sm italic font-serif text-slate-500 mt-1">
+                {{ activeSpecimen.scientific_name || 'Species unclassified' }}
+              </p>
+            </div>
+
+            <!-- Field Clue / Unlock Hint -->
+            <div v-if="activeSpecimen.unlock_hint" class="p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5 mb-1.5">
+                <span>💡</span>
+                <span>Field Discovery Clue</span>
+              </h4>
+              <p class="text-sm text-amber-950 font-medium leading-relaxed">
+                {{ activeSpecimen.unlock_hint }}
+              </p>
+            </div>
+
+            <!-- Full Habitat & Environment -->
+            <div v-if="activeSpecimen.habitat" class="p-4 rounded-2xl bg-slate-50 border border-slate-200/70">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5 mb-1.5">
+                <span>🌲</span>
+                <span>Habitat & Growing Environment</span>
+              </h4>
+              <p class="text-sm text-slate-800 leading-relaxed whitespace-pre-line">
+                {{ activeSpecimen.habitat }}
+              </p>
+            </div>
+
+            <!-- Botanical Description -->
+            <div v-if="activeSpecimen.description" class="p-4 rounded-2xl bg-slate-50 border border-slate-200/70">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5 mb-1.5">
+                <span>📖</span>
+                <span>Botanical Description & Identification</span>
+              </h4>
+              <p class="text-sm text-slate-800 leading-relaxed whitespace-pre-line">
+                {{ activeSpecimen.description }}
+              </p>
+            </div>
+
+            <!-- Edibility / Safety Notice -->
+            <div class="p-4 rounded-2xl border" :class="activeSpecimen.is_discovered ? (activeSpecimen.classification === 'edible' ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-red-50/70 border-red-200 text-red-950') : 'bg-slate-50 border-slate-200 text-slate-700'">
+              <h4 class="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                <span>🛡️</span>
+                <span>Edibility & Safety Rating</span>
+              </h4>
+              <div v-if="activeSpecimen.is_discovered">
+                <span class="capitalize font-black text-sm">
+                  Classification: {{ activeSpecimen.classification }}
+                </span>
+                <p class="text-xs text-slate-600 mt-0.5">
+                  {{ activeSpecimen.classification === 'edible' ? 'Recognized as safe for culinary use when properly cooked and identified.' : 'Warning: Not edible or toxic. Do not consume wild mushrooms without expert verification.' }}
+                </p>
+              </div>
+              <div v-else>
+                <span class="font-bold text-sm text-slate-800">
+                  🔒 Concealed for Forager Safety
+                </span>
+                <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                  Edibility guidelines and culinary safety warnings remain locked until you scan and verify this mushroom in the field.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0">
+            <button
+              type="button"
+              @click="closeSpecimenDossier"
+              class="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition cursor-pointer"
+            >
+              Close Dossier
+            </button>
+
+            <NuxtLink
+              to="/users/scan"
+              class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-sm transition no-underline flex items-center gap-2"
+            >
+              <AppIcon name="camera" class="w-4 h-4" />
+              <span>{{ activeSpecimen.is_discovered ? 'Scan Specimen Again' : 'Scan to Unlock (+5 Pts)' }}</span>
+            </NuxtLink>
           </div>
         </div>
       </div>
@@ -423,6 +642,16 @@ const getHeaders = () => {
 }
 
 const showNewSpecimenNotice = ref(false)
+const activeSpecimen = ref<any | null>(null)
+
+function openSpecimenDossier(species: any) {
+  if (!species) return
+  activeSpecimen.value = species
+}
+
+function closeSpecimenDossier() {
+  activeSpecimen.value = null
+}
 
 function checkNewSpecimenNotice() {
   if (!mycodex.value.latest_specimen) return
