@@ -87,7 +87,7 @@ export function useAuthSession() {
     if (role === 'admin' || role === 'super_admin') {
       return '/admin/dashboard'
     }
-    return '/users/scan'
+    return '/users/dashboard'
   }
 
   async function restoreAndValidateSession(): Promise<Record<string, any> | null> {

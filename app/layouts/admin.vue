@@ -27,13 +27,8 @@
         :class="sidebarCollapsed ? 'lg:flex-col lg:gap-2' : ''"
         style="padding: 4px 4px 18px;"
       >
-        <div class="w-9 h-9 rounded-[10px] bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(16,185,129,0.35)]">
-          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2"/>
-            <path d="M12 6c-3.3 0-6 2.7-6 6 0 1.2.4 2.4 1 3.3L12 6z" fill="currentColor" opacity=".3"/>
-            <path d="M12 6l5 9.3A5.97 5.97 0 0 0 18 12c0-3.3-2.7-6-6-6z" fill="currentColor" opacity=".6"/>
-          </svg>
+        <div class="w-9 h-9 rounded-[10px] overflow-hidden shrink-0 flex items-center justify-center shadow-[0_2px_8px_rgba(16,185,129,0.35)] bg-slate-900 border border-emerald-500/20">
+          <img src="/myco-logo.png" alt="MycoVision Logo" class="w-full h-full object-contain" />
         </div>
         <transition name="label-fade">
           <div v-if="!sidebarCollapsed || mobileOpen" class="flex flex-col gap-px flex-1 overflow-hidden">
@@ -81,20 +76,6 @@
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Dashboard</span></transition>
         </NuxtLink>
 
-        <NuxtLink v-if="isSuperAdmin" to="/admin/users" :title="(sidebarCollapsed && !mobileOpen) ? 'Users' : ''" @click="mobileOpen = false"
-          class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
-          active-class="!bg-emerald-500/15 !text-emerald-500">
-          <span class="flex items-center justify-center shrink-0 w-5">
-            <svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          </span>
-          <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Users</span></transition>
-        </NuxtLink>
-
         <NuxtLink v-if="isAdminOrAbove" to="/admin/scans" :title="(sidebarCollapsed && !mobileOpen) ? 'Scans Log' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
@@ -108,6 +89,20 @@
         </NuxtLink>
 
         <p v-if="!sidebarCollapsed || mobileOpen" class="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.8px] px-2 mt-3 mb-0.5 whitespace-nowrap">Management</p>
+
+        <NuxtLink v-if="isSuperAdmin" to="/admin/users" :title="(sidebarCollapsed && !mobileOpen) ? 'Users' : ''" @click="mobileOpen = false"
+          class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
+          active-class="!bg-emerald-500/15 !text-emerald-500">
+          <span class="flex items-center justify-center shrink-0 w-5">
+            <svg class="w-[17px] h-[17px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </span>
+          <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Users</span></transition>
+        </NuxtLink>
 
         <NuxtLink v-if="isAdminOrAbove" to="/admin/subscriptions" :title="(sidebarCollapsed && !mobileOpen) ? 'Subscriptions' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
@@ -145,7 +140,7 @@
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Species &amp; AI</span></transition>
         </NuxtLink>
 
-        <NuxtLink v-if="isSuperAdmin" to="/admin/reports" :title="(sidebarCollapsed && !mobileOpen) ? 'Reports' : ''" @click="mobileOpen = false"
+        <NuxtLink v-if="isAdminOrAbove" to="/admin/reports" :title="(sidebarCollapsed && !mobileOpen) ? 'Reports' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
           <span class="flex items-center justify-center shrink-0 w-5">
@@ -159,7 +154,7 @@
           <transition name="label-fade"><span v-if="!sidebarCollapsed || mobileOpen" class="whitespace-nowrap">Reports</span></transition>
         </NuxtLink>
 
-        <NuxtLink v-if="isSuperAdmin" to="/admin/settings" :title="(sidebarCollapsed && !mobileOpen) ? 'Settings' : ''" @click="mobileOpen = false"
+        <NuxtLink v-if="isAdminOrAbove" to="/admin/settings" :title="(sidebarCollapsed && !mobileOpen) ? 'Settings' : ''" @click="mobileOpen = false"
           class="flex items-center gap-2.5 px-2.5 py-[9px] rounded-lg text-slate-400 no-underline text-[13.5px] font-medium transition-colors duration-200 whitespace-nowrap overflow-hidden hover:bg-white/[0.06] hover:text-slate-200"
           active-class="!bg-emerald-500/15 !text-emerald-500">
           <span class="flex items-center justify-center shrink-0 w-5">

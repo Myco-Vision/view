@@ -2,8 +2,15 @@
   <div class="flex flex-col gap-[22px]">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-[22px] font-bold text-[#0f172a]">System Settings</h1>
-        <p class="text-[13.5px] text-[#64748b] mt-[3px]">Configure application behaviour and administrative preferences</p>
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <h1 class="text-[22px] font-bold text-[#0f172a]">System Settings</h1>
+          <span v-if="!isSuperAdmin" class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/60 rounded-full px-2.5 py-0.5">
+            Admin View
+          </span>
+        </div>
+        <p class="text-[13.5px] text-[#64748b] mt-[3px]">
+          {{ isSuperAdmin ? 'Configure application behaviour and administrative preferences' : 'Configure AI identification parameters and platform preferences' }}
+        </p>
       </div>
       <button class="w-full sm:w-auto justify-center py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 flex items-center gap-2" @click="saveAll" :disabled="isSavingSettings">
         <span v-if="isSavingSettings">Saving...</span>
@@ -56,8 +63,8 @@
           </div>
         </div>
 
-        <!-- Data Retention -->
-        <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
+        <!-- Data Retention (Super Admin Only) -->
+        <div v-if="isSuperAdmin" class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
           <div class="flex items-center gap-2.5">
             <span class="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0 bg-[#fef3c7] text-[#d97706]"><AppIcon name="save" class="w-4 h-4" /></span>
             <p class="text-[14px] font-bold text-[#0f172a] flex-1">Data Retention</p>
@@ -97,8 +104,8 @@
 
       <!-- RIGHT COLUMN -->
       <div class="flex flex-col gap-4">
-        <!-- Maintenance Mode -->
-        <div class="border rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]" :class="maintenance.enabled ? 'bg-[#fff8f8] border-[#fca5a5]' : 'bg-white border-[#e2e8f0]'">
+        <!-- Maintenance Mode (Super Admin Only) -->
+        <div v-if="isSuperAdmin" class="border rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]" :class="maintenance.enabled ? 'bg-[#fff8f8] border-[#fca5a5]' : 'bg-white border-[#e2e8f0]'">
           <div class="flex items-center gap-2.5">
             <span class="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0 bg-[#fee2e2] text-[#dc2626]"><AppIcon name="wrench" class="w-4 h-4" /></span>
             <p class="text-[14px] font-bold text-[#0f172a] flex-1">Maintenance Mode</p>
@@ -119,12 +126,12 @@
           </div>
         </div>
 
-        <!-- Admin Accounts -->
-        <div class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
+        <!-- Admin Accounts (Super Admin Only) -->
+        <div v-if="isSuperAdmin" class="bg-white border border-[#e2e8f0] rounded-[14px] p-5 flex flex-col gap-3.5 transition-colors duration-[0.18s]">
           <div class="flex items-center gap-2.5">
             <span class="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0 bg-[#f3e8ff] text-[#7c3aed]"><AppIcon name="crown" class="w-4 h-4" /></span>
             <p class="text-[14px] font-bold text-[#0f172a] flex-1">Admin Accounts</p>
-            <NuxtLink v-if="isSuperAdmin" to="/admin/accounts" class="py-1.5 px-3.5 rounded-[7px] bg-[#f1f5f9] border border-[#e2e8f0] text-[12.5px] font-semibold cursor-pointer font-sans text-[#0f172a] transition-colors duration-[0.18s] hover:bg-[#e2e8f0] no-underline flex items-center gap-1">Manage</NuxtLink>
+            <NuxtLink to="/admin/accounts" class="py-1.5 px-3.5 rounded-[7px] bg-[#f1f5f9] border border-[#e2e8f0] text-[12.5px] font-semibold cursor-pointer font-sans text-[#0f172a] transition-colors duration-[0.18s] hover:bg-[#e2e8f0] no-underline flex items-center gap-1">Manage</NuxtLink>
           </div>
           
           <div v-if="loadingAdmins" class="py-4 text-center text-[#94a3b8] text-[13px]">Loading admins...</div>
@@ -157,10 +164,6 @@
               </tr>
             </tbody>
             </table>
-          </div>
-          <div v-if="!isSuperAdmin" class="mt-2 text-[12px] text-[#64748b] flex items-start gap-1.5">
-             <AppIcon name="warning" class="w-4 h-4 text-amber-500 mt-0.5" />
-             <p>Only Super Administrators can add or remove admin accounts. Please contact a Super Admin for account changes.</p>
           </div>
         </div>
 
@@ -221,9 +224,14 @@ async function checkBackendHealth() {
   }
 }
 
+const { getRole, getUser } = useAuthSession()
 const admins = ref<any[]>([])
-const loadingAdmins = ref(true)
-const isSuperAdmin = ref(false)
+const loadingAdmins = ref(false)
+
+const isSuperAdmin = computed(() => {
+  const role = getRole() || (import.meta.client ? localStorage.getItem('role') : null) || getUser()?.role
+  return role === 'super_admin'
+})
 
 const getHeaders = () => {
   const token = localStorage.getItem('token')
@@ -231,8 +239,6 @@ const getHeaders = () => {
 }
 
 onMounted(async () => {
-  isSuperAdmin.value = localStorage.getItem('role') === 'super_admin'
-
   // Restore previously saved settings
   try {
     const saved = localStorage.getItem(SETTINGS_KEY)
@@ -244,21 +250,19 @@ onMounted(async () => {
     }
   } catch {}
 
-  fetchAdmins()
+  if (isSuperAdmin.value) {
+    fetchAdmins()
+  }
   checkBackendHealth()
 })
 
 async function fetchAdmins() {
   loadingAdmins.value = true
   try {
-    // We can fetch users and filter by role=admin,super_admin
-    // using the /admin/users endpoint which admins have access to.
     const res = await $fetch<any>(`${config.public.apiBase}/admin/users?per_page=100`, {
       headers: getHeaders()
     })
-    
-    // Filter down to admins and super_admins
-    admins.value = res.data.filter((u: any) => u.role === 'admin' || u.role === 'super_admin')
+    admins.value = (res.data || []).filter((u: any) => u.role === 'admin' || u.role === 'super_admin')
   } catch (error) {
     console.error('Failed to fetch admins:', error)
   } finally {
@@ -279,11 +283,26 @@ function formatDate(dateStr: string) {
 function saveAll() { 
   isSavingSettings.value = true
   try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-      model:       { ...model },
-      retention:   { ...retention },
-      maintenance: { ...maintenance },
-    }))
+    const payload: Record<string, any> = {
+      model: { ...model },
+    }
+
+    if (isSuperAdmin.value) {
+      payload.retention = { ...retention }
+      payload.maintenance = { ...maintenance }
+    } else {
+      // Preserve existing retention & maintenance settings set by Super Admin
+      try {
+        const saved = localStorage.getItem(SETTINGS_KEY)
+        if (saved) {
+          const s = JSON.parse(saved)
+          if (s.retention) payload.retention = s.retention
+          if (s.maintenance) payload.maintenance = s.maintenance
+        }
+      } catch {}
+    }
+
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload))
     toastSuccess('Settings saved.')
   } catch {
     toastError('Failed to save settings.')

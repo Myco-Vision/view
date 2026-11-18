@@ -25,10 +25,8 @@
     >
       <!-- Brand -->
       <div class="flex items-center gap-2.5 px-2 pb-4 border-b border-emerald-900/40 mb-2">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-950/50 shrink-0">
-          <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C7.03 2 3 6.03 3 11c0 1.25.26 2.44.73 3.52C4.1 15.35 4.8 16 5.6 16h12.8c.8 0 1.5-.65 1.87-1.48.47-1.08.73-2.27.73-3.52 0-4.97-4.03-9-9-9zm-1.5 15h3v5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-5z" />
-          </svg>
+        <div class="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-emerald-950/50 shrink-0 flex items-center justify-center bg-emerald-950/40 border border-emerald-500/20">
+          <img src="/myco-logo.png" alt="MycoVision Logo" class="w-full h-full object-contain" />
         </div>
         <div class="flex flex-col flex-1 min-w-0">
           <span class="text-[15px] font-bold text-white tracking-tight">Myco<span class="text-emerald-400">Vision</span></span>
@@ -42,6 +40,21 @@
 
       <!-- Navigation -->
       <nav class="flex-1 flex flex-col gap-0.5 overflow-y-auto overscroll-contain min-h-0">
+        <NuxtLink
+          to="/users/dashboard"
+          @click="mobileOpen = false"
+          class="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-slate-400 no-underline text-[13px] font-medium transition-all duration-200 hover:bg-emerald-900/30 hover:text-emerald-300"
+          active-class="!bg-emerald-600/20 !text-emerald-300 !border !border-emerald-500/30 shadow-sm"
+        >
+          <span class="flex items-center justify-center shrink-0 w-4 h-4">
+            <svg class="w-[16px] h-[16px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+          </span>
+          <span class="whitespace-nowrap">Dashboard</span>
+        </NuxtLink>
+
         <NuxtLink
           to="/users/scan"
           @click="mobileOpen = false"
@@ -184,10 +197,8 @@
           <svg class="w-[17px] h-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
         <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center">
-            <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C7.03 2 3 6.03 3 11c0 1.25.26 2.44.73 3.52C4.1 15.35 4.8 16 5.6 16h12.8c.8 0 1.5-.65 1.87-1.48.47-1.08.73-2.27.73-3.52 0-4.97-4.03-9-9-9zm-1.5 15h3v5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-5z" />
-            </svg>
+          <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 flex items-center justify-center bg-emerald-950/40 border border-emerald-500/20">
+            <img src="/myco-logo.png" alt="MycoVision Logo" class="w-full h-full object-contain" />
           </div>
           <span class="text-[14px] font-bold text-white">Myco<span class="text-emerald-400">Vision</span></span>
         </div>
