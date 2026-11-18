@@ -3,6 +3,16 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
+  // App head settings (Favicon & Browser Title)
+  app: {
+    head: {
+      title: 'MycoVision — Mushroom Identification & MycoDex',
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/myco-logo.ico' },
+      ],
+    },
+  },
+
   // Nuxt modules
   modules: ['@nuxtjs/tailwindcss'],
 
