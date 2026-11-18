@@ -7,7 +7,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "env:local": "./switch-env.sh local",
+    "env:cloud": "./switch-env.sh cloud"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
