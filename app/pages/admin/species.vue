@@ -242,7 +242,7 @@
           <div class="flex flex-col gap-1.5">
             <label class="text-[12.5px] font-semibold text-[#475569] flex items-center justify-between">
               <span>Specimen Photo / Reference Image</span>
-              <span class="text-[11px] text-[#94a3b8] font-normal">JPG, PNG, WebP up to 8MB</span>
+              <span class="text-[11px] text-[#94a3b8] font-normal">JPG, PNG, WebP (auto-optimized)</span>
             </label>
 
             <!-- When image is selected / exists -->
@@ -478,16 +478,84 @@ function onRarityChange(val: string) {
   else if (val === 'legendary') form.unlock_points = 25
 }
 
-function handleFileSelect(e: Event) {
+// Automatically optimize/compress images client-side before sending to server
+async function compressImage(file: File, maxDim = 1280, quality = 0.85): Promise<File> {
+  // If already under 800KB and is a standard web format, skip canvas overhead
+  if (file.size <= 800 * 1024 && !file.type.includes('heic')) {
+    return file
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        let width = img.width
+        let height = img.height
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width)
+            width = maxDim
+          } else {
+            width = Math.round((width * maxDim) / height)
+            height = maxDim
+          }
+        }
+
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(file)
+          return
+        }
+
+        ctx.drawImage(img, 0, 0, width, height)
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file)
+              return
+            }
+            const cleanName = (file.name || 'specimen').replace(/\.[^.]+$/, '') + '.jpg'
+            const compressed = new File([blob], cleanName, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            })
+            resolve(compressed)
+          },
+          'image/jpeg',
+          quality
+        )
+      }
+      img.onerror = () => resolve(file)
+      img.src = e.target?.result as string
+    }
+    reader.onerror = () => resolve(file)
+    reader.readAsDataURL(file)
+  })
+}
+
+async function handleFileSelect(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  if (file.size > 8 * 1024 * 1024) {
-    toast.error('Image size must be less than 8MB')
+
+  if (file.size > 20 * 1024 * 1024) {
+    toast.error('Image size must be less than 20MB')
     return
   }
-  selectedFile.value = file
-  previewImage.value = URL.createObjectURL(file)
+
+  try {
+    const optimized = await compressImage(file)
+    selectedFile.value = optimized
+    previewImage.value = URL.createObjectURL(optimized)
+  } catch (err) {
+    selectedFile.value = file
+    previewImage.value = URL.createObjectURL(file)
+  }
 }
 
 function removeSelectedFile() {
@@ -688,8 +756,15 @@ async function saveSpecies() {
     }
 
     const token = localStorage.getItem('token')
+    if (!token) {
+      formError.value = 'Your session has expired. Please sign in again.'
+      isSaving.value = false
+      return
+    }
+
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json'
     }
 
     if (editId) {
@@ -717,7 +792,14 @@ async function saveSpecies() {
       toast.success(wasEditing ? 'Species updated.' : 'New specimen added to MycoDex!')
     }
   } catch (err: any) {
-    formError.value = err?.data?.message || err?.message || 'Failed to save species.'
+    console.error('Failed to save species:', err)
+    if (err?.status === 413 || err?.message?.includes('413') || err?.message?.includes('Load failed')) {
+      formError.value = 'The uploaded photo was too large for the server. Please try a smaller photo or let the auto-optimizer resize it.'
+    } else if (err?.status === 401) {
+      formError.value = 'Your admin session has expired. Please sign in again.'
+    } else {
+      formError.value = err?.data?.message || err?.message || 'Failed to save species.'
+    }
   } finally {
     isSaving.value = false
   }
