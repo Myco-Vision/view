@@ -185,9 +185,22 @@
                   <AppIcon name="leaf" class="w-12 h-12 text-emerald-400" />
                 </div>
 
-                <!-- Specimen Scan Count Badge -->
-                <div class="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-black/75 text-white backdrop-blur-xs flex items-center gap-1 shadow-sm">
-                  <span>x{{ species.scan_count }}</span>
+                <!-- Specimen Scan Count & Rarity Badge -->
+                <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                  <span
+                    v-if="species.rarity && species.rarity !== 'common'"
+                    class="capitalize px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide shadow-sm"
+                    :class="{
+                      'bg-blue-600 text-white': species.rarity === 'uncommon',
+                      'bg-purple-600 text-white': species.rarity === 'rare',
+                      'bg-amber-400 text-slate-900 font-extrabold': species.rarity === 'legendary',
+                    }"
+                  >
+                    {{ species.rarity }}
+                  </span>
+                  <div class="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-black/75 text-white backdrop-blur-xs flex items-center gap-1 shadow-sm">
+                    <span>x{{ species.scan_count }}</span>
+                  </div>
                 </div>
 
                 <!-- Classification / Edibility Badge -->
@@ -205,6 +218,26 @@
 
               <!-- Locked Silhouette State -->
               <template v-else>
+                <!-- Rarity & Reward Points Badges -->
+                <div class="absolute top-2.5 left-2.5 z-10">
+                  <span
+                    class="capitalize px-2.5 py-0.5 rounded-full text-[10.5px] font-bold shadow-xs tracking-wider"
+                    :class="{
+                      'bg-slate-200 text-slate-700': !species.rarity || species.rarity === 'common',
+                      'bg-blue-600 text-white': species.rarity === 'uncommon',
+                      'bg-purple-600 text-white': species.rarity === 'rare',
+                      'bg-amber-400 text-slate-900 font-extrabold': species.rarity === 'legendary',
+                    }"
+                  >
+                    {{ species.rarity || 'common' }}
+                  </span>
+                </div>
+                <div class="absolute top-2.5 right-2.5 z-10">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10.5px] font-extrabold bg-emerald-600 text-white shadow-xs flex items-center gap-1">
+                    <span>+{{ species.unlock_points || 5 }} Pts</span>
+                  </span>
+                </div>
+
                 <div class="w-full h-full bg-gradient-to-b from-slate-200 to-slate-300 flex flex-col items-center justify-center gap-2 text-slate-400">
                   <div class="w-14 h-14 rounded-full bg-slate-300/80 flex items-center justify-center text-slate-500 shadow-inner">
                     <AppIcon name="lock" class="w-6 h-6" />
@@ -230,14 +263,24 @@
                 </template>
 
                 <template v-else>
-                  <h3 class="text-sm font-bold text-slate-500">
-                    ??? Unknown Species
+                  <h3 class="text-sm font-bold text-slate-600">
+                    ??? Locked Specimen
                   </h3>
                   <p class="text-xs italic text-slate-400 mt-0.5">
-                    Undiscovered
+                    Undiscovered Species
                   </p>
-                  <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">
-                    Find and scan this mushroom in the wild with AI data sharing to unlock full field notes and discovery rewards!
+                  <!-- Admin Unlock Clue if provided -->
+                  <div v-if="species.unlock_hint" class="mt-2.5 p-2 rounded-lg bg-amber-50/90 border border-amber-200/80 text-amber-900 text-[11px] leading-relaxed">
+                    <span class="font-bold flex items-center gap-1 text-amber-800 mb-0.5">
+                      💡 Field Clue:
+                    </span>
+                    {{ species.unlock_hint }}
+                  </div>
+                  <p v-else class="text-[11px] text-slate-400 mt-2 leading-relaxed">
+                    Find and scan this mushroom in the wild to unlock full species data and earn <strong class="text-emerald-600">+{{ species.unlock_points || 5 }} points</strong>!
+                  </p>
+                  <p v-if="species.habitat" class="text-[11px] text-slate-500 mt-1.5 truncate">
+                    <strong class="text-slate-600">Known Habitat:</strong> {{ species.habitat }}
                   </p>
                 </template>
               </div>
@@ -247,8 +290,8 @@
                 <span v-if="species.is_discovered && species.first_scanned_at" class="text-slate-400">
                   Found {{ new Date(species.first_scanned_at).toLocaleDateString() }}
                 </span>
-                <span v-else class="text-slate-400 font-medium">
-                  Scan to unlock
+                <span v-else class="text-emerald-600 font-bold">
+                  +{{ species.unlock_points || 5 }} Pts on unlock
                 </span>
 
                 <NuxtLink

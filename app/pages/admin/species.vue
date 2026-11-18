@@ -20,7 +20,10 @@
           <option value="unknown">Unknown</option>
         </select>
         <button v-if="activeTab === 'verified'" class="flex-1 sm:flex-initial justify-center py-2 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[#334155] text-[13.5px] font-semibold font-sans cursor-pointer transition-colors duration-[0.18s] hover:bg-[#f8fafc] flex items-center gap-1.5 whitespace-nowrap" @click="exportCatalogPdf"><AppIcon name="file" class="w-4 h-4 text-[#64748b]" /><span>Export Catalog PDF</span></button>
-        <button v-if="activeTab === 'verified'" class="flex-1 sm:flex-initial justify-center py-2 px-[18px] rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 whitespace-nowrap" @click="openAdd">+ Add Species</button>
+        <button v-if="activeTab === 'verified'" class="flex-1 sm:flex-initial justify-center py-2 px-4 rounded-xl bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-bold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 whitespace-nowrap shadow-xs flex items-center gap-1.5" @click="openAdd">
+          <AppIcon name="plus" class="w-4 h-4" />
+          <span>Add Specimen to Unlock</span>
+        </button>
       </div>
     </div>
 
@@ -57,15 +60,16 @@
     </div>
 
     <!-- Tab 1: Verified Species -->
-    <div v-if="activeTab === 'verified'" class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
+    <div v-if="activeTab === 'verified'" class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden shadow-xs">
       <div class="overflow-x-auto">
         <table class="w-full border-collapse">
           <thead>
             <tr>
               <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">#</th>
-              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Scientific Name</th>
-              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Common Name</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Specimen</th>
               <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Classification</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Rarity & Reward</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">MycoDex Unlocks</th>
               <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Habitat / Region</th>
               <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Added</th>
               <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Actions</th>
@@ -73,20 +77,47 @@
           </thead>
           <tbody>
             <tr v-if="loading" class="animate-pulse">
-              <td colspan="7" class="py-8 text-center text-[#94a3b8] text-[13.5px]">Loading species database...</td>
+              <td colspan="8" class="py-8 text-center text-[#94a3b8] text-[13.5px]">Loading species database...</td>
             </tr>
             <tr v-else-if="filteredSpecies.length === 0">
-              <td colspan="7" class="py-8 text-center text-[#94a3b8] text-[13.5px]">No verified species found on record.</td>
+              <td colspan="8" class="py-8 text-center text-[#94a3b8] text-[13.5px]">No verified species found on record.</td>
             </tr>
             <template v-else>
               <tr v-for="sp in paginatedSpecies" :key="sp.id" class="hover:bg-[#f8fafc] group">
                 <td class="py-2.5 px-3.5 text-[12px] text-[#94a3b8] border-b border-[#f8fafc] align-middle font-mono group-last:border-none">{{ sp.id }}</td>
-                <td class="py-2.5 px-3.5 text-[13px] text-[#0f172a] border-b border-[#f8fafc] align-middle italic font-semibold group-last:border-none">{{ sp.scientific_name || '-' }}</td>
-                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">{{ sp.name }}</td>
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <div class="flex items-center gap-3">
+                    <img :src="getImageUrl(sp.image_url || sp.image_path)" class="w-10 h-10 rounded-lg object-cover border border-[#e2e8f0] shrink-0" alt="Specimen" />
+                    <div>
+                      <p class="font-bold text-[#0f172a] text-[13.5px] leading-tight">{{ sp.name }}</p>
+                      <p class="text-[11.5px] text-[#64748b] italic font-serif mt-0.5">{{ sp.scientific_name || '-' }}</p>
+                    </div>
+                  </div>
+                </td>
                 <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
                   <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="sp.classification === 'edible' ? 'bg-[#d1fae5] text-[#065f46]' : (sp.classification === 'poisonous' ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#fef3c7] text-[#92400e]')">{{ sp.classification }}</span>
                 </td>
-                <td class="py-2.5 px-3.5 text-[12.5px] text-[#64748b] border-b border-[#f8fafc] align-middle group-last:border-none">{{ sp.habitat || '-' }}</td>
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <span
+                    class="py-[3px] px-2.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide inline-flex items-center gap-1 border"
+                    :class="{
+                      'bg-slate-50 text-slate-700 border-slate-200': (sp.rarity || 'common') === 'common',
+                      'bg-emerald-50 text-emerald-800 border-emerald-200': sp.rarity === 'uncommon',
+                      'bg-purple-50 text-purple-800 border-purple-200': sp.rarity === 'rare',
+                      'bg-amber-50 text-amber-900 border-amber-200': sp.rarity === 'legendary',
+                    }"
+                  >
+                    <span>{{ sp.rarity || 'common' }}</span>
+                    <span class="font-bold text-[10.5px] opacity-80">(+{{ sp.unlock_points || 5 }} pts)</span>
+                  </span>
+                </td>
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle group-last:border-none">
+                  <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#0f172a]">
+                    <AppIcon name="users" class="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{{ sp.unlock_count || 0 }} forager{{ (sp.unlock_count || 0) === 1 ? '' : 's' }}</span>
+                  </span>
+                </td>
+                <td class="py-2.5 px-3.5 text-[12.5px] text-[#64748b] border-b border-[#f8fafc] align-middle group-last:border-none max-w-[180px] truncate" :title="sp.habitat || '-'">{{ sp.habitat || '-' }}</td>
                 <td class="py-2.5 px-3.5 text-[12.5px] text-[#94a3b8] border-b border-[#f8fafc] align-middle whitespace-nowrap group-last:border-none">{{ formatDate(sp.created_at) }}</td>
                 <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
                   <div class="flex gap-1.5">
@@ -186,38 +217,85 @@
       @update:state="retrainState = $event"
     />
 
-    <!-- Add / Edit / Promote Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] backdrop-blur-[2px]" @click.self="closeModal">
-      <div class="bg-white rounded-2xl w-[560px] max-w-[95vw] shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
-        <div class="flex items-center justify-between py-[18px] px-[22px] border-b border-[#f1f5f9]">
-          <p class="text-[15px] font-bold text-[#0f172a]">{{ promoteScanId ? 'Promote Scan to Official Species DB' : (editingId ? 'Edit Species' : 'Add New Species') }}</p>
-          <button class="bg-transparent border-none cursor-pointer text-[16px] text-[#94a3b8] hover:text-[#ef4444]" @click="closeModal">✕</button>
+    <!-- Add / Edit / Promote Specimen Modal -->
+    <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] backdrop-blur-[2px] p-4" @click.self="closeModal">
+      <div class="bg-white rounded-2xl w-[640px] max-w-[95vw] max-h-[92vh] flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden">
+        <!-- Header -->
+        <div class="flex items-center justify-between py-4 px-6 border-b border-[#f1f5f9] bg-[#f8fafc]">
+          <div>
+            <p class="text-[15px] font-bold text-[#0f172a] flex items-center gap-2">
+              <AppIcon name="mushroom" class="w-4 h-4 text-emerald-600" />
+              <span>{{ promoteScanId ? 'Promote Scan to Official Species DB' : (editingId ? 'Edit Specimen Details' : 'Add New Specimen for Foragers to Unlock') }}</span>
+            </p>
+            <p class="text-[12px] text-[#64748b] mt-0.5">
+              Specimens added here appear in the MycoDex field catalog for foragers to discover and unlock.
+            </p>
+          </div>
+          <button class="bg-transparent border-none cursor-pointer text-[18px] text-[#94a3b8] hover:text-[#ef4444] px-1" @click="closeModal">✕</button>
         </div>
-        <div class="p-[22px] flex flex-col gap-4">
+
+        <!-- Scrollable Body -->
+        <div class="p-6 flex flex-col gap-4 overflow-y-auto">
           <div v-if="formError" class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[13px] font-medium">{{ formError }}</div>
-          <div v-if="form.image_path || form.image_url" class="flex items-center gap-3 p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl">
-            <img :src="getImageUrl(form.image_url || form.image_path)" class="w-14 h-14 rounded-lg object-cover border" alt="Reference" />
-            <div>
-              <p class="text-[12px] font-bold text-[#0f172a]">Candidate Photo Attached</p>
-              <p class="text-[11.5px] text-[#64748b]">This photo will be saved as the reference image for this DB species.</p>
+
+          <!-- Specimen Photo Upload & Preview -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#475569] flex items-center justify-between">
+              <span>Specimen Photo / Reference Image</span>
+              <span class="text-[11px] text-[#94a3b8] font-normal">JPG, PNG, WebP up to 8MB</span>
+            </label>
+
+            <!-- When image is selected / exists -->
+            <div v-if="previewImage" class="relative rounded-xl border border-[#cbd5e1] overflow-hidden bg-[#0f172a] flex items-center justify-center h-44 group">
+              <img :src="previewImage" class="h-full w-full object-contain" alt="Specimen reference" />
+              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <label class="py-1.5 px-3 rounded-lg bg-white/90 hover:bg-white text-slate-800 text-[12px] font-semibold cursor-pointer shadow-sm">
+                  Change Photo
+                  <input type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
+                </label>
+                <button
+                  type="button"
+                  class="py-1.5 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[12px] font-semibold cursor-pointer shadow-sm"
+                  @click="removeSelectedFile"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
+
+            <!-- Upload drop area when no image -->
+            <label
+              v-else
+              class="border-2 border-dashed border-[#cbd5e1] hover:border-emerald-500 rounded-xl p-5 flex flex-col items-center justify-center gap-2 bg-[#f8fafc] hover:bg-emerald-50/40 transition-colors cursor-pointer text-center"
+            >
+              <input type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
+              <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <AppIcon name="camera" class="w-5 h-5" />
+              </div>
+              <div>
+                <p class="text-[13px] font-semibold text-[#0f172a]">Click to upload specimen photo</p>
+                <p class="text-[11.5px] text-[#64748b]">Foragers will see this photo once they discover and unlock this mushroom.</p>
+              </div>
+            </label>
           </div>
 
+          <!-- Names: Common & Scientific -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div class="flex flex-col gap-1.5">
               <label class="text-[12.5px] font-semibold text-[#475569]">Common Name *</label>
-              <input v-model="form.name" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Paddy Straw Mushroom" />
+              <input v-model="form.name" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Golden Chanterelle" />
             </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-[12.5px] font-semibold text-[#475569]">Scientific Name</label>
-              <input v-model="form.scientific_name" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Volvariella volvacea" />
+              <input v-model="form.scientific_name" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Cantharellus cibarius" />
             </div>
           </div>
+
+          <!-- Classification & Habitat -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div class="flex flex-col gap-1.5">
               <label class="text-[12.5px] font-semibold text-[#475569]">Classification *</label>
               <select v-model="form.classification" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]">
-                <option value="">Select…</option>
                 <option value="edible">Edible</option>
                 <option value="poisonous">Poisonous</option>
                 <option value="unknown">Unknown</option>
@@ -225,23 +303,75 @@
             </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-[12.5px] font-semibold text-[#475569]">Habitat / Region</label>
-              <input v-model="form.habitat" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Southeast Asia" />
+              <input v-model="form.habitat" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Moist deciduous forest floors" />
             </div>
           </div>
+
+          <!-- Rarity & Unlock Points -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-[#f8fafc] p-3.5 rounded-xl border border-[#e2e8f0]">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#475569]">Specimen Rarity</label>
+              <select v-model="form.rarity" @change="onRarityChange(form.rarity)" class="py-[8px] px-3 border border-[#cbd5e1] rounded-lg text-[13px] font-sans text-[#0f172a] bg-white outline-none focus:border-[#10b981]">
+                <option value="common">Common (Standard +5 pts)</option>
+                <option value="uncommon">Uncommon (+10 pts bonus)</option>
+                <option value="rare">Rare (+15 pts bonus)</option>
+                <option value="legendary">Legendary (+25 pts bonus)</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#475569]">Forager Discovery Reward</label>
+              <div class="flex items-center gap-2">
+                <input v-model.number="form.unlock_points" type="number" min="1" max="500" class="py-[8px] px-3 border border-[#cbd5e1] rounded-lg text-[13px] font-sans text-[#0f172a] bg-white outline-none focus:border-[#10b981] w-24" />
+                <span class="text-[12px] text-[#64748b] font-medium">Pending pts on first unlock</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Forager Unlock Hint / Discovery Clue -->
           <div class="flex flex-col gap-1.5">
-            <label class="text-[12.5px] font-semibold text-[#475569]">Description</label>
-            <textarea v-model="form.description" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none resize-y transition-colors duration-[0.18s] focus:border-[#10b981]" rows="3" placeholder="Brief description…" />
+            <label class="text-[12.5px] font-semibold text-[#475569] flex items-center justify-between">
+              <span>Forager Discovery Clue (Unlock Hint)</span>
+              <span class="text-[11px] text-amber-700 font-normal">Shown in MycoDex while locked</span>
+            </label>
+            <textarea
+              v-model="form.unlock_hint"
+              class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13px] font-sans text-[#0f172a] bg-white outline-none resize-y transition-colors duration-[0.18s] focus:border-[#10b981]"
+              rows="2"
+              placeholder="e.g. Look on rotting hardwood logs in shaded mossy gullies after heavy summer rain."
+            />
           </div>
-          <div class="flex justify-between items-center pt-1">
-            <button v-if="editingId" class="py-[9px] px-4 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] text-[13px] font-semibold text-[#0f172a] cursor-pointer hover:bg-[#e2e8f0] flex items-center gap-1.5" @click="exportCurrentFormPdf"><AppIcon name="file" class="w-4 h-4 text-[#64748b]" /><span>Generate PDF</span></button>
-            <div v-else></div>
-            <div class="flex gap-2.5">
-              <button class="py-[9px] px-5 rounded-lg border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans cursor-pointer text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f8fafc]" @click="closeModal">Cancel</button>
-              <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px]" @click="saveSpecies" :disabled="isSaving">
-                <span v-if="isSaving" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-                <span v-else>{{ promoteScanId ? 'Confirm & Save to DB' : (editingId ? 'Update' : 'Add Species') }}</span>
-              </button>
+
+          <!-- Description -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[12.5px] font-semibold text-[#475569]">Botanical Description & Notes</label>
+            <textarea v-model="form.description" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13px] font-sans text-[#0f172a] bg-white outline-none resize-y transition-colors duration-[0.18s] focus:border-[#10b981]" rows="2" placeholder="Brief field description, cap texture, gill attachment, etc." />
+          </div>
+
+          <!-- Active in MycoDex Toggle -->
+          <div class="flex items-center justify-between p-3 rounded-xl bg-emerald-50/60 border border-emerald-200">
+            <div>
+              <p class="text-[12.5px] font-bold text-emerald-950">Active in Forager MycoDex</p>
+              <p class="text-[11.5px] text-emerald-800/80">Make this specimen visible in the field encyclopedia for all foragers to discover.</p>
             </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="form.is_active_mycodex" class="sr-only peer" />
+              <div class="w-10 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-between items-center py-3.5 px-6 border-t border-[#f1f5f9] bg-[#f8fafc]">
+          <button v-if="editingId" class="py-[9px] px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-semibold text-[#0f172a] cursor-pointer hover:bg-[#e2e8f0] flex items-center gap-1.5" @click="exportCurrentFormPdf">
+            <AppIcon name="file" class="w-4 h-4 text-[#64748b]" /><span>Generate PDF</span>
+          </button>
+          <div v-else></div>
+          <div class="flex gap-2.5">
+            <button class="py-[9px] px-5 rounded-lg border border-[#e2e8f0] bg-white text-[13.5px] font-medium font-sans cursor-pointer text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" @click="closeModal">Cancel</button>
+            <button class="py-[9px] px-5 rounded-lg bg-gradient-to-br from-[#10b981] to-[#059669] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]" @click="saveSpecies" :disabled="isSaving">
+              <span v-if="isSaving" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+              <span v-else>{{ promoteScanId ? 'Confirm & Save to DB' : (editingId ? 'Update Specimen' : 'Add to MycoDex') }}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -300,6 +430,11 @@ interface Species {
   description?: string
   image_path?: string
   image_url?: string
+  rarity?: string
+  unlock_points?: number
+  unlock_hint?: string
+  is_active_mycodex?: boolean
+  unlock_count?: number
   created_at?: string
 }
 
@@ -319,15 +454,48 @@ interface ScanCandidate {
 const species = ref<Species[]>([])
 const candidateScans = ref<ScanCandidate[]>([])
 
+const selectedFile = ref<File | null>(null)
+const previewImage = ref<string | null>(null)
+
 const form = reactive({
   name: '',
   scientific_name: '',
-  classification: '',
+  classification: 'edible',
   habitat: '',
   description: '',
   image_path: '',
-  image_url: ''
+  image_url: '',
+  rarity: 'common',
+  unlock_points: 5,
+  unlock_hint: '',
+  is_active_mycodex: true
 })
+
+function onRarityChange(val: string) {
+  if (val === 'common') form.unlock_points = 5
+  else if (val === 'uncommon') form.unlock_points = 10
+  else if (val === 'rare') form.unlock_points = 15
+  else if (val === 'legendary') form.unlock_points = 25
+}
+
+function handleFileSelect(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  if (file.size > 8 * 1024 * 1024) {
+    toast.error('Image size must be less than 8MB')
+    return
+  }
+  selectedFile.value = file
+  previewImage.value = URL.createObjectURL(file)
+}
+
+function removeSelectedFile() {
+  selectedFile.value = null
+  previewImage.value = null
+  form.image_path = ''
+  form.image_url = ''
+}
 
 const getHeaders = () => {
   const token = localStorage.getItem('token')
@@ -419,14 +587,30 @@ function formatDate(dateStr?: string) {
 function openAdd() {
   editingId.value = null
   promoteScanId.value = null
+  selectedFile.value = null
+  previewImage.value = null
   formError.value = ''
-  Object.assign(form, { name: '', scientific_name: '', classification: '', habitat: '', description: '', image_path: '', image_url: '' })
+  Object.assign(form, {
+    name: '',
+    scientific_name: '',
+    classification: 'edible',
+    habitat: '',
+    description: '',
+    image_path: '',
+    image_url: '',
+    rarity: 'common',
+    unlock_points: 5,
+    unlock_hint: '',
+    is_active_mycodex: true
+  })
   showModal.value = true
 }
 
 function openEdit(sp: Species) {
   editingId.value = sp.id
   promoteScanId.value = null
+  selectedFile.value = null
+  previewImage.value = sp.image_url || (sp.image_path ? getImageUrl(sp.image_path) : null)
   formError.value = ''
   Object.assign(form, {
     name: sp.name,
@@ -435,7 +619,11 @@ function openEdit(sp: Species) {
     habitat: sp.habitat || '',
     description: sp.description || '',
     image_path: sp.image_path || '',
-    image_url: sp.image_url || ''
+    image_url: sp.image_url || '',
+    rarity: sp.rarity || 'common',
+    unlock_points: sp.unlock_points ?? 5,
+    unlock_hint: sp.unlock_hint || '',
+    is_active_mycodex: sp.is_active_mycodex !== false
   })
   showModal.value = true
 }
@@ -443,6 +631,8 @@ function openEdit(sp: Species) {
 function openPromoteModal(scan: ScanCandidate) {
   promoteScanId.value = scan.id
   editingId.value = null
+  selectedFile.value = null
+  previewImage.value = scan.image_url || (scan.image_path ? getImageUrl(scan.image_path) : null)
   formError.value = ''
   // Deliberately NOT copying GPS coordinates or the user's name into public species fields.
   Object.assign(form, {
@@ -452,7 +642,11 @@ function openPromoteModal(scan: ScanCandidate) {
     habitat: '',
     description: '',
     image_path: scan.image_path,
-    image_url: scan.image_url || ''
+    image_url: scan.image_url || '',
+    rarity: 'uncommon',
+    unlock_points: 10,
+    unlock_hint: '',
+    is_active_mycodex: true
   })
   showModal.value = true
 }
@@ -472,19 +666,47 @@ async function saveSpecies() {
   const editId = editingId.value
 
   try {
+    const formData = new FormData()
+    formData.append('name', form.name)
+    if (form.scientific_name) formData.append('scientific_name', form.scientific_name)
+    formData.append('classification', form.classification)
+    if (form.habitat) formData.append('habitat', form.habitat)
+    if (form.description) formData.append('description', form.description)
+    if (form.rarity) formData.append('rarity', form.rarity)
+    formData.append('unlock_points', String(form.unlock_points ?? 5))
+    if (form.unlock_hint) formData.append('unlock_hint', form.unlock_hint)
+    formData.append('is_active_mycodex', form.is_active_mycodex ? '1' : '0')
+
+    if (selectedFile.value) {
+      formData.append('image', selectedFile.value)
+    } else if (form.image_path) {
+      formData.append('image_path', form.image_path)
+    }
+
+    if (promotedScanId) {
+      formData.append('scan_id', String(promotedScanId))
+    }
+
+    const token = localStorage.getItem('token')
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`
+    }
+
     if (editId) {
+      formData.append('_method', 'PUT')
       await $fetch(`${config.public.apiBase}/admin/species/${editId}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: form
+        method: 'POST',
+        headers,
+        body: formData
       })
     } else {
       await $fetch(`${config.public.apiBase}/admin/species`, {
         method: 'POST',
-        headers: getHeaders(),
-        body: promotedScanId ? { ...form, scan_id: promotedScanId } : form
+        headers,
+        body: formData
       })
     }
+
     closeModal()
     fetchVerifiedSpecies()
     if (promotedScanId) {
@@ -492,10 +714,10 @@ async function saveSpecies() {
       candidateScans.value = candidateScans.value.filter(c => c.id !== promotedScanId)
       toast.success('Candidate scan successfully promoted & saved to Species DB!')
     } else {
-      toast.success(wasEditing ? 'Species updated.' : 'Species added.')
+      toast.success(wasEditing ? 'Species updated.' : 'New specimen added to MycoDex!')
     }
   } catch (err: any) {
-    formError.value = err?.data?.message || 'Failed to save species.'
+    formError.value = err?.data?.message || err?.message || 'Failed to save species.'
   } finally {
     isSaving.value = false
   }
@@ -505,6 +727,8 @@ function closeModal() {
   showModal.value = false
   promoteScanId.value = null
   editingId.value = null
+  selectedFile.value = null
+  previewImage.value = null
   formError.value = ''
 }
 
