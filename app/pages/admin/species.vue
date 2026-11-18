@@ -303,7 +303,12 @@
             </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-[12.5px] font-semibold text-[#475569]">Habitat / Region</label>
-              <input v-model="form.habitat" class="py-[9px] px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] font-sans text-[#0f172a] bg-white outline-none transition-colors duration-[0.18s] focus:border-[#10b981]" placeholder="e.g. Moist deciduous forest floors" />
+              <textarea
+                v-model="form.habitat"
+                rows="2"
+                class="py-[8px] px-3 border border-[#e2e8f0] rounded-lg text-[13px] font-sans text-[#0f172a] bg-white outline-none resize-y transition-colors duration-[0.18s] focus:border-[#10b981]"
+                placeholder="e.g. Moist deciduous forest floors, shaded mossy banks, decomposing hardwood logs"
+              />
             </div>
           </div>
 
