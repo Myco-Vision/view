@@ -34,6 +34,64 @@
     </div>
 
     <template v-else>
+      <!-- ── New Specimen Alert Banner for Foragers ────────────────────────────── -->
+      <div
+        v-if="showNewSpecimenNotice && mycodex.latest_specimen"
+        class="rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-emerald-950 via-teal-950 to-slate-900 border border-emerald-400/50 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl relative overflow-hidden"
+      >
+        <div class="absolute -right-8 -bottom-8 w-36 h-36 rounded-full bg-emerald-500/15 blur-xl pointer-events-none"></div>
+        <div class="flex items-start sm:items-center gap-3.5 relative z-10">
+          <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 flex items-center justify-center shrink-0 shadow-inner">
+            <AppIcon name="sparkles" class="w-6 h-6 text-emerald-400 animate-pulse" />
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-[10px] font-black uppercase tracking-wider text-slate-950 bg-emerald-400 px-2.5 py-0.5 rounded-full shadow-xs">
+                ✨ New Specimen Target
+              </span>
+              <span class="text-[11.5px] text-emerald-300 font-semibold">
+                Recently added by biology admins!
+              </span>
+            </div>
+            <h4 class="text-sm sm:text-base font-extrabold text-white mt-1 flex flex-wrap items-center gap-2">
+              <span>{{ mycodex.latest_specimen.common_name }}</span>
+              <span
+                class="capitalize text-[10.5px] font-bold px-2 py-0.5 rounded-md text-white shadow-xs"
+                :class="{
+                  'bg-slate-700': !mycodex.latest_specimen.rarity || mycodex.latest_specimen.rarity === 'common',
+                  'bg-blue-600': mycodex.latest_specimen.rarity === 'uncommon',
+                  'bg-purple-600': mycodex.latest_specimen.rarity === 'rare',
+                  'bg-amber-400 text-slate-900 font-extrabold': mycodex.latest_specimen.rarity === 'legendary',
+                }"
+              >
+                {{ mycodex.latest_specimen.rarity || 'Common' }}
+              </span>
+              <span class="text-emerald-400 text-xs font-black">
+                +{{ mycodex.latest_specimen.unlock_points || 5 }} Pts Discovery Bounty
+              </span>
+            </h4>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed max-w-2xl">
+              {{ mycodex.latest_specimen.unlock_hint || 'Head out into the wild to scan and be among the first foragers to unlock this new specimen into your MycoDex!' }}
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2.5 shrink-0 relative z-10 sm:self-center">
+          <NuxtLink
+            to="/users/scan"
+            class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold shadow-sm transition no-underline flex items-center gap-1.5"
+          >
+            <AppIcon name="camera" class="w-3.5 h-3.5" />
+            <span>Hunt Specimen</span>
+          </NuxtLink>
+          <button
+            @click="dismissNewSpecimenNotice"
+            class="px-3 py-2 rounded-xl border border-emerald-500/30 bg-emerald-950/40 hover:bg-emerald-900/60 text-slate-300 hover:text-white text-xs font-medium transition cursor-pointer"
+          >
+            Acknowledge
+          </button>
+        </div>
+      </div>
+
       <!-- Feedback notification banner -->
       <div
         v-if="feedbackMessage"
@@ -188,6 +246,12 @@
                 <!-- Specimen Scan Count & Rarity Badge -->
                 <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5">
                   <span
+                    v-if="species.id === mycodex.latest_specimen?.id || species.is_new_target"
+                    class="px-2 py-0.5 rounded-full text-[9.5px] font-black bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-xs animate-pulse tracking-wide"
+                  >
+                    ✨ NEW
+                  </span>
+                  <span
                     v-if="species.rarity && species.rarity !== 'common'"
                     class="capitalize px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide shadow-sm"
                     :class="{
@@ -218,8 +282,14 @@
 
               <!-- Locked Silhouette State -->
               <template v-else>
-                <!-- Rarity & Reward Points Badges -->
-                <div class="absolute top-2.5 left-2.5 z-10">
+                <!-- Rarity, Reward Points & NEW TARGET Badges -->
+                <div class="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
+                  <span
+                    v-if="species.id === mycodex.latest_specimen?.id || species.is_new_target"
+                    class="px-2 py-0.5 rounded-full text-[9.5px] font-black bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-xs animate-pulse tracking-wide"
+                  >
+                    ✨ NEW
+                  </span>
                   <span
                     class="capitalize px-2.5 py-0.5 rounded-full text-[10.5px] font-bold shadow-xs tracking-wider"
                     :class="{
@@ -238,7 +308,21 @@
                   </span>
                 </div>
 
-                <div class="w-full h-full bg-gradient-to-b from-slate-200 to-slate-300 flex flex-col items-center justify-center gap-2 text-slate-400">
+                <!-- Reference Silhouette or Generic Silhouette -->
+                <div v-if="species.reference_image_url" class="w-full h-full relative overflow-hidden bg-slate-900 flex items-center justify-center">
+                  <img
+                    :src="species.reference_image_url"
+                    class="w-full h-full object-cover filter brightness-0 contrast-200 opacity-25 select-none pointer-events-none"
+                    alt="Locked specimen shadow"
+                  />
+                  <div class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-white/80">
+                    <div class="w-11 h-11 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white shadow-md border border-white/10">
+                      <AppIcon name="lock" class="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <span class="text-[10.5px] font-extrabold text-white/90 tracking-wider">LOCKED SPECIMEN</span>
+                  </div>
+                </div>
+                <div v-else class="w-full h-full bg-gradient-to-b from-slate-200 to-slate-300 flex flex-col items-center justify-center gap-2 text-slate-400">
                   <div class="w-14 h-14 rounded-full bg-slate-300/80 flex items-center justify-center text-slate-500 shadow-inner">
                     <AppIcon name="lock" class="w-6 h-6" />
                   </div>
@@ -263,11 +347,12 @@
                 </template>
 
                 <template v-else>
-                  <h3 class="text-sm font-bold text-slate-600">
-                    ??? Locked Specimen
+                  <h3 class="text-sm font-bold text-slate-700 flex items-center justify-between">
+                    <span>{{ species.common_name }}</span>
+                    <span class="text-[9.5px] font-bold text-slate-400 uppercase tracking-wide bg-slate-100 px-1.5 py-0.5 rounded">🔒 Locked</span>
                   </h3>
                   <p class="text-xs italic text-slate-400 mt-0.5">
-                    Undiscovered Species
+                    {{ species.scientific_name || 'Undiscovered Species' }}
                   </p>
                   <!-- Admin Unlock Clue if provided -->
                   <div v-if="species.unlock_hint" class="mt-2.5 p-2 rounded-lg bg-amber-50/90 border border-amber-200/80 text-amber-900 text-[11px] leading-relaxed">
@@ -337,6 +422,35 @@ const getHeaders = () => {
   return { Authorization: `Bearer ${token}` }
 }
 
+const showNewSpecimenNotice = ref(false)
+
+function checkNewSpecimenNotice() {
+  if (!mycodex.value.latest_specimen) return
+  const latestId = mycodex.value.latest_specimen.id
+  const totalCount = mycodex.value.total_species_count || 0
+  const dismissedId = parseInt(localStorage.getItem('mycodex_dismissed_specimen_id') || '0', 10)
+
+  // Check if specimen was created recently (within last 14 days) or newer than dismissed
+  const createdDate = mycodex.value.latest_specimen.created_at ? new Date(mycodex.value.latest_specimen.created_at) : null
+  const isRecent = createdDate ? (Date.now() - createdDate.getTime()) < 14 * 24 * 60 * 60 * 1000 : true
+
+  if (latestId > dismissedId && isRecent) {
+    showNewSpecimenNotice.value = true
+  }
+
+  // Update seen markers to clear sidebar badge
+  localStorage.setItem('mycodex_last_seen_id', String(latestId))
+  localStorage.setItem('mycodex_last_seen_total', String(totalCount))
+  window.dispatchEvent(new CustomEvent('mycodex-seen'))
+}
+
+function dismissNewSpecimenNotice() {
+  showNewSpecimenNotice.value = false
+  if (mycodex.value.latest_specimen) {
+    localStorage.setItem('mycodex_dismissed_specimen_id', String(mycodex.value.latest_specimen.id))
+  }
+}
+
 async function fetchMycoDex() {
   loading.value = true
   try {
@@ -344,6 +458,7 @@ async function fetchMycoDex() {
       headers: getHeaders(),
     })
     mycodex.value = res
+    checkNewSpecimenNotice()
   } catch (err: any) {
     console.error('Failed to load MycoDex:', err)
   } finally {

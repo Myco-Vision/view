@@ -92,7 +92,7 @@
 
         <NuxtLink
           to="/mycodex"
-          @click="mobileOpen = false"
+          @click="onMycoDexClick"
           class="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-slate-400 no-underline text-[13px] font-medium transition-all duration-200 hover:bg-emerald-900/30 hover:text-emerald-300"
           active-class="!bg-emerald-600/20 !text-emerald-300 !border !border-emerald-500/30 shadow-sm"
         >
@@ -100,7 +100,15 @@
             <AppIcon name="sparkles" class="w-4 h-4" />
           </span>
           <span class="whitespace-nowrap flex-1">MycoDex</span>
-          <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Pro Pass</span>
+          <span
+            v-if="mycodexNewCount > 0"
+            class="text-[9.5px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 animate-pulse flex items-center gap-1 shadow-sm"
+          >
+            ● {{ mycodexNewCount }} NEW
+          </span>
+          <span v-else class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            Pro Pass
+          </span>
         </NuxtLink>
 
         <NuxtLink
@@ -203,6 +211,24 @@ const userAvatar     = ref('')
 const isSubscribed   = ref(false)
 const remainingScans = ref<number | null>(null)
 const rewardPoints   = ref<number | null>(null)
+const mycodexNewCount = ref(0)
+const latestSpecimenId = ref(0)
+const latestSpecimenTotal = ref(0)
+
+function onMycoDexClick() {
+  mobileOpen.value = false
+  if (latestSpecimenId.value > 0) {
+    localStorage.setItem('mycodex_last_seen_id', String(latestSpecimenId.value))
+  }
+  if (latestSpecimenTotal.value > 0) {
+    localStorage.setItem('mycodex_last_seen_total', String(latestSpecimenTotal.value))
+  }
+  mycodexNewCount.value = 0
+}
+
+function handleMycoDexSeen() {
+  mycodexNewCount.value = 0
+}
 
 function photoUrl(path: string) {
   if (/^https?:\/\//i.test(path)) return path // e.g. Google avatar
@@ -250,6 +276,27 @@ async function refreshUserSubscription() {
         rewardPoints.value = data.reward_points
       }
 
+      if (data.mycodex) {
+        latestSpecimenId.value = data.mycodex.latest_specimen_id || 0
+        latestSpecimenTotal.value = data.mycodex.total_species || 0
+
+        const lastSeenId = parseInt(localStorage.getItem('mycodex_last_seen_id') || '0', 10)
+        const lastSeenTotal = parseInt(localStorage.getItem('mycodex_last_seen_total') || '0', 10)
+        const currentTotal = data.mycodex.total_species || 0
+
+        if (lastSeenId === 0 && lastSeenTotal === 0) {
+          // First time establishing baseline for user
+          localStorage.setItem('mycodex_last_seen_id', String(latestSpecimenId.value))
+          localStorage.setItem('mycodex_last_seen_total', String(currentTotal))
+          mycodexNewCount.value = 0
+        } else if (latestSpecimenId.value > lastSeenId || (lastSeenTotal > 0 && currentTotal > lastSeenTotal)) {
+          const diff = Math.max(1, currentTotal > lastSeenTotal ? currentTotal - lastSeenTotal : 1)
+          mycodexNewCount.value = diff
+        } else {
+          mycodexNewCount.value = 0
+        }
+      }
+
       const latest = localStorage.getItem('user')
       if (latest) {
         const u = JSON.parse(latest)
@@ -275,11 +322,13 @@ onMounted(async () => {
   syncUserFromStorage()
   window.addEventListener('subscription-updated', refreshUserSubscription)
   window.addEventListener('user-updated', syncUserFromStorage)
+  window.addEventListener('mycodex-seen', handleMycoDexSeen)
 })
 
 onUnmounted(() => {
   window.removeEventListener('subscription-updated', refreshUserSubscription)
   window.removeEventListener('user-updated', syncUserFromStorage)
+  window.removeEventListener('mycodex-seen', handleMycoDexSeen)
 })
 
 const userInitials = computed(() => {
