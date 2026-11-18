@@ -283,15 +283,16 @@ async function refreshUserSubscription() {
         const lastSeenId = parseInt(localStorage.getItem('mycodex_last_seen_id') || '0', 10)
         const lastSeenTotal = parseInt(localStorage.getItem('mycodex_last_seen_total') || '0', 10)
         const currentTotal = data.mycodex.total_species || 0
+        const newCountFromApi = typeof data.mycodex.new_specimens_count === 'number' ? data.mycodex.new_specimens_count : 0
 
-        if (lastSeenId === 0 && lastSeenTotal === 0) {
-          // First time establishing baseline for user
-          localStorage.setItem('mycodex_last_seen_id', String(latestSpecimenId.value))
-          localStorage.setItem('mycodex_last_seen_total', String(currentTotal))
-          mycodexNewCount.value = 0
-        } else if (latestSpecimenId.value > lastSeenId || (lastSeenTotal > 0 && currentTotal > lastSeenTotal)) {
-          const diff = Math.max(1, currentTotal > lastSeenTotal ? currentTotal - lastSeenTotal : 1)
-          mycodexNewCount.value = diff
+        // If the user has never seen this specimen ID before
+        if (latestSpecimenId.value > 0 && latestSpecimenId.value > lastSeenId) {
+          const diff = lastSeenTotal > 0 && currentTotal > lastSeenTotal
+            ? (currentTotal - lastSeenTotal)
+            : (newCountFromApi > 0 ? newCountFromApi : 1)
+          mycodexNewCount.value = Math.max(1, diff)
+        } else if (lastSeenTotal > 0 && currentTotal > lastSeenTotal) {
+          mycodexNewCount.value = Math.max(1, currentTotal - lastSeenTotal)
         } else {
           mycodexNewCount.value = 0
         }

@@ -242,8 +242,8 @@
             <div class="relative h-44 bg-slate-100 overflow-hidden flex items-center justify-center">
               <template v-if="species.is_discovered">
                 <img
-                  v-if="species.cover_image_url"
-                  :src="species.cover_image_url"
+                  v-if="species.cover_image_url || species.reference_image_url"
+                  :src="species.cover_image_url || species.reference_image_url"
                   :alt="species.common_name"
                   class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
@@ -289,8 +289,26 @@
                 </div>
               </template>
 
-              <!-- Locked Silhouette State -->
+              <!-- Locked Specimen State -->
               <template v-else>
+                <!-- Reference Photo (Full Color) or Fallback Placeholder -->
+                <img
+                  v-if="species.reference_image_url || species.cover_image_url"
+                  :src="species.reference_image_url || species.cover_image_url"
+                  :alt="species.common_name"
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div v-else class="w-full h-full bg-gradient-to-b from-slate-800 to-slate-900 flex flex-col items-center justify-center gap-2 text-slate-400">
+                  <div class="w-12 h-12 rounded-full bg-slate-800/90 flex items-center justify-center text-slate-400 border border-slate-700">
+                    <AppIcon name="lock" class="w-5 h-5" />
+                  </div>
+                  <span class="text-[10px] font-bold text-slate-400 tracking-wider">LOCKED SPECIMEN</span>
+                </div>
+
+                <!-- Subtle gradient overlay so badges are always readable -->
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-black/30 pointer-events-none"></div>
+
                 <!-- Rarity, Reward Points & NEW TARGET Badges -->
                 <div class="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
                   <span
@@ -302,7 +320,7 @@
                   <span
                     class="capitalize px-2.5 py-0.5 rounded-full text-[10.5px] font-bold shadow-xs tracking-wider"
                     :class="{
-                      'bg-slate-200 text-slate-700': !species.rarity || species.rarity === 'common',
+                      'bg-slate-900/80 text-slate-200 border border-slate-700': !species.rarity || species.rarity === 'common',
                       'bg-blue-600 text-white': species.rarity === 'uncommon',
                       'bg-purple-600 text-white': species.rarity === 'rare',
                       'bg-amber-400 text-slate-900 font-extrabold': species.rarity === 'legendary',
@@ -317,25 +335,12 @@
                   </span>
                 </div>
 
-                <!-- Reference Silhouette or Generic Silhouette -->
-                <div v-if="species.reference_image_url" class="w-full h-full relative overflow-hidden bg-slate-900 flex items-center justify-center">
-                  <img
-                    :src="species.reference_image_url"
-                    class="w-full h-full object-cover filter brightness-0 contrast-200 opacity-25 select-none pointer-events-none"
-                    alt="Locked specimen shadow"
-                  />
-                  <div class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-white/80">
-                    <div class="w-11 h-11 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white shadow-md border border-white/10">
-                      <AppIcon name="lock" class="w-5 h-5 text-emerald-400" />
-                    </div>
-                    <span class="text-[10.5px] font-extrabold text-white/90 tracking-wider">LOCKED SPECIMEN</span>
-                  </div>
-                </div>
-                <div v-else class="w-full h-full bg-gradient-to-b from-slate-200 to-slate-300 flex flex-col items-center justify-center gap-2 text-slate-400">
-                  <div class="w-14 h-14 rounded-full bg-slate-300/80 flex items-center justify-center text-slate-500 shadow-inner">
-                    <AppIcon name="lock" class="w-6 h-6" />
-                  </div>
-                  <span class="text-xs font-bold text-slate-500 tracking-wider">LOCKED SPECIMEN</span>
+                <!-- Bottom Left: Locked Target Badge -->
+                <div class="absolute bottom-2.5 left-2.5 z-10">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-950/85 text-amber-300 border border-amber-400/30 backdrop-blur-xs flex items-center gap-1 shadow-sm">
+                    <AppIcon name="lock" class="w-3 h-3 text-amber-400" />
+                    <span>Target Specimen</span>
+                  </span>
                 </div>
               </template>
             </div>
@@ -426,8 +431,8 @@
             <!-- Discovered Full Color Photo -->
             <template v-if="activeSpecimen.is_discovered">
               <img
-                v-if="activeSpecimen.cover_image_url"
-                :src="activeSpecimen.cover_image_url"
+                v-if="activeSpecimen.cover_image_url || activeSpecimen.reference_image_url"
+                :src="activeSpecimen.cover_image_url || activeSpecimen.reference_image_url"
                 :alt="activeSpecimen.common_name"
                 class="w-full h-full object-cover"
               />
@@ -452,19 +457,20 @@
               </div>
             </template>
 
-            <!-- Locked Silhouette State -->
+            <!-- Locked Target Specimen Photo -->
             <template v-else>
-              <div v-if="activeSpecimen.reference_image_url" class="w-full h-full relative overflow-hidden bg-slate-950 flex items-center justify-center">
+              <div v-if="activeSpecimen.reference_image_url || activeSpecimen.cover_image_url" class="w-full h-full relative overflow-hidden bg-slate-900">
                 <img
-                  :src="activeSpecimen.reference_image_url"
-                  class="w-full h-full object-cover filter brightness-0 contrast-200 opacity-25 select-none pointer-events-none"
-                  alt="Silhouette"
+                  :src="activeSpecimen.reference_image_url || activeSpecimen.cover_image_url"
+                  :alt="activeSpecimen.common_name"
+                  class="w-full h-full object-cover"
                 />
-                <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white">
-                  <div class="w-14 h-14 rounded-2xl bg-black/70 backdrop-blur-md flex items-center justify-center text-white border border-white/10 shadow-lg">
-                    <AppIcon name="lock" class="w-7 h-7 text-emerald-400" />
-                  </div>
-                  <span class="text-xs font-extrabold tracking-widest uppercase text-emerald-400">Locked Target Specimen</span>
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30 pointer-events-none"></div>
+                <div class="absolute bottom-3.5 left-3.5 flex items-center gap-2">
+                  <span class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-slate-950/85 text-amber-300 border border-amber-400/40 backdrop-blur-md shadow-md flex items-center gap-1.5">
+                    <AppIcon name="lock" class="w-3.5 h-3.5 text-amber-400" />
+                    <span>Target Specimen</span>
+                  </span>
                 </div>
               </div>
               <div v-else class="w-full h-full bg-gradient-to-b from-slate-900 to-slate-950 flex flex-col items-center justify-center gap-2 text-slate-400">
