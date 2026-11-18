@@ -4,13 +4,13 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">MycoDex</h1>
-          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-            <AppIcon name="sparkles" class="w-3.5 h-3.5 text-emerald-600" />
+          <h1 class="text-2xl font-extrabold text-white tracking-tight">MycoDex</h1>
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            <AppIcon name="sparkles" class="w-3.5 h-3.5 text-emerald-400" />
             Field Encyclopedia
           </span>
         </div>
-        <p class="text-sm text-slate-500 mt-1">
+        <p class="text-sm text-slate-300 mt-1.5 leading-relaxed">
           Catalog your wild mushroom discoveries, earn crowdsourcing points, and redeem them for free 7-Day Pro Passes!
         </p>
       </div>
@@ -18,7 +18,7 @@
       <!-- Quick Scan Shortcut -->
       <NuxtLink
         to="/users/scan"
-        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition no-underline shrink-0"
+        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-sm transition no-underline shrink-0"
       >
         <AppIcon name="camera" class="w-4 h-4" />
         Scan to Unlock
@@ -27,9 +27,9 @@
 
     <!-- Loading Skeleton -->
     <div v-if="loading" class="space-y-4">
-      <div class="h-36 rounded-2xl bg-slate-100 animate-pulse" />
+      <div class="h-36 rounded-2xl bg-emerald-950/40 border border-emerald-900/30 animate-pulse" />
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        <div v-for="i in 8" :key="i" class="h-64 rounded-2xl bg-slate-100 animate-pulse" />
+        <div v-for="i in 8" :key="i" class="h-64 rounded-2xl bg-emerald-950/40 border border-emerald-900/30 animate-pulse" />
       </div>
     </div>
 
@@ -129,32 +129,32 @@
         <!-- Stats bar & filter -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-3">
-            <h2 class="text-base font-bold text-slate-900">Mushroom Species Discovered</h2>
-            <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-slate-900 text-white">
+            <h2 class="text-base font-bold text-white">Mushroom Species Discovered</h2>
+            <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
               {{ mycodex.species_discovered_count }} / {{ mycodex.total_species_count }}
             </span>
           </div>
 
           <!-- Filter buttons -->
-          <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+          <div class="flex items-center gap-1.5 p-1 bg-[#0c221a] border border-emerald-900/40 rounded-xl text-xs font-semibold">
             <button
               @click="filterMode = 'all'"
               class="px-3 py-1.5 rounded-lg border-none cursor-pointer transition-colors"
-              :class="filterMode === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'bg-transparent text-slate-500 hover:text-slate-800'"
+              :class="filterMode === 'all' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-transparent text-slate-400 hover:text-white'"
             >
               All ({{ mycodex.total_species_count }})
             </button>
             <button
               @click="filterMode = 'discovered'"
               class="px-3 py-1.5 rounded-lg border-none cursor-pointer transition-colors"
-              :class="filterMode === 'discovered' ? 'bg-white text-emerald-800 shadow-xs' : 'bg-transparent text-slate-500 hover:text-slate-800'"
+              :class="filterMode === 'discovered' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-transparent text-slate-400 hover:text-white'"
             >
               Unlocked ({{ mycodex.species_discovered_count }})
             </button>
             <button
               @click="filterMode = 'locked'"
               class="px-3 py-1.5 rounded-lg border-none cursor-pointer transition-colors"
-              :class="filterMode === 'locked' ? 'bg-white text-slate-900 shadow-xs' : 'bg-transparent text-slate-500 hover:text-slate-800'"
+              :class="filterMode === 'locked' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-transparent text-slate-400 hover:text-white'"
             >
               Locked ({{ mycodex.total_species_count - mycodex.species_discovered_count }})
             </button>
