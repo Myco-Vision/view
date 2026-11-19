@@ -61,31 +61,129 @@
 
     <!-- Tab 1: Verified Species -->
     <div v-if="activeTab === 'verified'" class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden shadow-xs">
+      <!-- Sub-tabs bar: Active Targets vs Archived Targets & Bulk Bar -->
+      <div class="p-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]/50 flex flex-wrap items-center justify-between gap-3">
+        <div class="inline-flex p-1 bg-[#e2e8f0]/60 rounded-xl">
+          <button
+            type="button"
+            class="px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-2 cursor-pointer"
+            :class="speciesSubTab === 'active' ? 'bg-white text-[#0f172a] shadow-xs' : 'text-[#64748b] hover:text-[#0f172a]'"
+            @click="speciesSubTab = 'active'; selectedIds = []"
+          >
+            <AppIcon name="leaf" class="w-3.5 h-3.5 text-[#059669]" />
+            <span>Active Targets</span>
+            <span class="py-0.2 px-1.5 rounded-full text-[11px] font-bold bg-[#d1fae5] text-[#065f46]">
+              {{ activeSpeciesCount }}
+            </span>
+          </button>
+          <button
+            type="button"
+            class="px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-2 cursor-pointer"
+            :class="speciesSubTab === 'archived' ? 'bg-white text-[#0f172a] shadow-xs' : 'text-[#64748b] hover:text-[#0f172a]'"
+            @click="speciesSubTab = 'archived'; selectedIds = []"
+          >
+            <AppIcon name="archive" class="w-3.5 h-3.5 text-[#d97706]" />
+            <span>Archived Targets</span>
+            <span class="py-0.2 px-1.5 rounded-full text-[11px] font-bold bg-[#fef3c7] text-[#92400e]">
+              {{ archivedSpeciesCount }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Bulk Selection Actions -->
+        <div v-if="selectedIds.length > 0" class="flex items-center gap-2">
+          <span class="text-[12px] font-medium text-[#64748b]">
+            {{ selectedIds.length }} selected
+          </span>
+          <template v-if="speciesSubTab === 'active'">
+            <button
+              type="button"
+              class="py-1.5 px-3 rounded-lg border border-[#fde68a] bg-[#fef3c7] text-[#92400e] text-[12px] font-semibold hover:bg-[#fde68a] transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              @click="bulkArchive"
+            >
+              <AppIcon name="archive" class="w-3.5 h-3.5 text-[#d97706]" />
+              <span>Archive Selected</span>
+            </button>
+            <button
+              type="button"
+              class="py-1.5 px-3 rounded-lg border border-[#fecaca] bg-[#fef2f2] text-[#dc2626] text-[12px] font-semibold hover:bg-[#fee2e2] transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              @click="openBulkDeleteModal"
+            >
+              <AppIcon name="trash" class="w-3.5 h-3.5 text-[#dc2626]" />
+              <span>Delete Selected</span>
+            </button>
+          </template>
+          <template v-else>
+            <button
+              type="button"
+              class="py-1.5 px-3 rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] text-[#065f46] text-[12px] font-semibold hover:bg-[#dcfce7] transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              @click="bulkRestore"
+            >
+              <AppIcon name="rotate-ccw" class="w-3.5 h-3.5 text-[#059669]" />
+              <span>Restore Selected</span>
+            </button>
+            <button
+              type="button"
+              class="py-1.5 px-3 rounded-lg border border-[#fecaca] bg-[#fef2f2] text-[#dc2626] text-[12px] font-semibold hover:bg-[#fee2e2] transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              @click="openBulkDeleteModal"
+            >
+              <AppIcon name="trash" class="w-3.5 h-3.5 text-[#dc2626]" />
+              <span>Delete Permanently</span>
+            </button>
+          </template>
+        </div>
+      </div>
+
       <div class="overflow-x-auto">
         <table class="w-full border-collapse">
           <thead>
             <tr>
-              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">#</th>
-              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Specimen</th>
-              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Classification</th>
-              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Rarity & Reward</th>
-              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">MycoDex Unlocks</th>
-              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Habitat / Region</th>
-              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Added</th>
-              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc]">Actions</th>
+              <th class="w-10 px-3 py-3 text-left border-b border-[#f1f5f9] bg-[#f8fafc]">
+                <input
+                  type="checkbox"
+                  class="w-4 h-4 rounded text-[#059669] border-[#cbd5e1] focus:ring-[#059669] cursor-pointer"
+                  :checked="isAllSelected"
+                  title="Select all on this page"
+                  @change="toggleSelectAll"
+                />
+              </th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3 border-b border-[#f1f5f9] bg-[#f8fafc] w-12">#</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc] min-w-[170px]">Specimen</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc] min-w-[110px]">Classification</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc] min-w-[130px]">Rarity &amp; Reward</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc] min-w-[125px]">MycoDex Unlocks</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc] min-w-[105px]">Status</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc] min-w-[140px]">Habitat / Region</th>
+              <th class="text-left text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-3.5 border-b border-[#f1f5f9] bg-[#f8fafc] min-w-[110px]">Added</th>
+              <th class="text-right text-[11.5px] font-semibold text-[#94a3b8] uppercase tracking-[0.5px] py-3 px-4 border-b border-[#f1f5f9] bg-[#f8fafc] min-w-[160px] sticky right-0 z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)]">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="loading" class="animate-pulse">
-              <td colspan="8" class="py-8 text-center text-[#94a3b8] text-[13.5px]">Loading species database...</td>
+              <td colspan="10" class="py-8 text-center text-[#94a3b8] text-[13.5px]">Loading species database...</td>
             </tr>
             <tr v-else-if="filteredSpecies.length === 0">
-              <td colspan="8" class="py-8 text-center text-[#94a3b8] text-[13.5px]">No verified species found on record.</td>
+              <td colspan="10" class="py-8 text-center text-[#94a3b8] text-[13.5px]">
+                {{ speciesSubTab === 'active' ? 'No active species found on record.' : 'No archived species found on record.' }}
+              </td>
             </tr>
             <template v-else>
-              <tr v-for="sp in paginatedSpecies" :key="sp.id" class="hover:bg-[#f8fafc] group">
-                <td class="py-2.5 px-3.5 text-[12px] text-[#94a3b8] border-b border-[#f8fafc] align-middle font-mono group-last:border-none">{{ sp.id }}</td>
-                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle group-last:border-none">
+              <tr
+                v-for="sp in paginatedSpecies"
+                :key="sp.id"
+                class="hover:bg-[#f8fafc] group transition-colors"
+                :class="{ 'bg-amber-50/40': selectedIds.includes(sp.id) }"
+              >
+                <td class="w-10 px-3 py-2.5 border-b border-[#f8fafc] align-middle" @click.stop>
+                  <input
+                    type="checkbox"
+                    class="w-4 h-4 rounded text-[#059669] border-[#cbd5e1] focus:ring-[#059669] cursor-pointer"
+                    :checked="selectedIds.includes(sp.id)"
+                    @change="toggleSelect(sp.id)"
+                  />
+                </td>
+                <td class="py-2.5 px-3 text-[12px] text-[#94a3b8] border-b border-[#f8fafc] align-middle font-mono">{{ sp.id }}</td>
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
                   <div class="flex items-center gap-3">
                     <img :src="getImageUrl(sp.image_url || sp.image_path)" class="w-10 h-10 rounded-lg object-cover border border-[#e2e8f0] shrink-0" alt="Specimen" />
                     <div>
@@ -94,10 +192,10 @@
                     </div>
                   </div>
                 </td>
-                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
+                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle">
                   <span class="py-[3px] px-2.5 rounded-[20px] text-[11.5px] font-semibold capitalize" :class="sp.classification === 'edible' ? 'bg-[#d1fae5] text-[#065f46]' : (sp.classification === 'poisonous' ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#fef3c7] text-[#92400e]')">{{ sp.classification }}</span>
                 </td>
-                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle group-last:border-none">
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
                   <span
                     class="py-[3px] px-2.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide inline-flex items-center gap-1 border"
                     :class="{
@@ -111,19 +209,88 @@
                     <span class="font-bold text-[10.5px] opacity-80">(+{{ sp.unlock_points || 5 }} pts)</span>
                   </span>
                 </td>
-                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle group-last:border-none">
+                <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
                   <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#0f172a]">
                     <AppIcon name="users" class="w-3.5 h-3.5 text-emerald-600" />
                     <span>{{ sp.unlock_count || 0 }} forager{{ (sp.unlock_count || 0) === 1 ? '' : 's' }}</span>
                   </span>
                 </td>
-                <td class="py-2.5 px-3.5 text-[12.5px] text-[#64748b] border-b border-[#f8fafc] align-middle group-last:border-none max-w-[180px] truncate" :title="sp.habitat || '-'">{{ sp.habitat || '-' }}</td>
-                <td class="py-2.5 px-3.5 text-[12.5px] text-[#94a3b8] border-b border-[#f8fafc] align-middle whitespace-nowrap group-last:border-none">{{ formatDate(sp.created_at) }}</td>
-                <td class="py-2.5 px-3.5 text-[13px] text-[#334155] border-b border-[#f8fafc] align-middle group-last:border-none">
-                  <div class="flex gap-1.5">
-                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] text-[#475569] cursor-pointer flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#e0f2fe] hover:border-[#bae6fd] hover:text-[#0284c7]" title="Generate PDF" @click="exportSpeciesPdf(sp)"><AppIcon name="file" class="w-3.5 h-3.5" /></button>
-                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] text-[#475569] cursor-pointer flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#f1f5f9]" title="Edit" @click="openEdit(sp)"><AppIcon name="pencil" class="w-3.5 h-3.5" /></button>
-                    <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-[#f8fafc] text-[#475569] cursor-pointer flex items-center justify-center transition-colors duration-[0.18s] hover:bg-[#fee2e2] hover:border-[#fecaca] hover:text-[#dc2626]" title="Delete" @click="deleteSpecies(sp)"><AppIcon name="trash" class="w-3.5 h-3.5" /></button>
+                <td class="py-2.5 px-3.5 text-[12.5px] border-b border-[#f8fafc] align-middle whitespace-nowrap">
+                  <span
+                    v-if="sp.is_active_mycodex !== false"
+                    class="py-0.5 px-2.5 rounded-full text-[11.5px] font-semibold bg-[#d1fae5] text-[#065f46] inline-flex items-center gap-1.5 border border-[#a7f3d0]"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#059669]"></span>
+                    Active
+                  </span>
+                  <span
+                    v-else
+                    class="py-0.5 px-2.5 rounded-full text-[11.5px] font-semibold bg-[#fef3c7] text-[#92400e] inline-flex items-center gap-1.5 border border-[#fde68a]"
+                  >
+                    <AppIcon name="archive" class="w-3 h-3 text-[#d97706]" />
+                    Archived
+                  </span>
+                </td>
+                <td class="py-2.5 px-3.5 text-[12.5px] text-[#64748b] border-b border-[#f8fafc] align-middle max-w-[180px] truncate" :title="sp.habitat || '-'">{{ sp.habitat || '-' }}</td>
+                <td class="py-2.5 px-3.5 text-[12.5px] text-[#94a3b8] border-b border-[#f8fafc] align-middle whitespace-nowrap">
+                  <span>{{ formatDate(sp.created_at) }}</span>
+                  <span v-if="sp.archived_at && sp.is_active_mycodex === false" class="block text-[10.5px] text-[#d97706]">
+                    Archived {{ formatDate(sp.archived_at) }}
+                  </span>
+                </td>
+                <td class="py-2.5 px-4 text-right border-b border-[#f8fafc] align-middle sticky right-0 bg-white group-hover:bg-[#f8fafc] transition-colors z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)]" @click.stop>
+                  <div class="inline-flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      class="w-8 h-8 rounded-lg border border-[#e2e8f0] bg-white text-[#475569] cursor-pointer inline-flex items-center justify-center transition-colors hover:bg-[#e0f2fe] hover:border-[#bae6fd] hover:text-[#0284c7] shadow-2xs shrink-0"
+                      title="Generate PDF Dossier"
+                      aria-label="Generate PDF Dossier"
+                      @click="exportSpeciesPdf(sp)"
+                    >
+                      <AppIcon name="file" class="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      class="w-8 h-8 rounded-lg border border-[#e2e8f0] bg-white text-[#475569] cursor-pointer inline-flex items-center justify-center transition-colors hover:bg-[#f1f5f9] hover:border-[#cbd5e1] hover:text-[#0f172a] shadow-2xs shrink-0"
+                      title="Edit Specimen"
+                      aria-label="Edit Specimen"
+                      @click="openEdit(sp)"
+                    >
+                      <AppIcon name="pencil" class="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      v-if="sp.is_active_mycodex !== false"
+                      type="button"
+                      class="w-8 h-8 rounded-lg border border-[#e2e8f0] bg-white text-[#d97706] cursor-pointer inline-flex items-center justify-center transition-colors hover:bg-[#fef3c7] hover:border-[#fde68a] shadow-2xs shrink-0 disabled:opacity-50"
+                      title="Archive this specimen (hide from active MycoDex target list)"
+                      aria-label="Archive Specimen"
+                      :disabled="archivingId === sp.id"
+                      @click="archiveSingleSpecies(sp)"
+                    >
+                      <AppIcon v-if="archivingId !== sp.id" name="archive" class="w-3.5 h-3.5 text-[#d97706]" />
+                      <AppIcon v-else name="cog" class="w-3.5 h-3.5 text-[#d97706] animate-spin" />
+                    </button>
+                    <button
+                      v-else
+                      type="button"
+                      class="w-8 h-8 rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] text-[#059669] cursor-pointer inline-flex items-center justify-center transition-colors hover:bg-[#dcfce7] hover:border-[#86efac] shadow-2xs shrink-0 disabled:opacity-50"
+                      title="Restore specimen back to active MycoDex targets"
+                      aria-label="Restore Specimen"
+                      :disabled="archivingId === sp.id"
+                      @click="restoreSingleSpecies(sp)"
+                    >
+                      <AppIcon v-if="archivingId !== sp.id" name="rotate-ccw" class="w-3.5 h-3.5 text-[#059669]" />
+                      <AppIcon v-else name="cog" class="w-3.5 h-3.5 text-[#059669] animate-spin" />
+                    </button>
+                    <button
+                      type="button"
+                      class="w-8 h-8 rounded-lg border border-[#fecaca] bg-[#fef2f2] text-[#dc2626] cursor-pointer inline-flex items-center justify-center transition-colors hover:bg-[#fee2e2] hover:border-[#fca5a5] shadow-2xs shrink-0"
+                      :title="sp.is_active_mycodex === false ? 'Permanently Delete Specimen' : 'Delete Specimen'"
+                      :aria-label="sp.is_active_mycodex === false ? 'Permanently Delete Specimen' : 'Delete Specimen'"
+                      @click="promptSmartDelete(sp)"
+                    >
+                      <AppIcon name="trash" class="w-3.5 h-3.5 text-[#dc2626]" />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -132,7 +299,7 @@
         </table>
       </div>
       <div class="flex items-center justify-between py-3 px-4 border-t border-[#f1f5f9]">
-        <span class="text-[12.5px] text-[#64748b]">{{ filteredSpecies.length }} of {{ species.length }} species</span>
+        <span class="text-[12.5px] text-[#64748b]">{{ filteredSpecies.length }} of {{ speciesSubTab === 'active' ? activeSpeciesCount : archivedSpeciesCount }} species</span>
         <div class="flex items-center gap-2.5">
           <button class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" :disabled="page <= 1" @click="page--">‹</button>
           <span class="text-[12.5px] text-[#475569]">Page {{ page }} of {{ totalPages }}</span>
@@ -381,6 +548,166 @@
         </div>
       </div>
     </div>
+
+    <!-- Smart Delete Confirmation Modal -->
+    <div
+      v-if="deleteModalSpecies"
+      class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
+      @click.self="closeDeleteModal"
+    >
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <!-- Header -->
+        <div class="p-5 border-b border-slate-100 flex items-start gap-3.5">
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            :class="deleteModalHasLinked ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'"
+          >
+            <AppIcon :name="deleteModalHasLinked ? 'warning' : 'trash'" class="w-5 h-5" />
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 leading-tight">
+              {{ deleteModalHasLinked ? 'Specimen Has Linked Forager Data' : 'Permanently Delete Specimen?' }}
+            </h3>
+            <p class="text-xs text-slate-500 mt-1 font-mono">
+              {{ deleteModalSpecies.name }} (ID #{{ deleteModalSpecies.id }})
+            </p>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="p-5 text-sm space-y-3.5 text-slate-600">
+          <template v-if="deleteModalHasLinked">
+            <p class="leading-relaxed">
+              <strong class="text-slate-900">"{{ deleteModalSpecies.name }}"</strong> is currently linked to
+              <strong class="text-slate-900">{{ deleteModalSpecies.scan_count || 0 }} user scan(s)</strong> and has been unlocked by
+              <strong class="text-slate-900">{{ deleteModalSpecies.unlock_count || 0 }} forager(s)</strong>.
+            </p>
+            <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed space-y-1.5">
+              <p class="font-bold flex items-center gap-1.5">
+                <AppIcon name="archive" class="w-3.5 h-3.5 text-amber-700" />
+                <span>Recommended: Archive this specimen instead</span>
+              </p>
+              <p class="text-amber-800">
+                Archiving removes this mushroom from new MycoDex unlock targets while safely preserving existing forager discoveries and historical scan logs.
+              </p>
+            </div>
+          </template>
+          <template v-else>
+            <p class="leading-relaxed">
+              Are you sure you want to permanently delete <strong class="text-slate-900">"{{ deleteModalSpecies.name }}"</strong>?
+            </p>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center gap-2">
+              <AppIcon name="check-circle" class="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>0 linked scans and 0 forager unlocks. Safe to permanently delete.</span>
+            </div>
+          </template>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-end gap-2.5">
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            @click="closeDeleteModal"
+          >
+            Cancel
+          </button>
+
+          <!-- If has linked data, Archive Instead is the primary action -->
+          <button
+            v-if="deleteModalHasLinked"
+            type="button"
+            class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+            @click="archiveSingleSpecies(deleteModalSpecies); closeDeleteModal()"
+          >
+            <AppIcon name="archive" class="w-3.5 h-3.5 text-white" />
+            <span>Archive Instead</span>
+          </button>
+
+          <!-- Delete button -->
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+            :class="deleteModalHasLinked
+              ? 'border border-red-200 bg-red-50 hover:bg-red-100 text-red-700'
+              : 'bg-red-600 hover:bg-red-700 text-white'"
+            :disabled="deleting"
+            @click="executeSmartDelete(deleteModalHasLinked)"
+          >
+            <AppIcon v-if="!deleting" name="trash" class="w-3.5 h-3.5" />
+            <AppIcon v-else name="cog" class="w-3.5 h-3.5 animate-spin" />
+            <span>{{ deleteModalHasLinked ? 'Force Delete Anyway' : 'Delete Permanently' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Delete Confirmation Modal -->
+    <div
+      v-if="showBulkDeleteModal"
+      class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
+      @click.self="closeBulkDeleteModal"
+    >
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div class="p-5 border-b border-slate-100 flex items-start gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+            <AppIcon name="trash" class="w-5 h-5" />
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 leading-tight">
+              Delete {{ selectedIds.length }} Selected Specimen(s)?
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">
+              Confirm permanent deletion of selected species records.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-5 text-sm space-y-3.5 text-slate-600">
+          <p class="leading-relaxed">
+            You are about to delete <strong class="text-slate-900">{{ selectedIds.length }} specimen(s)</strong>.
+          </p>
+          <div v-if="bulkHasAnyLinked" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed space-y-1">
+            <p class="font-bold flex items-center gap-1.5">
+              <AppIcon name="warning" class="w-3.5 h-3.5 text-amber-700" />
+              <span>Some specimens have linked user scans/unlocks</span>
+            </p>
+            <p class="text-amber-800">
+              By default, specimens with active user history will be skipped to protect data integrity. You can choose to force delete all selected.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-end gap-2.5">
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            @click="closeBulkDeleteModal"
+          >
+            Cancel
+          </button>
+          <button
+            v-if="bulkHasAnyLinked"
+            type="button"
+            class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+            @click="bulkArchive(); closeBulkDeleteModal()"
+          >
+            <AppIcon name="archive" class="w-3.5 h-3.5 text-white" />
+            <span>Archive Selected Instead</span>
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+            :disabled="deleting"
+            @click="executeBulkDelete(true)"
+          >
+            <AppIcon v-if="!deleting" name="trash" class="w-3.5 h-3.5" />
+            <AppIcon v-else name="cog" class="w-3.5 h-3.5 animate-spin" />
+            <span>Delete Selected</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -440,8 +767,17 @@ interface Species {
   unlock_hint?: string
   is_active_mycodex?: boolean
   unlock_count?: number
+  scan_count?: number
+  archived_at?: string
   created_at?: string
 }
+
+const speciesSubTab = ref<'active' | 'archived'>('active')
+const selectedIds = ref<number[]>([])
+const deleteModalSpecies = ref<Species | null>(null)
+const showBulkDeleteModal = ref(false)
+const deleting = ref(false)
+const archivingId = ref<number | null>(null)
 
 interface ScanCandidate {
   id: number
@@ -614,14 +950,44 @@ async function fetchCandidateScans() {
   }
 }
 
-const filteredSpecies = computed(() => species.value.filter(s => {
+const activeSpeciesList = computed(() => species.value.filter(s => s.is_active_mycodex !== false))
+const archivedSpeciesList = computed(() => species.value.filter(s => s.is_active_mycodex === false))
+
+const activeSpeciesCount = computed(() => activeSpeciesList.value.length)
+const archivedSpeciesCount = computed(() => archivedSpeciesList.value.length)
+
+const filteredSpecies = computed(() => {
+  const baseList = speciesSubTab.value === 'active' ? activeSpeciesList.value : archivedSpeciesList.value
   const q = searchQuery.value.toLowerCase()
-  const sName = (s.scientific_name || '').toLowerCase()
-  const cName = (s.name || '').toLowerCase()
-  const matchQ = !q || sName.includes(q) || cName.includes(q)
-  const matchC = !clsFilter.value || s.classification === clsFilter.value
-  return matchQ && matchC
-}))
+  return baseList.filter(s => {
+    const sName = (s.scientific_name || '').toLowerCase()
+    const cName = (s.name || '').toLowerCase()
+    const matchQ = !q || sName.includes(q) || cName.includes(q)
+    const matchC = !clsFilter.value || s.classification === clsFilter.value
+    return matchQ && matchC
+  })
+})
+
+const isAllSelected = computed(() => {
+  if (paginatedSpecies.value.length === 0) return false
+  return paginatedSpecies.value.every(s => selectedIds.value.includes(s.id))
+})
+
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    const pageIds = paginatedSpecies.value.map(s => s.id)
+    selectedIds.value = selectedIds.value.filter(id => !pageIds.includes(id))
+  } else {
+    const newIds = new Set([...selectedIds.value, ...paginatedSpecies.value.map(s => s.id)])
+    selectedIds.value = Array.from(newIds)
+  }
+}
+
+function toggleSelect(id: number) {
+  const idx = selectedIds.value.indexOf(id)
+  if (idx >= 0) selectedIds.value.splice(idx, 1)
+  else selectedIds.value.push(id)
+}
 
 const filteredCandidates = computed(() => candidateScans.value.filter(c => {
   const q = searchQuery.value.toLowerCase()
@@ -819,23 +1185,139 @@ function closeModal() {
   formError.value = ''
 }
 
-async function deleteSpecies(sp: Species) {
-  const ok = await confirm({
-    title: 'Delete species?',
-    message: `"${sp.name}" will be permanently removed from the species database.`,
-    tone: 'danger',
-    confirmText: 'Delete',
-  })
-  if (!ok) return
+async function archiveSingleSpecies(sp: Species) {
+  archivingId.value = sp.id
   try {
-    await $fetch(`${config.public.apiBase}/admin/species/${sp.id}`, {
-      method: 'DELETE',
-      headers: getHeaders()
+    await $fetch(`${config.public.apiBase}/admin/species/${sp.id}/archive`, {
+      method: 'PUT',
+      headers: getHeaders(),
     })
-    fetchVerifiedSpecies()
-    toast.success('Species deleted.')
+    toast.success(`"${sp.name}" archived from active MycoDex targets.`)
+    await fetchVerifiedSpecies()
   } catch (err: any) {
-    toast.error(err?.data?.message || 'Failed to delete species.')
+    toast.error(err?.data?.message || 'Failed to archive species.')
+  } finally {
+    archivingId.value = null
+  }
+}
+
+async function restoreSingleSpecies(sp: Species) {
+  archivingId.value = sp.id
+  try {
+    await $fetch(`${config.public.apiBase}/admin/species/${sp.id}/restore`, {
+      method: 'PUT',
+      headers: getHeaders(),
+    })
+    toast.success(`"${sp.name}" restored to active MycoDex targets.`)
+    await fetchVerifiedSpecies()
+  } catch (err: any) {
+    toast.error(err?.data?.message || 'Failed to restore species.')
+  } finally {
+    archivingId.value = null
+  }
+}
+
+async function bulkArchive() {
+  if (selectedIds.value.length === 0) return
+  try {
+    await $fetch(`${config.public.apiBase}/admin/species/bulk-archive`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: { ids: selectedIds.value }
+    })
+    toast.success(`${selectedIds.value.length} species archived.`)
+    selectedIds.value = []
+    await fetchVerifiedSpecies()
+  } catch (err: any) {
+    toast.error(err?.data?.message || 'Failed to bulk archive species.')
+  }
+}
+
+async function bulkRestore() {
+  if (selectedIds.value.length === 0) return
+  try {
+    await $fetch(`${config.public.apiBase}/admin/species/bulk-restore`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: { ids: selectedIds.value }
+    })
+    toast.success(`${selectedIds.value.length} species restored.`)
+    selectedIds.value = []
+    await fetchVerifiedSpecies()
+  } catch (err: any) {
+    toast.error(err?.data?.message || 'Failed to bulk restore species.')
+  }
+}
+
+const deleteModalHasLinked = computed(() => {
+  if (!deleteModalSpecies.value) return false
+  return (deleteModalSpecies.value.unlock_count || 0) > 0 || (deleteModalSpecies.value.scan_count || 0) > 0
+})
+
+function promptSmartDelete(sp: Species) {
+  deleteModalSpecies.value = sp
+}
+
+function closeDeleteModal() {
+  deleteModalSpecies.value = null
+}
+
+async function executeSmartDelete(force = false) {
+  if (!deleteModalSpecies.value) return
+  const sp = deleteModalSpecies.value
+  deleting.value = true
+  try {
+    await $fetch(`${config.public.apiBase}/admin/species/${sp.id}${force ? '?force=1' : ''}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    })
+    toast.success(`"${sp.name}" permanently deleted.`)
+    selectedIds.value = selectedIds.value.filter(id => id !== sp.id)
+    closeDeleteModal()
+    await fetchVerifiedSpecies()
+  } catch (err: any) {
+    if (err?.data?.requires_confirmation) {
+      toast.warning(err?.data?.message || 'Species has linked data. Use archive instead or force delete.')
+    } else {
+      toast.error(err?.data?.message || 'Failed to delete species.')
+    }
+  } finally {
+    deleting.value = false
+  }
+}
+
+const bulkSelectedItems = computed(() => {
+  return species.value.filter(s => selectedIds.value.includes(s.id))
+})
+const bulkHasAnyLinked = computed(() => {
+  return bulkSelectedItems.value.some(s => (s.unlock_count || 0) > 0 || (s.scan_count || 0) > 0)
+})
+
+function openBulkDeleteModal() {
+  if (selectedIds.value.length === 0) return
+  showBulkDeleteModal.value = true
+}
+
+function closeBulkDeleteModal() {
+  showBulkDeleteModal.value = false
+}
+
+async function executeBulkDelete(force = false) {
+  deleting.value = true
+  try {
+    const res: any = await $fetch(`${config.public.apiBase}/admin/species/bulk-delete`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: { ids: selectedIds.value, force }
+    })
+    toast.success(res?.message || 'Selected species deleted.')
+    selectedIds.value = []
+    closeBulkDeleteModal()
+    await fetchVerifiedSpecies()
+  } catch (err: any) {
+    toast.error(err?.data?.message || 'Failed to delete selected species.')
+  } finally {
+    deleting.value = false
   }
 }
 
