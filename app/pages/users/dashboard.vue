@@ -40,7 +40,7 @@
                 Welcome back, <span class="text-emerald-400">{{ firstName }}</span>! 🍄
               </h1>
               <p class="text-sm sm:text-[14.5px] text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                Track your mushroom discoveries, monitor your field sightings, and explore Philippine fungal biodiversity with AI identification.
+                Track your mushroom discoveries, monitor your field sightings, and explore Davao's fungal biodiversity with AI identification.
               </p>
             </div>
           </div>
