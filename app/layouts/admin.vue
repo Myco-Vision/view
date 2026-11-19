@@ -27,12 +27,9 @@
         :class="sidebarCollapsed ? 'lg:flex-col lg:gap-2' : ''"
         style="padding: 4px 4px 18px;"
       >
-        <div class="w-9 h-9 rounded-[10px] bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(16,185,129,0.35)]">
-          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2"/>
-            <path d="M12 6c-3.3 0-6 2.7-6 6 0 1.2.4 2.4 1 3.3L12 6z" fill="currentColor" opacity=".3"/>
-            <path d="M12 6l5 9.3A5.97 5.97 0 0 0 18 12c0-3.3-2.7-6-6-6z" fill="currentColor" opacity=".6"/>
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-950/50 shrink-0">
+          <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C7.03 2 3 6.03 3 11c0 1.25.26 2.44.73 3.52C4.1 15.35 4.8 16 5.6 16h12.8c.8 0 1.5-.65 1.87-1.48.47-1.08.73-2.27.73-3.52 0-4.97-4.03-9-9-9zm-1.5 15h3v5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-5z" />
           </svg>
         </div>
         <transition name="label-fade">
