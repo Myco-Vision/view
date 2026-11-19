@@ -722,7 +722,7 @@
                     <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[105px] border-b border-[#f1f5f9]">Dataset</th>
                     <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Train Acc.</th>
                     <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Val Acc.</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[210px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]">Actions</th>
+                    <th class="text-right px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[90px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -798,23 +798,23 @@
                       <div class="inline-flex items-center gap-1.5">
                         <button
                           type="button"
-                          class="py-1.5 px-3 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
+                          class="w-8 h-8 rounded-lg border border-[#cbd5e1] bg-white hover:bg-[#f1f5f9] hover:border-[#94a3b8] cursor-pointer inline-flex items-center justify-center transition-colors shadow-2xs shrink-0"
                           title="View comprehensive status and performance report for this retraining run"
+                          aria-label="View Report"
                           @click="openReportModal(run)"
                         >
-                          <AppIcon name="clipboard" class="w-3.5 h-3.5 text-[#059669]" />
-                          <span>Report</span>
+                          <AppIcon name="clipboard" class="w-4 h-4 text-[#059669]" />
                         </button>
                         <button
                           type="button"
-                          class="py-1.5 px-2.5 rounded-lg border border-[#e2e8f0] bg-white hover:bg-[#fef3c7] hover:border-[#fde68a] text-[12px] font-semibold text-[#64748b] hover:text-[#92400e] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0 disabled:opacity-50"
+                          class="w-8 h-8 rounded-lg border border-[#e2e8f0] bg-white hover:bg-[#fef3c7] hover:border-[#fde68a] cursor-pointer inline-flex items-center justify-center transition-colors shadow-2xs shrink-0 disabled:opacity-50"
                           title="Archive this retraining run"
+                          aria-label="Archive run"
                           :disabled="archivingId === run.id || !run.id"
                           @click="archiveRun(run)"
                         >
-                          <AppIcon v-if="archivingId !== run.id" name="archive" class="w-3.5 h-3.5 text-[#d97706]" />
-                          <AppIcon v-else name="cog" class="w-3.5 h-3.5 text-[#d97706] animate-spin" />
-                          <span>Archive</span>
+                          <AppIcon v-if="archivingId !== run.id" name="archive" class="w-4 h-4 text-[#d97706]" />
+                          <AppIcon v-else name="cog" class="w-4 h-4 text-[#d97706] animate-spin" />
                         </button>
                       </div>
                     </td>
@@ -896,7 +896,7 @@
                     <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[105px] border-b border-[#f1f5f9]">Dataset</th>
                     <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Train Acc.</th>
                     <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Val Acc.</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[240px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]">Actions</th>
+                    <th class="text-right px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[130px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -963,32 +963,32 @@
                       <div class="inline-flex items-center gap-1.5">
                         <button
                           type="button"
-                          class="py-1.5 px-2.5 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
+                          class="w-8 h-8 rounded-lg border border-[#cbd5e1] bg-white hover:bg-[#f1f5f9] hover:border-[#94a3b8] cursor-pointer inline-flex items-center justify-center transition-colors shadow-2xs shrink-0"
                           title="View comprehensive status and performance report for this retraining run"
+                          aria-label="View Report"
                           @click="openReportModal(run)"
                         >
-                          <AppIcon name="clipboard" class="w-3.5 h-3.5 text-[#059669]" />
-                          <span>Report</span>
+                          <AppIcon name="clipboard" class="w-4 h-4 text-[#059669]" />
                         </button>
                         <button
                           type="button"
-                          class="py-1.5 px-2.5 rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] hover:bg-[#dcfce7] text-[12px] font-semibold text-[#059669] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0 disabled:opacity-50"
+                          class="w-8 h-8 rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] hover:bg-[#dcfce7] hover:border-[#86efac] cursor-pointer inline-flex items-center justify-center transition-colors shadow-2xs shrink-0 disabled:opacity-50"
                           title="Recover this run back to active history"
+                          aria-label="Recover run"
                           :disabled="recoveringId === run.id"
                           @click="recoverRun(run)"
                         >
-                          <AppIcon v-if="recoveringId !== run.id" name="rotate-ccw" class="w-3.5 h-3.5 text-[#059669]" />
-                          <AppIcon v-else name="cog" class="w-3.5 h-3.5 text-[#059669] animate-spin" />
-                          <span>Recover</span>
+                          <AppIcon v-if="recoveringId !== run.id" name="rotate-ccw" class="w-4 h-4 text-[#059669]" />
+                          <AppIcon v-else name="cog" class="w-4 h-4 text-[#059669] animate-spin" />
                         </button>
                         <button
                           type="button"
-                          class="py-1.5 px-2.5 rounded-lg border border-[#fecaca] bg-[#fef2f2] hover:bg-[#fee2e2] text-[12px] font-semibold text-[#dc2626] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
+                          class="w-8 h-8 rounded-lg border border-[#fecaca] bg-[#fef2f2] hover:bg-[#fee2e2] hover:border-[#fca5a5] cursor-pointer inline-flex items-center justify-center transition-colors shadow-2xs shrink-0"
                           title="Permanently delete this run"
+                          aria-label="Permanently delete run"
                           @click="openDeleteConfirmModal([run.id])"
                         >
-                          <AppIcon name="trash" class="w-3.5 h-3.5 text-[#dc2626]" />
-                          <span>Delete</span>
+                          <AppIcon name="trash" class="w-4 h-4 text-[#dc2626]" />
                         </button>
                       </div>
                     </td>
