@@ -797,7 +797,7 @@
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
       >
         <div
-          class="bg-[#0d221b] border border-emerald-700/40 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative text-slate-100"
+          class="bg-[#0d221b] border border-emerald-700/40 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative text-slate-100 max-h-[90vh] overflow-y-auto"
         >
           <!-- Close Button -->
           <button

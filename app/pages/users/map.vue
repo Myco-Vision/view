@@ -21,29 +21,29 @@
         />
       </div>
 
-      <div>
+      <div class="flex-1 sm:flex-initial w-full sm:w-auto">
         <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">From</label>
         <input
           v-model="filters.date_from"
           @change="loadMapData"
           type="date"
-          class="rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800"
+          class="w-full sm:w-auto rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800"
         />
       </div>
 
-      <div>
+      <div class="flex-1 sm:flex-initial w-full sm:w-auto">
         <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">To</label>
         <input
           v-model="filters.date_to"
           @change="loadMapData"
           type="date"
-          class="rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800"
+          class="w-full sm:w-auto rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800"
         />
       </div>
 
       <button
         @click="loadMapData"
-        class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer"
+        class="w-full sm:w-auto px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer justify-center"
       >
         Apply
       </button>
@@ -101,11 +101,11 @@
         <ClientOnly>
           <div
             ref="mapEl"
-            class="w-full h-[500px] sm:h-[560px] z-0"
+            class="w-full h-[380px] sm:h-[560px] z-0"
             :class="{ 'cursor-crosshair': !!relocateScanId }"
           />
           <template #fallback>
-            <div class="w-full h-[500px] bg-slate-100 animate-pulse flex items-center justify-center text-sm text-slate-400">
+            <div class="w-full h-[380px] sm:h-[560px] bg-slate-100 animate-pulse flex items-center justify-center text-sm text-slate-400">
               Loading interactive map...
             </div>
           </template>

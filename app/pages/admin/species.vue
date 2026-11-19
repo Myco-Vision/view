@@ -533,7 +533,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="flex justify-between items-center py-3.5 px-6 border-t border-[#f1f5f9] bg-[#f8fafc]">
+        <div class="flex justify-between items-center py-3.5 px-6 border-t border-[#f1f5f9] bg-[#f8fafc] flex-wrap gap-2.5">
           <button v-if="editingId" class="py-[9px] px-4 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-semibold text-[#0f172a] cursor-pointer hover:bg-[#e2e8f0] flex items-center gap-1.5" @click="exportCurrentFormPdf">
             <AppIcon name="file" class="w-4 h-4 text-[#64748b]" /><span>Generate PDF</span>
           </button>

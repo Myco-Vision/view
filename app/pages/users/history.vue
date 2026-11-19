@@ -182,37 +182,35 @@
           <!-- Image Header with Floating Badge -->
           <div class="relative h-[220px] bg-[#0f172a]">
             <img :src="selectedScan.image" :alt="selectedScan.name" class="w-full h-full object-cover" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-5">
-              <div class="flex items-end justify-between w-full">
-                <div>
-                  <span
-                    class="text-[11.5px] font-bold py-1 px-3 rounded-full mb-1.5 inline-flex items-center gap-1.5 backdrop-blur-md"
-                    :class="selectedScan.classification === 'Edible' ? 'bg-[#dcfce7]/90 text-[#166534]' : (selectedScan.classification === 'Poisonous' ? 'bg-[#fee2e2]/90 text-[#991b1b]' : 'bg-[#fef3c7]/90 text-[#92400e]')"
-                  >
-                    <AppIcon :name="selectedScan.classification === 'Edible' ? 'check-circle' : (selectedScan.classification === 'Poisonous' ? 'skull' : 'help-circle')" class="w-3.5 h-3.5" />
-                    <span>{{ selectedScan.classification === 'Edible' ? 'Edible Species' : (selectedScan.classification === 'Poisonous' ? 'Poisonous Species' : 'Unknown Classification') }}</span>
-                  </span>
-                  <h2 class="text-[20px] font-bold text-white italic drop-shadow-md">{{ selectedScan.name }}</h2>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button 
-                    class="py-1.5 px-3 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white text-[12px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all shadow-sm"
-                    title="Export Mushroom Information (PDF)"
-                    @click="exportScanPdf(selectedScan)"
-                  >
-                    <svg class="w-3.5 h-3.5 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                      <line x1="12" y1="18" x2="12" y2="12"/>
-                      <polyline points="9 15 12 18 15 15"/>
-                    </svg>
-                    <span>Export PDF</span>
-                  </button>
-                  <button 
-                    class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white text-lg hover:bg-white/40 cursor-pointer"
-                    @click="showModal = false"
-                  >✕</button>
-                </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/40 flex flex-col justify-between p-4 sm:p-5">
+              <div class="flex items-center justify-end gap-2">
+                <button 
+                  class="py-1 px-3 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white text-[11.5px] sm:text-[12px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all shadow-sm"
+                  title="Export Mushroom Information (PDF)"
+                  @click="exportScanPdf(selectedScan)"
+                >
+                  <svg class="w-3.5 h-3.5 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="12" y1="18" x2="12" y2="12"/>
+                    <polyline points="9 15 12 18 15 15"/>
+                  </svg>
+                  <span>Export PDF</span>
+                </button>
+                <button 
+                  class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white text-base hover:bg-white/40 cursor-pointer"
+                  @click="showModal = false"
+                >✕</button>
+              </div>
+              <div>
+                <span
+                  class="text-[11px] sm:text-[11.5px] font-bold py-0.5 px-2.5 rounded-full mb-1.5 inline-flex items-center gap-1.5 backdrop-blur-md"
+                  :class="selectedScan.classification === 'Edible' ? 'bg-[#dcfce7]/90 text-[#166534]' : (selectedScan.classification === 'Poisonous' ? 'bg-[#fee2e2]/90 text-[#991b1b]' : 'bg-[#fef3c7]/90 text-[#92400e]')"
+                >
+                  <AppIcon :name="selectedScan.classification === 'Edible' ? 'check-circle' : (selectedScan.classification === 'Poisonous' ? 'skull' : 'help-circle')" class="w-3.5 h-3.5" />
+                  <span>{{ selectedScan.classification === 'Edible' ? 'Edible Species' : (selectedScan.classification === 'Poisonous' ? 'Poisonous Species' : 'Unknown Classification') }}</span>
+                </span>
+                <h2 class="text-[18px] sm:text-[20px] font-bold text-white italic drop-shadow-md truncate">{{ selectedScan.name }}</h2>
               </div>
             </div>
           </div>

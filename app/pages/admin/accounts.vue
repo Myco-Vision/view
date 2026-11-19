@@ -36,12 +36,12 @@
 
     <!-- Toolbar -->
     <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-[14px] border border-[#e2e8f0] flex-wrap">
-      <div class="relative flex-1 min-w-[200px] max-w-[320px]">
+      <div class="relative flex-1 min-w-[200px] sm:max-w-[320px]">
         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input v-model="filters.search" @input="debouncedFetch" class="py-[9px] pr-3 pl-9 border border-[#e2e8f0] rounded-[10px] text-[13.5px] font-sans text-[#0f172a] bg-[#f8fafc] outline-none w-full transition-colors duration-[0.18s] focus:border-amber-500 focus:bg-white" placeholder="Search accounts by name, email, or username..." />
       </div>
-      <div class="flex items-center gap-2.5">
-        <select v-model="filters.role" @change="fetchAccounts()" class="py-[9px] px-3 border border-[#e2e8f0] rounded-[10px] text-[13.5px] font-sans text-[#0f172a] bg-[#f8fafc] outline-none cursor-pointer focus:border-amber-500 focus:bg-white">
+      <div class="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
+        <select v-model="filters.role" @change="fetchAccounts()" class="py-[9px] px-3 border border-[#e2e8f0] rounded-[10px] text-[13.5px] font-sans text-[#0f172a] bg-[#f8fafc] outline-none cursor-pointer focus:border-amber-500 focus:bg-white flex-1 sm:flex-initial">
           <option value="">All Roles</option>
           <option value="super_admin">Super Admin</option>
           <option value="admin">Admin</option>

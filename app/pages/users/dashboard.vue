@@ -36,8 +36,9 @@
               </svg>
             </div>
             <div>
-              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                Welcome back, <span class="text-emerald-400">{{ firstName }}</span>! 🍄
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2 flex-wrap">
+                <span>Welcome back, <span class="text-emerald-400">{{ firstName }}</span>!</span>
+                <AppIcon name="mushroom" class="w-6 h-6 text-emerald-400 inline-block" />
               </h1>
               <p class="text-sm sm:text-[14.5px] text-slate-300 mt-1 max-w-2xl leading-relaxed">
                 Track your mushroom discoveries, monitor your field sightings, and explore Davao's fungal biodiversity with AI identification.

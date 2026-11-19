@@ -77,8 +77,8 @@
         v-else-if="pendingList.length === 0"
         class="bg-white border border-[#e2e8f0] rounded-[14px] p-12 text-center flex flex-col items-center justify-center gap-3 shadow-xs"
       >
-        <div class="w-14 h-14 rounded-2xl bg-[#f0fdf4] text-[#059669] flex items-center justify-center text-[26px]">
-          🍄
+        <div class="w-14 h-14 rounded-2xl bg-[#f0fdf4] text-[#059669] flex items-center justify-center">
+          <AppIcon name="mushroom" class="w-8 h-8 text-[#059669]" />
         </div>
         <div>
           <p class="text-[15px] font-bold text-[#0f172a]">Queue is Clear!</p>
@@ -144,9 +144,10 @@
 
                 <span
                   v-if="item.is_new_species_for_user"
-                  class="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  class="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"
                 >
-                  🌟 New Species Unlock (+5 pts)
+                  <AppIcon name="sparkles" class="w-3 h-3 text-amber-500" />
+                  <span>New Species Unlock (+5 pts)</span>
                 </span>
               </div>
 

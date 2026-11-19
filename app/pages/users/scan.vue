@@ -126,8 +126,8 @@
         <div v-if="mycodexReward && mycodexReward.eligible" class="p-3.5 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 flex flex-col gap-2">
           <div class="flex items-center justify-between gap-2">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold text-emerald-800 bg-emerald-200/60 border border-emerald-300">
-              <AppIcon name="sparkles" class="w-3.5 h-3.5 text-emerald-600" />
-              {{ mycodexReward.is_new_species ? '🌟 Unlocked in MycoDex!' : '🍄 Specimen Count +1' }}
+              <AppIcon :name="mycodexReward.is_new_species ? 'sparkles' : 'mushroom'" class="w-3.5 h-3.5 text-emerald-600" />
+              <span>{{ mycodexReward.is_new_species ? 'Unlocked in MycoDex!' : 'Specimen Count +1' }}</span>
             </span>
             <span class="text-xs font-extrabold text-emerald-700 bg-white/80 px-2 py-0.5 rounded-md border border-emerald-200">
               +{{ mycodexReward.points_awarded }} Pending Pts

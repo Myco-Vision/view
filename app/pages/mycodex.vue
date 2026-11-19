@@ -46,8 +46,9 @@
           </div>
           <div>
             <div class="flex flex-wrap items-center gap-2">
-              <span class="text-[10px] font-black uppercase tracking-wider text-slate-950 bg-emerald-400 px-2.5 py-0.5 rounded-full shadow-xs">
-                ✨ New Specimen Target
+              <span class="text-[10px] font-black uppercase tracking-wider text-slate-950 bg-emerald-400 px-2.5 py-0.5 rounded-full shadow-xs inline-flex items-center gap-1">
+                <AppIcon name="sparkles" class="w-3 h-3 text-slate-950" />
+                <span>New Specimen Target</span>
               </span>
               <span class="text-[11.5px] text-emerald-300 font-semibold">
                 Recently added by biology admins!
@@ -133,10 +134,11 @@
 
             <!-- Current subscription status -->
             <span
-              class="text-xs font-bold px-2.5 py-1 rounded-full border"
+              class="text-xs font-bold px-2.5 py-1 rounded-full border inline-flex items-center gap-1"
               :class="mycodex.subscription?.is_subscribed ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'"
             >
-              {{ mycodex.subscription?.is_subscribed ? '🌟 Pro Active' : 'Free Tier' }}
+              <AppIcon v-if="mycodex.subscription?.is_subscribed" name="sparkles" class="w-3.5 h-3.5 text-emerald-600" />
+              <span>{{ mycodex.subscription?.is_subscribed ? 'Pro Active' : 'Free Tier' }}</span>
               <span v-if="mycodex.subscription?.expires_at" class="font-normal text-[11px] text-slate-500">
                 (Exp: {{ new Date(mycodex.subscription.expires_at).toLocaleDateString() }})
               </span>
@@ -256,9 +258,10 @@
                 <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5">
                   <span
                     v-if="species.id === mycodex.latest_specimen?.id || species.is_new_target"
-                    class="px-2 py-0.5 rounded-full text-[9.5px] font-black bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-xs animate-pulse tracking-wide"
+                    class="px-2 py-0.5 rounded-full text-[9.5px] font-black bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-xs animate-pulse tracking-wide inline-flex items-center gap-1"
                   >
-                    ✨ NEW
+                    <AppIcon name="sparkles" class="w-2.5 h-2.5 text-slate-950" />
+                    <span>NEW</span>
                   </span>
                   <span
                     v-if="species.rarity && species.rarity !== 'common'"
@@ -313,9 +316,10 @@
                 <div class="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
                   <span
                     v-if="species.id === mycodex.latest_specimen?.id || species.is_new_target"
-                    class="px-2 py-0.5 rounded-full text-[9.5px] font-black bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-xs animate-pulse tracking-wide"
+                    class="px-2 py-0.5 rounded-full text-[9.5px] font-black bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-xs animate-pulse tracking-wide inline-flex items-center gap-1"
                   >
-                    ✨ NEW
+                    <AppIcon name="sparkles" class="w-2.5 h-2.5 text-slate-950" />
+                    <span>NEW</span>
                   </span>
                   <span
                     class="capitalize px-2.5 py-0.5 rounded-full text-[10.5px] font-bold shadow-xs tracking-wider"
@@ -363,7 +367,10 @@
                 <template v-else>
                   <h3 class="text-sm font-bold text-slate-700 flex items-center justify-between">
                     <span>{{ species.common_name }}</span>
-                    <span class="text-[9.5px] font-bold text-slate-400 uppercase tracking-wide bg-slate-100 px-1.5 py-0.5 rounded">🔒 Locked</span>
+                    <span class="text-[9.5px] font-bold text-slate-400 uppercase tracking-wide bg-slate-100 px-1.5 py-0.5 rounded inline-flex items-center gap-1">
+                      <AppIcon name="lock" class="w-3 h-3 text-slate-400" />
+                      <span>Locked</span>
+                    </span>
                   </h3>
                   <p class="text-xs italic text-slate-400 mt-0.5">
                     {{ species.scientific_name || 'Undiscovered Species' }}
@@ -371,7 +378,8 @@
                   <!-- Admin Unlock Clue if provided -->
                   <div v-if="species.unlock_hint" class="mt-2.5 p-2 rounded-lg bg-amber-50/90 border border-amber-200/80 text-amber-900 text-[11px] leading-relaxed">
                     <span class="font-bold flex items-center gap-1 text-amber-800 mb-0.5">
-                      💡 Field Clue:
+                      <AppIcon name="sparkles" class="w-3.5 h-3.5 text-amber-700" />
+                      <span>Field Clue:</span>
                     </span>
                     {{ species.unlock_hint }}
                   </div>
@@ -541,7 +549,7 @@
             <!-- Field Clue / Unlock Hint -->
             <div v-if="activeSpecimen.unlock_hint" class="p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90">
               <h4 class="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5 mb-1.5">
-                <span>💡</span>
+                <AppIcon name="sparkles" class="w-3.5 h-3.5 text-amber-600" />
                 <span>Field Discovery Clue</span>
               </h4>
               <p class="text-sm text-amber-950 font-medium leading-relaxed">
@@ -552,7 +560,7 @@
             <!-- Full Habitat & Environment -->
             <div v-if="activeSpecimen.habitat" class="p-4 rounded-2xl bg-slate-50 border border-slate-200/70">
               <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5 mb-1.5">
-                <span>🌲</span>
+                <AppIcon name="map-pin" class="w-3.5 h-3.5 text-slate-500" />
                 <span>Habitat & Growing Environment</span>
               </h4>
               <p class="text-sm text-slate-800 leading-relaxed whitespace-pre-line">
@@ -563,7 +571,7 @@
             <!-- Botanical Description -->
             <div v-if="activeSpecimen.description" class="p-4 rounded-2xl bg-slate-50 border border-slate-200/70">
               <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5 mb-1.5">
-                <span>📖</span>
+                <AppIcon name="book" class="w-3.5 h-3.5 text-slate-500" />
                 <span>Botanical Description & Identification</span>
               </h4>
               <p class="text-sm text-slate-800 leading-relaxed whitespace-pre-line">
@@ -574,7 +582,7 @@
             <!-- Edibility / Safety Notice -->
             <div class="p-4 rounded-2xl border" :class="activeSpecimen.is_discovered ? (activeSpecimen.classification === 'edible' ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-red-50/70 border-red-200 text-red-950') : 'bg-slate-50 border-slate-200 text-slate-700'">
               <h4 class="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1">
-                <span>🛡️</span>
+                <AppIcon name="shield-lock" class="w-3.5 h-3.5 text-slate-500" />
                 <span>Edibility & Safety Rating</span>
               </h4>
               <div v-if="activeSpecimen.is_discovered">
@@ -586,8 +594,9 @@
                 </p>
               </div>
               <div v-else>
-                <span class="font-bold text-sm text-slate-800">
-                  🔒 Concealed for Forager Safety
+                <span class="font-bold text-sm text-slate-800 inline-flex items-center gap-1.5">
+                  <AppIcon name="lock" class="w-4 h-4 text-slate-500" />
+                  <span>Concealed for Forager Safety</span>
                 </span>
                 <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
                   Edibility guidelines and culinary safety warnings remain locked until you scan and verify this mushroom in the field.

@@ -36,12 +36,12 @@
 
     <!-- Toolbar -->
     <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-[14px] border border-[#e2e8f0] flex-wrap">
-      <div class="relative flex-1 min-w-[200px] max-w-[320px]">
+      <div class="relative flex-1 min-w-[200px] sm:max-w-[320px]">
         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input v-model="filters.search" @input="debouncedFetch" :class="[inputCls, 'pl-9 bg-[#f8fafc] focus:bg-white w-full']" placeholder="Search by name, email, or username…" />
       </div>
-      <div class="flex items-center gap-2.5">
-        <select v-model="filters.role" @change="fetchUsers(1)" :class="[inputCls, 'bg-[#f8fafc] cursor-pointer focus:bg-white']">
+      <div class="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
+        <select v-model="filters.role" @change="fetchUsers(1)" :class="[inputCls, 'bg-[#f8fafc] cursor-pointer focus:bg-white flex-1 sm:flex-initial']">
           <option value="">All Roles</option>
           <option v-if="isSuperAdmin" value="super_admin">Super Admin</option>
           <option value="admin">Admin</option>
@@ -142,8 +142,8 @@
     </div>
 
     <!-- Profile Modal -->
-    <div v-if="selectedUser" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] backdrop-blur-[2px]" @click.self="selectedUser = null">
-      <div class="bg-white rounded-2xl w-[420px] max-w-[90vw] shadow-[0_20px_60px_rgba(0,0,0,0.2)] overflow-hidden">
+    <div v-if="selectedUser" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] backdrop-blur-[2px] p-4" @click.self="selectedUser = null">
+      <div class="bg-white rounded-2xl w-full max-w-[420px] max-h-[90vh] overflow-y-auto shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
         <div class="flex items-center justify-between py-[18px] px-[22px] border-b border-[#f1f5f9]">
           <p class="text-[15px] font-bold text-[#0f172a]">User Profile</p>
           <button class="bg-transparent border-none cursor-pointer text-[16px] text-[#94a3b8] p-1 transition-colors hover:text-[#ef4444]" @click="selectedUser = null">✕</button>

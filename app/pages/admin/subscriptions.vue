@@ -44,12 +44,12 @@
           :class="statusFilter === t.value ? 'bg-emerald-500/15 text-emerald-600' : 'bg-transparent text-[#64748b] hover:bg-[#f1f5f9]'"
           @click="statusFilter = t.value; fetchSubs()">{{ t.label }}</button>
       </div>
-      <div class="flex items-center gap-2.5 flex-wrap">
-        <div class="relative">
+      <div class="flex items-center gap-2.5 flex-wrap w-full sm:w-auto">
+        <div class="relative flex-1 sm:flex-initial">
           <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input id="subscription-search" v-model="searchQuery" @input="debouncedFetch" class="py-2 pr-3 pl-8 border border-[#e2e8f0] rounded-lg text-[13.5px] text-[#0f172a] bg-white outline-none w-full sm:w-[230px] focus:border-[#10b981]" placeholder="Search user or payment ID…" />
         </div>
-        <select id="plan-filter" v-model="planFilter" @change="fetchSubs()" class="py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] text-[#0f172a] bg-white outline-none cursor-pointer">
+        <select id="plan-filter" v-model="planFilter" @change="fetchSubs()" class="w-full sm:w-auto py-2 px-3 border border-[#e2e8f0] rounded-lg text-[13.5px] text-[#0f172a] bg-white outline-none cursor-pointer">
           <option value="">All Plans</option>
           <option value="monthly">Monthly</option>
           <option value="annual">Annual</option>
@@ -359,7 +359,7 @@
 
     <!-- Review refund modal -->
     <div v-if="review.r" class="modal-backdrop" @click.self="review.r = null">
-      <div class="modal-card !w-[540px]">
+      <div class="modal-card !w-full !max-w-[540px] mx-4">
         <div class="modal-head">
           <div>
             <p class="text-[15px] font-bold text-[#0f172a]">Refund Request #{{ review.r.id }}</p>
@@ -381,7 +381,7 @@
           <!-- Server-side policy snapshot taken when the request was made -->
           <div v-if="review.r.eligibility">
             <p class="field-label">Policy check (at submit time)</p>
-            <ul class="grid grid-cols-2 gap-2 text-[12.5px]">
+            <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12.5px]">
               <li v-for="c in eligibilityChecks" :key="c.label" class="flex items-center gap-2 p-2 rounded-lg border" :class="c.ok ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800'">
                 <span>{{ c.ok ? '✓' : '!' }}</span><span>{{ c.label }}</span>
               </li>
@@ -390,7 +390,7 @@
 
           <!-- Decision (pending only) -->
           <template v-if="review.r.status === 'pending'">
-            <div v-if="canApprove" class="grid grid-cols-2 gap-3">
+            <div v-if="canApprove" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="field-label" for="refund-amount">Refund amount (₱)</label>
                 <input id="refund-amount" v-model.number="review.amount" type="number" min="1" :max="review.r.subscription?.price" step="0.01" class="field-input" />
