@@ -132,13 +132,20 @@
             </svg>
           </button>
 
-          <!-- Export PDF Button -->
+          <!-- Export PDF Button inside every card -->
           <button 
-            class="w-[34px] h-[34px] rounded-lg border border-[#e2e8f0] bg-white flex items-center justify-center cursor-pointer transition-colors duration-[0.18s] text-[#0284c7] hover:bg-[#e0f2fe] hover:border-[#bae6fd]" 
-            title="Export Mushroom Datasheet (PDF)"
+            class="h-[34px] px-2.5 sm:px-3 rounded-lg border border-emerald-500/30 bg-emerald-50 hover:bg-emerald-100/90 text-emerald-700 flex items-center gap-1.5 text-[12px] font-semibold cursor-pointer transition-all shadow-sm active:scale-95" 
+            title="Export Mushroom Information (PDF)"
             @click.stop="exportScanPdf(item)"
           >
-            <AppIcon name="file" class="w-3.5 h-3.5 text-[#0284c7]" />
+            <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <polyline points="9 15 12 18 15 15"/>
+            </svg>
+            <span class="whitespace-nowrap hidden xs:inline">Export PDF</span>
+            <span class="xs:hidden">PDF</span>
           </button>
 
           <!-- Delete Scan Button -->
@@ -187,10 +194,25 @@
                   </span>
                   <h2 class="text-[20px] font-bold text-white italic drop-shadow-md">{{ selectedScan.name }}</h2>
                 </div>
-                <button 
-                  class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white text-lg hover:bg-white/40 cursor-pointer"
-                  @click="showModal = false"
-                >✕</button>
+                <div class="flex items-center gap-2">
+                  <button 
+                    class="py-1.5 px-3 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white text-[12px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all shadow-sm"
+                    title="Export Mushroom Information (PDF)"
+                    @click="exportScanPdf(selectedScan)"
+                  >
+                    <svg class="w-3.5 h-3.5 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="12" y1="18" x2="12" y2="12"/>
+                      <polyline points="9 15 12 18 15 15"/>
+                    </svg>
+                    <span>Export PDF</span>
+                  </button>
+                  <button 
+                    class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white text-lg hover:bg-white/40 cursor-pointer"
+                    @click="showModal = false"
+                  >✕</button>
+                </div>
               </div>
             </div>
           </div>
@@ -238,6 +260,30 @@
               </p>
             </div>
 
+            <!-- PDF Export Quick Action Card inside modal -->
+            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-xl p-3.5 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="12" y1="18" x2="12" y2="12"/>
+                    <polyline points="9 15 12 18 15 15"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[12.5px] font-bold text-emerald-950 truncate">Mushroom Information Datasheet</p>
+                  <p class="text-[11px] text-emerald-700 truncate">Export printable specimen PDF with field data &amp; safety advice</p>
+                </div>
+              </div>
+              <button 
+                class="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold cursor-pointer transition-all shadow-sm shrink-0 flex items-center gap-1.5 active:scale-95"
+                @click="exportScanPdf(selectedScan)"
+              >
+                <span>Export PDF</span>
+              </button>
+            </div>
+
           </div>
 
           <!-- Modal Footer Actions -->
@@ -254,11 +300,16 @@
             </button>
             <div class="flex items-center gap-2 w-full sm:w-auto">
               <button 
-                class="w-full sm:w-auto justify-center py-2 px-4 rounded-xl border border-[#0284c7]/30 bg-[#f0f9ff] text-[#0284c7] hover:bg-[#e0f2fe] text-[13px] font-semibold cursor-pointer flex items-center gap-1.5 transition-all shadow-sm"
+                class="w-full sm:w-auto justify-center py-2 px-4 rounded-xl border border-emerald-500/30 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[13px] font-semibold cursor-pointer flex items-center gap-1.5 transition-all shadow-sm"
                 title="Export Mushroom Datasheet (PDF)"
                 @click="exportScanPdf(selectedScan)"
               >
-                <AppIcon name="file" class="w-3.5 h-3.5 text-[#0284c7]" />
+                <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="12" y1="18" x2="12" y2="12"/>
+                  <polyline points="9 15 12 18 15 15"/>
+                </svg>
                 <span>Export PDF</span>
               </button>
               <button 
@@ -543,10 +594,27 @@ function exportScanPdf(item: MushroomScan | null) {
     }
     @media print {
       body { padding: 0; }
+      .no-print { display: none !important; }
     }
   </style>
 </head>
 <body>
+  <!-- Top Action Bar (Hidden during print) -->
+  <div class="no-print" style="position: sticky; top: 0; z-index: 100; background: #0f172a; color: white; padding: 12px 24px; margin: -24px -24px 20px -24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-weight: 700; font-size: 14px;">MycoVision Mushroom Information Datasheet</span>
+      <span style="font-size: 11px; background: rgba(16,185,129,0.2); color: #34d399; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Specimen #SCAN-${esc(item.id)}</span>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button onclick="window.print()" style="background: #10b981; color: white; border: none; padding: 7px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer;">
+        Save as PDF / Print
+      </button>
+      <button onclick="window.close()" style="background: rgba(255,255,255,0.1); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.2); padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer;">
+        Close
+      </button>
+    </div>
+  </div>
+
   <div class="header">
     <div>
       <div class="brand">${PRINT_MUSHROOM_SVG} MycoVision</div>
@@ -706,10 +774,27 @@ function exportHistoryPdf() {
     }
     @media print {
       body { padding: 0; }
+      .no-print { display: none !important; }
     }
   </style>
 </head>
 <body>
+  <!-- Top Action Bar (Hidden during print) -->
+  <div class="no-print" style="position: sticky; top: 0; z-index: 100; background: #0f172a; color: white; padding: 12px 24px; margin: -20px -20px 20px -20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-weight: 700; font-size: 14px;">MycoVision Forager Scan History Log</span>
+      <span style="font-size: 11px; background: rgba(16,185,129,0.2); color: #34d399; padding: 2px 8px; border-radius: 12px; font-weight: 600;">${filtered.value.length} Total Records</span>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button onclick="window.print()" style="background: #10b981; color: white; border: none; padding: 7px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer;">
+        Save as PDF / Print
+      </button>
+      <button onclick="window.close()" style="background: rgba(255,255,255,0.1); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.2); padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer;">
+        Close
+      </button>
+    </div>
+  </div>
+
   <div class="header">
     <div>
       <div class="brand">${PRINT_MUSHROOM_SVG} MycoVision</div>
