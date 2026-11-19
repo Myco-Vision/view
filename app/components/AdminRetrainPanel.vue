@@ -627,158 +627,415 @@
         </div>
       </div>
 
-      <!-- Retrain History -->
+      <!-- Retrain History & Archived History -->
       <div class="bg-white border border-[#e2e8f0] rounded-[14px] overflow-hidden">
-        <div class="px-5 py-3.5 border-b border-[#f1f5f9]">
-          <h3 class="text-[14px] font-bold text-[#0f172a] flex items-center gap-2">
-            <AppIcon name="clipboard" class="w-4 h-4 text-[#64748b]" />
-            <span>Retraining History</span>
-          </h3>
-        </div>
+        <!-- Card Header with Tabs and Bulk Actions -->
+        <div class="px-5 py-3 border-b border-[#f1f5f9] flex flex-wrap items-center justify-between gap-3 bg-[#f8fafc]/40">
+          <div class="flex items-center gap-1.5 p-1 bg-[#f1f5f9] rounded-xl">
+            <button
+              type="button"
+              class="text-[12.5px] font-semibold py-1.5 px-3.5 rounded-lg transition-all flex items-center gap-2 cursor-pointer"
+              :class="historyTab === 'active'
+                ? 'bg-white text-[#0f172a] shadow-xs'
+                : 'text-[#64748b] hover:text-[#0f172a]'"
+              @click="historyTab = 'active'"
+            >
+              <AppIcon name="clipboard" class="w-3.5 h-3.5" :class="historyTab === 'active' ? 'text-[#059669]' : 'text-[#64748b]'" />
+              <span>Active History</span>
+              <span
+                class="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
+                :class="historyTab === 'active' ? 'bg-[#d1fae5] text-[#065f46]' : 'bg-[#e2e8f0] text-[#64748b]'"
+              >
+                {{ history.length }}
+              </span>
+            </button>
 
-        <div v-if="history.length === 0" class="py-10 text-center">
-          <p class="text-[13px] text-[#94a3b8]">No retraining runs yet.</p>
-        </div>
-
-        <div v-else>
-          <div class="overflow-x-auto history-scroll-container pb-2">
-            <table class="w-full text-[13px] border-separate border-spacing-0">
-              <thead class="bg-[#f8fafc]">
-                <tr>
-                  <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[155px] border-b border-[#f1f5f9]">Date</th>
-                  <th class="text-left px-3.5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[125px] border-b border-[#f1f5f9]">Status</th>
-                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Duration</th>
-                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="check-circle" class="w-3.5 h-3.5 text-[#059669]" />Edible</span></th>
-                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[80px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="skull" class="w-3.5 h-3.5 text-[#dc2626]" />Poisonous</span></th>
-                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[105px] border-b border-[#f1f5f9]">Dataset</th>
-                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Train Acc.</th>
-                  <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Val Acc.</th>
-                  <th class="text-right px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[130px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]">Report</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(run, i) in paginatedHistory"
-                  :key="run.id ?? (historyStartIndex + i)"
-                  class="hover:bg-[#f8fafc] transition-colors cursor-pointer group"
-                  @click="openReportModal(run)"
-                >
-                  <td class="px-4 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
-                    <div class="flex items-center gap-1.5">
-                      <AppIcon name="calendar" class="w-3.5 h-3.5 text-[#94a3b8]" />
-                      <span>{{ formatDate(run.started_at) }}</span>
-                    </div>
-                  </td>
-                  <td class="px-3.5 py-3 whitespace-nowrap border-b border-[#f1f5f9]">
-                    <span
-                      class="text-[11.5px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
-                      :class="{
-                        'bg-[#d1fae5] text-[#065f46]': run.status === 'done',
-                        'bg-[#fee2e2] text-[#991b1b]': run.status === 'failed',
-                        'bg-[#fef9c3] text-[#713f12]': run.status === 'running',
-                      }"
-                    >
-                      <span v-if="run.status === 'done'">✓ Completed</span>
-                      <span v-else-if="run.status === 'failed'">✕ Failed</span>
-                      <span v-else class="flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                        Running
-                      </span>
-                    </span>
-                    <p v-if="run.status === 'failed' && run.error" class="text-[11px] text-[#dc2626] mt-1 max-w-[180px] truncate" :title="run.error">
-                      {{ run.error }}
-                    </p>
-                  </td>
-                  <td class="px-3 py-3 text-[#64748b] whitespace-nowrap border-b border-[#f1f5f9]">
-                    <span class="inline-flex items-center gap-1">
-                      <AppIcon name="hourglass" class="w-3 h-3 text-[#94a3b8]" />
-                      {{ formatDuration(run) }}
-                    </span>
-                  </td>
-                  <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
-                    <span>{{ run.total_edible ?? run.new_edible ?? '—' }}</span>
-                    <span v-if="run.new_edible != null && run.total_edible != null && run.new_edible !== run.total_edible" class="text-[11px] text-[#059669] ml-1 font-medium">
-                      (+{{ run.new_edible }})
-                    </span>
-                  </td>
-                  <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
-                    <span>{{ run.total_poisonous ?? run.new_poisonous ?? '—' }}</span>
-                    <span v-if="run.new_poisonous != null && run.total_poisonous != null && run.new_poisonous !== run.total_poisonous" class="text-[11px] text-[#dc2626] ml-1 font-medium">
-                      (+{{ run.new_poisonous }})
-                    </span>
-                  </td>
-                  <td class="px-3 py-3 text-[#475569] whitespace-nowrap border-b border-[#f1f5f9]">
-                    <span class="font-medium text-[#0f172a]">{{ run.total_images ?? (run.new_edible != null ? (run.new_edible + (run.new_poisonous || 0)) : '—') }}</span>
-                    <span v-if="(run.new_edible || 0) + (run.new_poisonous || 0) > 0" class="text-[11px] text-[#059669] font-medium block">
-                      {{ (run.new_edible || 0) + (run.new_poisonous || 0) }} new ingested
-                    </span>
-                    <span v-else-if="run.status === 'done'" class="text-[10.5px] text-[#64748b] block font-medium">
-                      Baseline test (0 new scans)
-                    </span>
-                    <span v-else class="text-[11px] text-[#94a3b8] block">
-                      0 new ingested
-                    </span>
-                  </td>
-                  <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
-                    {{ run.train_accuracy != null ? run.train_accuracy + '%' : '—' }}
-                  </td>
-                  <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
-                    {{ run.val_accuracy != null ? run.val_accuracy + '%' : '—' }}
-                  </td>
-                  <td class="px-4 py-3 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f8fafc] transition-colors z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]" @click.stop>
-                    <button
-                      type="button"
-                      class="py-1.5 px-3 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
-                      title="View comprehensive status and performance report for this retraining run"
-                      @click="openReportModal(run)"
-                    >
-                      <AppIcon name="clipboard" class="w-3.5 h-3.5 text-[#059669]" />
-                      <span>View Report</span>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <button
+              type="button"
+              class="text-[12.5px] font-semibold py-1.5 px-3.5 rounded-lg transition-all flex items-center gap-2 cursor-pointer"
+              :class="historyTab === 'archived'
+                ? 'bg-white text-[#0f172a] shadow-xs'
+                : 'text-[#64748b] hover:text-[#0f172a]'"
+              @click="historyTab = 'archived'"
+            >
+              <AppIcon name="archive" class="w-3.5 h-3.5" :class="historyTab === 'archived' ? 'text-[#d97706]' : 'text-[#64748b]'" />
+              <span>Archived History</span>
+              <span
+                class="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
+                :class="historyTab === 'archived' ? 'bg-[#fef3c7] text-[#92400e]' : 'bg-[#e2e8f0] text-[#64748b]'"
+              >
+                {{ archivedHistory.length }}
+              </span>
+            </button>
           </div>
 
-          <!-- History Pagination Bar -->
-          <div class="flex flex-wrap items-center justify-between gap-3 py-3 px-5 border-t border-[#f1f5f9] bg-[#f8fafc]/50">
-            <div class="flex items-center gap-3">
-              <span class="text-[12.5px] text-[#64748b]">
-                Showing <strong class="text-[#334155]">{{ historyStartIndex + 1 }}</strong>–<strong class="text-[#334155]">{{ historyEndIndex }}</strong> of <strong class="text-[#334155]">{{ history.length }}</strong> runs
-              </span>
-              <div class="flex items-center gap-1.5 ml-1">
-                <span class="text-[11.5px] text-[#94a3b8]">Per page:</span>
-                <select
-                  v-model.number="historyPerPage"
-                  class="text-[12px] text-[#334155] bg-white border border-[#e2e8f0] rounded-md px-2 py-1 focus:outline-none focus:border-[#059669] cursor-pointer"
+          <!-- Bulk Actions for Archived Table -->
+          <div v-if="historyTab === 'archived' && selectedArchivedIds.length > 0" class="flex items-center gap-2 animate-in fade-in duration-150">
+            <span class="text-[12px] text-[#475569] font-medium">
+              <strong class="text-[#0f172a]">{{ selectedArchivedIds.length }}</strong> selected
+            </span>
+            <button
+              type="button"
+              class="py-1 px-3 rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] hover:bg-[#dcfce7] text-[#059669] text-[12px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+              title="Recover selected retraining runs back to active history"
+              @click="bulkRecoverArchived"
+            >
+              <AppIcon name="rotate-ccw" class="w-3.5 h-3.5" />
+              <span>Recover ({{ selectedArchivedIds.length }})</span>
+            </button>
+            <button
+              type="button"
+              class="py-1 px-3 rounded-lg border border-[#fecaca] bg-[#fef2f2] hover:bg-[#fee2e2] text-[#dc2626] text-[12px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+              title="Permanently delete selected retraining runs"
+              @click="openDeleteConfirmModal(selectedArchivedIds)"
+            >
+              <AppIcon name="trash" class="w-3.5 h-3.5" />
+              <span>Delete ({{ selectedArchivedIds.length }})</span>
+            </button>
+            <button
+              type="button"
+              class="text-[11.5px] text-[#64748b] hover:text-[#0f172a] underline cursor-pointer ml-1"
+              @click="selectedArchivedIds = []"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- ACTIVE HISTORY TAB CONTENT -->
+        <div v-if="historyTab === 'active'">
+          <div v-if="history.length === 0" class="py-12 text-center">
+            <AppIcon name="clipboard" class="w-8 h-8 text-[#cbd5e1] mx-auto mb-2" />
+            <p class="text-[13px] text-[#94a3b8]">No active retraining runs.</p>
+          </div>
+
+          <div v-else>
+            <div class="overflow-x-auto history-scroll-container pb-2">
+              <table class="w-full text-[13px] border-separate border-spacing-0">
+                <thead class="bg-[#f8fafc]">
+                  <tr>
+                    <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[155px] border-b border-[#f1f5f9]">Date</th>
+                    <th class="text-left px-3.5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[125px] border-b border-[#f1f5f9]">Status</th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Duration</th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="check-circle" class="w-3.5 h-3.5 text-[#059669]" />Edible</span></th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[80px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="skull" class="w-3.5 h-3.5 text-[#dc2626]" />Poisonous</span></th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[105px] border-b border-[#f1f5f9]">Dataset</th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Train Acc.</th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Val Acc.</th>
+                    <th class="text-right px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[210px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(run, i) in paginatedHistory"
+                    :key="run.id ?? (historyStartIndex + i)"
+                    class="hover:bg-[#f8fafc] transition-colors cursor-pointer group"
+                    @click="openReportModal(run)"
+                  >
+                    <td class="px-4 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
+                      <div class="flex items-center gap-1.5">
+                        <AppIcon name="calendar" class="w-3.5 h-3.5 text-[#94a3b8]" />
+                        <span>{{ formatDate(run.started_at) }}</span>
+                      </div>
+                    </td>
+                    <td class="px-3.5 py-3 whitespace-nowrap border-b border-[#f1f5f9]">
+                      <span
+                        class="text-[11.5px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
+                        :class="{
+                          'bg-[#d1fae5] text-[#065f46]': run.status === 'done',
+                          'bg-[#fee2e2] text-[#991b1b]': run.status === 'failed',
+                          'bg-[#fef9c3] text-[#713f12]': run.status === 'running',
+                        }"
+                      >
+                        <span v-if="run.status === 'done'">✓ Completed</span>
+                        <span v-else-if="run.status === 'failed'">✕ Failed</span>
+                        <span v-else class="flex items-center gap-1">
+                          <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                          Running
+                        </span>
+                      </span>
+                      <p v-if="run.status === 'failed' && run.error" class="text-[11px] text-[#dc2626] mt-1 max-w-[180px] truncate" :title="run.error">
+                        {{ run.error }}
+                      </p>
+                    </td>
+                    <td class="px-3 py-3 text-[#64748b] whitespace-nowrap border-b border-[#f1f5f9]">
+                      <span class="inline-flex items-center gap-1">
+                        <AppIcon name="hourglass" class="w-3 h-3 text-[#94a3b8]" />
+                        {{ formatDuration(run) }}
+                      </span>
+                    </td>
+                    <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
+                      <span>{{ run.total_edible ?? run.new_edible ?? '—' }}</span>
+                      <span v-if="run.new_edible != null && run.total_edible != null && run.new_edible !== run.total_edible" class="text-[11px] text-[#059669] ml-1 font-medium">
+                        (+{{ run.new_edible }})
+                      </span>
+                    </td>
+                    <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
+                      <span>{{ run.total_poisonous ?? run.new_poisonous ?? '—' }}</span>
+                      <span v-if="run.new_poisonous != null && run.total_poisonous != null && run.new_poisonous !== run.total_poisonous" class="text-[11px] text-[#dc2626] ml-1 font-medium">
+                        (+{{ run.new_poisonous }})
+                      </span>
+                    </td>
+                    <td class="px-3 py-3 text-[#475569] whitespace-nowrap border-b border-[#f1f5f9]">
+                      <span class="font-medium text-[#0f172a]">{{ run.total_images ?? (run.new_edible != null ? (run.new_edible + (run.new_poisonous || 0)) : '—') }}</span>
+                      <span v-if="(run.new_edible || 0) + (run.new_poisonous || 0) > 0" class="text-[11px] text-[#059669] font-medium block">
+                        {{ (run.new_edible || 0) + (run.new_poisonous || 0) }} new ingested
+                      </span>
+                      <span v-else-if="run.status === 'done'" class="text-[10.5px] text-[#64748b] block font-medium">
+                        Baseline test (0 new scans)
+                      </span>
+                      <span v-else class="text-[11px] text-[#94a3b8] block">
+                        0 new ingested
+                      </span>
+                    </td>
+                    <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
+                      {{ run.train_accuracy != null ? run.train_accuracy + '%' : '—' }}
+                    </td>
+                    <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
+                      {{ run.val_accuracy != null ? run.val_accuracy + '%' : '—' }}
+                    </td>
+                    <td class="px-4 py-3 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f8fafc] transition-colors z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]" @click.stop>
+                      <div class="inline-flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          class="py-1.5 px-3 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
+                          title="View comprehensive status and performance report for this retraining run"
+                          @click="openReportModal(run)"
+                        >
+                          <AppIcon name="clipboard" class="w-3.5 h-3.5 text-[#059669]" />
+                          <span>Report</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="py-1.5 px-2.5 rounded-lg border border-[#e2e8f0] bg-white hover:bg-[#fef3c7] hover:border-[#fde68a] text-[12px] font-semibold text-[#64748b] hover:text-[#92400e] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0 disabled:opacity-50"
+                          title="Archive this retraining run"
+                          :disabled="archivingId === run.id || !run.id"
+                          @click="archiveRun(run)"
+                        >
+                          <AppIcon v-if="archivingId !== run.id" name="archive" class="w-3.5 h-3.5 text-[#d97706]" />
+                          <AppIcon v-else name="cog" class="w-3.5 h-3.5 text-[#d97706] animate-spin" />
+                          <span>Archive</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Active History Pagination Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 py-3 px-5 border-t border-[#f1f5f9] bg-[#f8fafc]/50">
+              <div class="flex items-center gap-3">
+                <span class="text-[12.5px] text-[#64748b]">
+                  Showing <strong class="text-[#334155]">{{ historyStartIndex + 1 }}</strong>–<strong class="text-[#334155]">{{ historyEndIndex }}</strong> of <strong class="text-[#334155]">{{ history.length }}</strong> runs
+                </span>
+                <div class="flex items-center gap-1.5 ml-1">
+                  <span class="text-[11.5px] text-[#94a3b8]">Per page:</span>
+                  <select
+                    v-model.number="historyPerPage"
+                    class="text-[12px] text-[#334155] bg-white border border-[#e2e8f0] rounded-md px-2 py-1 focus:outline-none focus:border-[#059669] cursor-pointer"
+                  >
+                    <option :value="5">5</option>
+                    <option :value="10">10</option>
+                    <option :value="20">20</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center font-bold"
+                  :disabled="historyPage <= 1"
+                  @click="historyPage--"
+                  title="Previous page"
                 >
-                  <option :value="5">5</option>
-                  <option :value="10">10</option>
-                  <option :value="20">20</option>
-                </select>
+                  ‹
+                </button>
+                <span class="text-[12.5px] text-[#475569] font-medium">Page {{ historyPage }} of {{ historyTotalPages }}</span>
+                <button
+                  type="button"
+                  class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center font-bold"
+                  :disabled="historyPage >= historyTotalPages"
+                  @click="historyPage++"
+                  title="Next page"
+                >
+                  ›
+                </button>
               </div>
             </div>
-            <div class="flex items-center gap-2.5">
-              <button
-                type="button"
-                class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center font-bold"
-                :disabled="historyPage <= 1"
-                @click="historyPage--"
-                title="Previous page"
-              >
-                ‹
-              </button>
-              <span class="text-[12.5px] text-[#475569] font-medium">Page {{ historyPage }} of {{ historyTotalPages }}</span>
-              <button
-                type="button"
-                class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center font-bold"
-                :disabled="historyPage >= historyTotalPages"
-                @click="historyPage++"
-                title="Next page"
-              >
-                ›
-              </button>
+          </div>
+        </div>
+
+        <!-- ARCHIVED HISTORY TAB CONTENT -->
+        <div v-else-if="historyTab === 'archived'">
+          <div v-if="archivedHistory.length === 0" class="py-12 text-center">
+            <AppIcon name="archive" class="w-8 h-8 text-[#cbd5e1] mx-auto mb-2" />
+            <p class="text-[13px] text-[#94a3b8]">No archived retraining runs.</p>
+            <p class="text-[12px] text-[#cbd5e1] mt-0.5">Use the "Archive" action on any active run to store it here.</p>
+          </div>
+
+          <div v-else>
+            <div class="overflow-x-auto history-scroll-container pb-2">
+              <table class="w-full text-[13px] border-separate border-spacing-0">
+                <thead class="bg-[#f8fafc]">
+                  <tr>
+                    <th class="w-10 px-3.5 py-3 text-left border-b border-[#f1f5f9]">
+                      <input
+                        type="checkbox"
+                        class="w-4 h-4 rounded text-[#059669] border-[#cbd5e1] focus:ring-[#059669] cursor-pointer"
+                        :checked="isAllArchivedSelected"
+                        title="Select / deselect all on page"
+                        @change="toggleSelectAllArchived"
+                      />
+                    </th>
+                    <th class="text-left px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[155px] border-b border-[#f1f5f9]">Date</th>
+                    <th class="text-left px-3.5 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[125px] border-b border-[#f1f5f9]">Status</th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Duration</th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="check-circle" class="w-3.5 h-3.5 text-[#059669]" />Edible</span></th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[80px] border-b border-[#f1f5f9]"><span class="inline-flex items-center gap-1"><AppIcon name="skull" class="w-3.5 h-3.5 text-[#dc2626]" />Poisonous</span></th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[105px] border-b border-[#f1f5f9]">Dataset</th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Train Acc.</th>
+                    <th class="text-left px-3 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[75px] border-b border-[#f1f5f9]">Val Acc.</th>
+                    <th class="text-right px-4 py-3 text-[11.5px] font-semibold text-[#64748b] uppercase tracking-wide min-w-[240px] sticky right-0 bg-[#f8fafc] z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(run, i) in paginatedArchivedHistory"
+                    :key="run.id ?? (archivedStartIndex + i)"
+                    class="hover:bg-[#f8fafc] transition-colors cursor-pointer group"
+                    :class="{ 'bg-amber-50/40': selectedArchivedIds.includes(run.id) }"
+                    @click="openReportModal(run)"
+                  >
+                    <td class="w-10 px-3.5 py-3 border-b border-[#f1f5f9]" @click.stop>
+                      <input
+                        type="checkbox"
+                        class="w-4 h-4 rounded text-[#059669] border-[#cbd5e1] focus:ring-[#059669] cursor-pointer"
+                        :checked="selectedArchivedIds.includes(run.id)"
+                        @change="toggleSelectArchived(run.id)"
+                      />
+                    </td>
+                    <td class="px-4 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
+                      <div class="flex items-center gap-1.5">
+                        <AppIcon name="calendar" class="w-3.5 h-3.5 text-[#94a3b8]" />
+                        <span>{{ formatDate(run.started_at) }}</span>
+                      </div>
+                      <span v-if="run.archived_at" class="text-[10.5px] text-[#94a3b8] block">
+                        Archived {{ formatDate(run.archived_at) }}
+                      </span>
+                    </td>
+                    <td class="px-3.5 py-3 whitespace-nowrap border-b border-[#f1f5f9]">
+                      <span
+                        class="text-[11.5px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
+                        :class="{
+                          'bg-[#d1fae5] text-[#065f46]': run.status === 'done',
+                          'bg-[#fee2e2] text-[#991b1b]': run.status === 'failed',
+                          'bg-[#fef9c3] text-[#713f12]': run.status === 'running',
+                        }"
+                      >
+                        <span v-if="run.status === 'done'">✓ Completed</span>
+                        <span v-else-if="run.status === 'failed'">✕ Failed</span>
+                        <span v-else>Running</span>
+                      </span>
+                    </td>
+                    <td class="px-3 py-3 text-[#64748b] whitespace-nowrap border-b border-[#f1f5f9]">
+                      <span class="inline-flex items-center gap-1">
+                        <AppIcon name="hourglass" class="w-3 h-3 text-[#94a3b8]" />
+                        {{ formatDuration(run) }}
+                      </span>
+                    </td>
+                    <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
+                      <span>{{ run.total_edible ?? run.new_edible ?? '—' }}</span>
+                    </td>
+                    <td class="px-3 py-3 text-[#334155] whitespace-nowrap border-b border-[#f1f5f9]">
+                      <span>{{ run.total_poisonous ?? run.new_poisonous ?? '—' }}</span>
+                    </td>
+                    <td class="px-3 py-3 text-[#475569] whitespace-nowrap border-b border-[#f1f5f9]">
+                      <span class="font-medium text-[#0f172a]">{{ run.total_images ?? '—' }}</span>
+                    </td>
+                    <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
+                      {{ run.train_accuracy != null ? run.train_accuracy + '%' : '—' }}
+                    </td>
+                    <td class="px-3 py-3 font-semibold text-[#0f172a] whitespace-nowrap border-b border-[#f1f5f9]">
+                      {{ run.val_accuracy != null ? run.val_accuracy + '%' : '—' }}
+                    </td>
+                    <td class="px-4 py-3 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f8fafc] transition-colors z-10 shadow-[-6px_0_10px_-3px_rgba(0,0,0,0.06)] border-b border-[#f1f5f9]" @click.stop>
+                      <div class="inline-flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          class="py-1.5 px-2.5 rounded-lg border border-[#cbd5e1] bg-white group-hover:bg-[#f1f5f9] text-[12px] font-semibold text-[#0f172a] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
+                          title="View comprehensive status and performance report for this retraining run"
+                          @click="openReportModal(run)"
+                        >
+                          <AppIcon name="clipboard" class="w-3.5 h-3.5 text-[#059669]" />
+                          <span>Report</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="py-1.5 px-2.5 rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] hover:bg-[#dcfce7] text-[12px] font-semibold text-[#059669] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0 disabled:opacity-50"
+                          title="Recover this run back to active history"
+                          :disabled="recoveringId === run.id"
+                          @click="recoverRun(run)"
+                        >
+                          <AppIcon v-if="recoveringId !== run.id" name="rotate-ccw" class="w-3.5 h-3.5 text-[#059669]" />
+                          <AppIcon v-else name="cog" class="w-3.5 h-3.5 text-[#059669] animate-spin" />
+                          <span>Recover</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="py-1.5 px-2.5 rounded-lg border border-[#fecaca] bg-[#fef2f2] hover:bg-[#fee2e2] text-[12px] font-semibold text-[#dc2626] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
+                          title="Permanently delete this run"
+                          @click="openDeleteConfirmModal([run.id])"
+                        >
+                          <AppIcon name="trash" class="w-3.5 h-3.5 text-[#dc2626]" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Archived History Pagination Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 py-3 px-5 border-t border-[#f1f5f9] bg-[#f8fafc]/50">
+              <div class="flex items-center gap-3">
+                <span class="text-[12.5px] text-[#64748b]">
+                  Showing <strong class="text-[#334155]">{{ archivedStartIndex + 1 }}</strong>–<strong class="text-[#334155]">{{ archivedEndIndex }}</strong> of <strong class="text-[#334155]">{{ archivedHistory.length }}</strong> archived runs
+                </span>
+                <div class="flex items-center gap-1.5 ml-1">
+                  <span class="text-[11.5px] text-[#94a3b8]">Per page:</span>
+                  <select
+                    v-model.number="archivedPerPage"
+                    class="text-[12px] text-[#334155] bg-white border border-[#e2e8f0] rounded-md px-2 py-1 focus:outline-none focus:border-[#059669] cursor-pointer"
+                  >
+                    <option :value="5">5</option>
+                    <option :value="10">10</option>
+                    <option :value="20">20</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center font-bold"
+                  :disabled="archivedPage <= 1"
+                  @click="archivedPage--"
+                  title="Previous page"
+                >
+                  ‹
+                </button>
+                <span class="text-[12.5px] text-[#475569] font-medium">Page {{ archivedPage }} of {{ archivedTotalPages }}</span>
+                <button
+                  type="button"
+                  class="w-[30px] h-[30px] rounded-[7px] border border-[#e2e8f0] bg-white cursor-pointer text-[14px] text-[#475569] transition-colors duration-[0.18s] hover:bg-[#f1f5f9] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center font-bold"
+                  :disabled="archivedPage >= archivedTotalPages"
+                  @click="archivedPage++"
+                  title="Next page"
+                >
+                  ›
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1274,6 +1531,48 @@
       </div>
     </div>
   </div>
+
+  <!-- Delete History Confirmation Modal -->
+  <div
+    v-if="deleteModalOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs"
+    @click.self="deleteModalOpen = false"
+  >
+    <div class="bg-white rounded-2xl shadow-2xl border border-[#e2e8f0] w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="p-6">
+        <div class="w-12 h-12 rounded-xl bg-[#fee2e2] text-[#dc2626] flex items-center justify-center mb-4 shadow-sm">
+          <AppIcon name="trash" class="w-6 h-6" />
+        </div>
+        <h4 class="text-[17px] font-bold text-[#0f172a] mb-2">
+          Delete Retraining History?
+        </h4>
+        <p class="text-[13.5px] text-[#64748b] leading-relaxed mb-6">
+          Are you sure you want to permanently delete
+          <strong class="text-[#0f172a]">{{ idsPendingDelete.length === 1 ? 'this retraining run' : `${idsPendingDelete.length} retraining runs` }}</strong>?
+          This record and its performance metrics will be permanently erased. This action cannot be undone.
+        </p>
+        <div class="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            class="py-2 px-4 rounded-xl border border-[#e2e8f0] bg-white hover:bg-[#f1f5f9] text-[13px] font-semibold text-[#475569] cursor-pointer transition-colors"
+            :disabled="deletingHistory"
+            @click="deleteModalOpen = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="py-2 px-4 rounded-xl bg-[#dc2626] hover:bg-[#b91c1c] text-white text-[13px] font-semibold cursor-pointer inline-flex items-center gap-2 transition-colors shadow-sm disabled:opacity-50"
+            :disabled="deletingHistory"
+            @click="confirmDeleteHistory"
+          >
+            <AppIcon v-if="deletingHistory" name="cog" class="w-4 h-4 animate-spin" />
+            <span>{{ deletingHistory ? 'Deleting…' : 'Permanently Delete' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 </template>
 
@@ -1442,6 +1741,12 @@ const history = ref<any[]>([])
 const historyPage = ref(1)
 const historyPerPage = ref(5)
 
+const historyTab = ref<'active' | 'archived'>('active')
+const archivedHistory = ref<any[]>([])
+const archivedPage = ref(1)
+const archivedPerPage = ref(5)
+const selectedArchivedIds = ref<number[]>([])
+
 const historyTotalPages = computed(() => Math.max(1, Math.ceil(history.value.length / historyPerPage.value)))
 const paginatedHistory = computed(() => {
   const start = (historyPage.value - 1) * historyPerPage.value
@@ -1456,6 +1761,136 @@ watch(historyTotalPages, (t) => {
 watch(historyPerPage, () => {
   historyPage.value = 1
 })
+
+const archivedTotalPages = computed(() => Math.max(1, Math.ceil(archivedHistory.value.length / archivedPerPage.value)))
+const paginatedArchivedHistory = computed(() => {
+  const start = (archivedPage.value - 1) * archivedPerPage.value
+  return archivedHistory.value.slice(start, start + archivedPerPage.value)
+})
+const archivedStartIndex = computed(() => (archivedHistory.value.length === 0 ? 0 : (archivedPage.value - 1) * archivedPerPage.value))
+const archivedEndIndex = computed(() => Math.min(archivedHistory.value.length, archivedPage.value * archivedPerPage.value))
+
+watch(archivedTotalPages, (t) => {
+  if (archivedPage.value > t) archivedPage.value = t
+})
+watch(archivedPerPage, () => {
+  archivedPage.value = 1
+})
+
+const isAllArchivedSelected = computed(() => {
+  const pageItems = paginatedArchivedHistory.value.filter(r => r.id != null)
+  if (pageItems.length === 0) return false
+  return pageItems.every(r => selectedArchivedIds.value.includes(r.id))
+})
+
+function toggleSelectAllArchived() {
+  const pageIds = paginatedArchivedHistory.value.map(r => r.id).filter(Boolean)
+  if (isAllArchivedSelected.value) {
+    selectedArchivedIds.value = selectedArchivedIds.value.filter(id => !pageIds.includes(id))
+  } else {
+    const combined = new Set([...selectedArchivedIds.value, ...pageIds])
+    selectedArchivedIds.value = Array.from(combined)
+  }
+}
+
+function toggleSelectArchived(id: number) {
+  const idx = selectedArchivedIds.value.indexOf(id)
+  if (idx >= 0) {
+    selectedArchivedIds.value.splice(idx, 1)
+  } else {
+    selectedArchivedIds.value.push(id)
+  }
+}
+
+const archivingId = ref<number | null>(null)
+const recoveringId = ref<number | null>(null)
+const deleteModalOpen = ref(false)
+const idsPendingDelete = ref<number[]>([])
+const deletingHistory = ref(false)
+
+async function archiveRun(run: any) {
+  if (!run?.id) return
+  archivingId.value = run.id
+  try {
+    const res = await $fetch<any>(`${api}/admin/retrain/history/archive`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: { id: run.id },
+    })
+    if (res.history) history.value = res.history
+    if (res.archived_history) archivedHistory.value = res.archived_history
+    toastSuccess(res.message || 'Retraining run archived.')
+  } catch (err: any) {
+    toastError(err?.data?.message || err?.message || 'Failed to archive retraining run.')
+  } finally {
+    archivingId.value = null
+  }
+}
+
+async function recoverRun(run: any) {
+  if (!run?.id) return
+  recoveringId.value = run.id
+  try {
+    const res = await $fetch<any>(`${api}/admin/retrain/history/recover`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: { id: run.id },
+    })
+    if (res.history) history.value = res.history
+    if (res.archived_history) archivedHistory.value = res.archived_history
+    selectedArchivedIds.value = selectedArchivedIds.value.filter(id => id !== run.id)
+    toastSuccess(res.message || 'Retraining run recovered.')
+  } catch (err: any) {
+    toastError(err?.data?.message || err?.message || 'Failed to recover retraining run.')
+  } finally {
+    recoveringId.value = null
+  }
+}
+
+async function bulkRecoverArchived() {
+  if (selectedArchivedIds.value.length === 0) return
+  try {
+    const res = await $fetch<any>(`${api}/admin/retrain/history/recover`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: { ids: selectedArchivedIds.value },
+    })
+    if (res.history) history.value = res.history
+    if (res.archived_history) archivedHistory.value = res.archived_history
+    selectedArchivedIds.value = []
+    toastSuccess(res.message || 'Selected runs recovered successfully.')
+  } catch (err: any) {
+    toastError(err?.data?.message || err?.message || 'Failed to recover selected runs.')
+  }
+}
+
+function openDeleteConfirmModal(ids: number[]) {
+  if (!ids || ids.length === 0) return
+  idsPendingDelete.value = [...ids]
+  deleteModalOpen.value = true
+}
+
+async function confirmDeleteHistory() {
+  if (idsPendingDelete.value.length === 0) return
+  deletingHistory.value = true
+  try {
+    const res = await $fetch<any>(`${api}/admin/retrain/history/delete`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: { ids: idsPendingDelete.value },
+    })
+    if (res.history) history.value = res.history
+    if (res.archived_history) archivedHistory.value = res.archived_history
+    selectedArchivedIds.value = selectedArchivedIds.value.filter(id => !idsPendingDelete.value.includes(id))
+    deleteModalOpen.value = false
+    toastSuccess(res.message || 'Retraining history permanently deleted.')
+  } catch (err: any) {
+    toastError(err?.data?.message || err?.message || 'Failed to delete retraining history.')
+  } finally {
+    deletingHistory.value = false
+    idsPendingDelete.value = []
+  }
+}
 
 const selectedReportRun = ref<any>(null)
 const showReportModal = ref(false)
@@ -1604,6 +2039,7 @@ async function fetchStatus() {
     statusError.value = current.error ?? null
     if (current.last_result) lastResult.value = current.last_result
     history.value = data.history ?? []
+    archivedHistory.value = data.archived_history ?? []
 
     if (current.state === 'done' || current.state === 'failed') {
       stopPolling()

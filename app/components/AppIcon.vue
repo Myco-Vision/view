@@ -326,6 +326,19 @@ const ICONS: Record<string, IconDef> = {
       'M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3',
     ],
   },
+  archive: {
+    paths: [
+      'M21 8v13H3V8',
+      'M1 3h22v5H1z',
+      'M10 12h4',
+    ],
+  },
+  'rotate-ccw': {
+    paths: [
+      'M1 4v6h6',
+      'M3.51 15a9 9 0 1 0 2.13-9.36L1 10',
+    ],
+  },
 }
 
 const props = defineProps<{ name: string }>()
