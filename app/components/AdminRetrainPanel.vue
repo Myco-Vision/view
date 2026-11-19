@@ -310,56 +310,69 @@
 
     <template v-else>
       <!-- Status Banner -->
-      <div
-        v-if="retrainState !== 'idle'"
-        class="rounded-[14px] border px-5 py-4 flex items-start gap-4"
-        :class="{
-          'bg-[#fffbeb] border-[#fde68a]': retrainState === 'running',
-          'bg-[#f0fdf4] border-[#bbf7d0]': retrainState === 'done',
-          'bg-[#fef2f2] border-[#fecaca]': retrainState === 'failed' || retrainState === 'unknown',
-        }"
-      >
-        <div class="mt-0.5">
-          <AppIcon
-            :name="retrainState === 'running' ? 'cog' : retrainState === 'done' ? 'check-circle' : 'x-circle'"
-            class="w-6 h-6"
-            :class="{
-              'text-[#d97706] animate-spin': retrainState === 'running',
-              'text-[#059669]': retrainState === 'done',
-              'text-[#dc2626]': retrainState === 'failed' || retrainState === 'unknown',
-            }"
-          />
-        </div>
-        <div class="flex flex-col gap-0.5 flex-1">
-          <p
-            class="text-[14px] font-semibold"
-            :class="{
-              'text-[#92400e]': retrainState === 'running',
-              'text-[#065f46]': retrainState === 'done',
-              'text-[#991b1b]': retrainState === 'failed' || retrainState === 'unknown',
-            }"
-          >
-            {{ statusMessage }}
-          </p>
-          <p v-if="lastResult" class="text-[12.5px] text-[#64748b]">
-            Train accuracy: <strong>{{ lastResult.train_accuracy }}%</strong> ·
-            Val accuracy: <strong>{{ lastResult.val_accuracy }}%</strong> ·
-            {{ lastResult.total_images }} images used
-            ({{ lastResult.total_edible }} edible, {{ lastResult.total_poisonous }} poisonous)
-          </p>
-          <p v-if="statusError" class="text-[12.5px] text-[#ef4444] font-mono">{{ statusError }}</p>
-          <div v-if="retrainState === 'unknown'" class="mt-2">
-            <button
-              type="button"
-              class="py-1 px-3 rounded-lg border border-[#fecaca] bg-white hover:bg-[#fef2f2] text-[12px] font-semibold text-[#dc2626] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs"
-              @click="fetchStatus"
-            >
-              <AppIcon name="refresh" class="w-3.5 h-3.5" />
-              <span>Retry Connection</span>
-            </button>
+      <transition name="fade">
+        <div
+          v-if="retrainState !== 'idle' && (retrainState !== 'done' || !doneBannerDismissed)"
+          class="rounded-[14px] border px-5 py-4 flex items-start gap-4 transition-all duration-300"
+          :class="{
+            'bg-[#fffbeb] border-[#fde68a]': retrainState === 'running',
+            'bg-[#f0fdf4] border-[#bbf7d0]': retrainState === 'done',
+            'bg-[#fef2f2] border-[#fecaca]': retrainState === 'failed' || retrainState === 'unknown',
+          }"
+        >
+          <div class="mt-0.5">
+            <AppIcon
+              :name="retrainState === 'running' ? 'cog' : retrainState === 'done' ? 'check-circle' : 'x-circle'"
+              class="w-6 h-6"
+              :class="{
+                'text-[#d97706] animate-spin': retrainState === 'running',
+                'text-[#059669]': retrainState === 'done',
+                'text-[#dc2626]': retrainState === 'failed' || retrainState === 'unknown',
+              }"
+            />
+          </div>
+          <div class="flex flex-col gap-0.5 flex-1">
+            <div class="flex items-center justify-between">
+              <p
+                class="text-[14px] font-semibold"
+                :class="{
+                  'text-[#92400e]': retrainState === 'running',
+                  'text-[#065f46]': retrainState === 'done',
+                  'text-[#991b1b]': retrainState === 'failed' || retrainState === 'unknown',
+                }"
+              >
+                {{ statusMessage }}
+              </p>
+              <button
+                v-if="retrainState === 'done'"
+                type="button"
+                class="text-[#065f46]/60 hover:text-[#065f46] bg-transparent border-none cursor-pointer p-0.5 text-sm font-bold"
+                title="Dismiss notification"
+                @click="dismissDoneBanner"
+              >
+                ✕
+              </button>
+            </div>
+            <p v-if="lastResult" class="text-[12.5px] text-[#64748b]">
+              Train accuracy: <strong>{{ lastResult.train_accuracy }}%</strong> ·
+              Val accuracy: <strong>{{ lastResult.val_accuracy }}%</strong> ·
+              {{ lastResult.total_images }} images used
+              ({{ lastResult.total_edible }} edible, {{ lastResult.total_poisonous }} poisonous)
+            </p>
+            <p v-if="statusError" class="text-[12.5px] text-[#ef4444] font-mono">{{ statusError }}</p>
+            <div v-if="retrainState === 'unknown'" class="mt-2">
+              <button
+                type="button"
+                class="py-1 px-3 rounded-lg border border-[#fecaca] bg-white hover:bg-[#fef2f2] text-[12px] font-semibold text-[#dc2626] cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs"
+                @click="fetchStatus"
+              >
+                <AppIcon name="refresh" class="w-3.5 h-3.5" />
+                <span>Retry Connection</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </transition>
 
       <!-- Warning if too few images -->
       <div
@@ -1447,9 +1460,34 @@ watch(historyPerPage, () => {
 const selectedReportRun = ref<any>(null)
 const showReportModal = ref(false)
 let statusInterval: ReturnType<typeof setInterval> | null = null
+let doneTimer: ReturnType<typeof setTimeout> | null = null
+const doneBannerDismissed = ref(false)
+
+function dismissDoneBanner() {
+  doneBannerDismissed.value = true
+  if (doneTimer) {
+    clearTimeout(doneTimer)
+    doneTimer = null
+  }
+}
 
 watch(() => summary.value.total, n => emit('update:count', n), { immediate: true })
-watch(retrainState, s => emit('update:state', s), { immediate: true })
+watch(retrainState, (s) => {
+  emit('update:state', s)
+  if (s === 'done') {
+    doneBannerDismissed.value = false
+    if (doneTimer) clearTimeout(doneTimer)
+    doneTimer = setTimeout(() => {
+      doneBannerDismissed.value = true
+    }, 5000)
+  } else if (s === 'running') {
+    doneBannerDismissed.value = false
+    if (doneTimer) {
+      clearTimeout(doneTimer)
+      doneTimer = null
+    }
+  }
+}, { immediate: true })
 
 const statusMessage = computed(() => {
   if (retrainState.value === 'running') return 'Retraining in progress — this may take several minutes…'
@@ -2010,10 +2048,26 @@ onMounted(async () => {
   if (retrainState.value === 'running') startPolling()
 })
 
-onUnmounted(() => stopPolling())
+onUnmounted(() => {
+  stopPolling()
+  if (doneTimer) {
+    clearTimeout(doneTimer)
+    doneTimer = null
+  }
+})
 </script>
 
 <style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
 .history-scroll-container {
   overflow-x: auto;
   overflow-y: hidden;
