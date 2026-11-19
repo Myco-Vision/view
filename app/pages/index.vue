@@ -22,8 +22,11 @@
         
         <!-- Brand Logo -->
         <NuxtLink to="/" class="flex items-center gap-3 group">
-          <div class="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-emerald-950/50 group-hover:scale-105 transition-transform flex items-center justify-center bg-emerald-950/40 border border-emerald-500/20">
-            <img src="/myco-logo.png" alt="MycoVision Logo" class="w-full h-full object-contain" />
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-950/50 group-hover:scale-105 transition-transform">
+            <!-- Custom Mushroom Icon -->
+            <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C7.03 2 3 6.03 3 11c0 1.25.26 2.44.73 3.52C4.1 15.35 4.8 16 5.6 16h12.8c.8 0 1.5-.65 1.87-1.48.47-1.08.73-2.27.73-3.52 0-4.97-4.03-9-9-9zm-1.5 15h3v5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-5z" />
+            </svg>
           </div>
           <div class="flex flex-col">
             <span class="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
@@ -762,8 +765,10 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap items-center lg:justify-between gap-6">
         
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-emerald-950/40 border border-emerald-500/20">
-            <img src="/myco-logo.png" alt="MycoVision Logo" class="w-full h-full object-contain" />
+          <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C7.03 2 3 6.03 3 11c0 1.25.26 2.44.73 3.52C4.1 15.35 4.8 16 5.6 16h12.8c.8 0 1.5-.65 1.87-1.48.47-1.08.73-2.27.73-3.52 0-4.97-4.03-9-9-9zm-1.5 15h3v5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-5z" />
+            </svg>
           </div>
           <div>
             <span class="text-sm font-bold text-white">MycoVision</span>

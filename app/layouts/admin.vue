@@ -27,8 +27,13 @@
         :class="sidebarCollapsed ? 'lg:flex-col lg:gap-2' : ''"
         style="padding: 4px 4px 18px;"
       >
-        <div class="w-9 h-9 rounded-[10px] overflow-hidden shrink-0 flex items-center justify-center shadow-[0_2px_8px_rgba(16,185,129,0.35)] bg-slate-900 border border-emerald-500/20">
-          <img src="/myco-logo.png" alt="MycoVision Logo" class="w-full h-full object-contain" />
+        <div class="w-9 h-9 rounded-[10px] bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(16,185,129,0.35)]">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2"/>
+            <path d="M12 6c-3.3 0-6 2.7-6 6 0 1.2.4 2.4 1 3.3L12 6z" fill="currentColor" opacity=".3"/>
+            <path d="M12 6l5 9.3A5.97 5.97 0 0 0 18 12c0-3.3-2.7-6-6-6z" fill="currentColor" opacity=".6"/>
+          </svg>
         </div>
         <transition name="label-fade">
           <div v-if="!sidebarCollapsed || mobileOpen" class="flex flex-col gap-px flex-1 overflow-hidden">

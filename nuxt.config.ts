@@ -8,8 +8,7 @@ export default defineNuxtConfig({
     head: {
       title: 'MycoVision — Mushroom Identification & MycoDex',
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/myco-logo.ico' },
-        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
       ],
     },
   },
