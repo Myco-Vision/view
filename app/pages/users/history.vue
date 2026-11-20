@@ -17,9 +17,6 @@
           <AppIcon name="file" class="w-3.5 h-3.5 text-emerald-400" />
           <span>Export History (PDF)</span>
         </button>
-        <span v-if="favorites.length" class="text-[12.5px] font-medium text-[#ef4444] bg-[#fef2f2] border border-[#fecaca] py-1 px-3 rounded-full inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
-          <AppIcon name="heart-solid" class="w-3.5 h-3.5" /> {{ favorites.length }} Favorites saved
-        </span>
       </div>
     </div>
 
@@ -107,15 +104,15 @@
 
         <!-- Actions -->
         <div class="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f1f5f9]">
-          <!-- Favorite Heart Button -->
+          <!-- Add to Folder Button -->
           <button 
             class="w-[34px] h-[34px] rounded-lg border flex items-center justify-center cursor-pointer transition-all duration-[0.18s]"
-            :class="isFavorite(item.id) ? 'bg-[#fef2f2] border-[#fecaca] text-[#ef4444]' : 'bg-white border-[#e2e8f0] text-[#94a3b8] hover:bg-[#fef2f2] hover:text-[#ef4444] hover:border-[#fecaca]'"
-            :title="isFavorite(item.id) ? 'Remove from favorites' : 'Add to collection favorites'"
-            @click.stop="toggleFavorite(item)"
+            :class="isInAnyFolder(item.id) ? 'bg-emerald-50 border-emerald-300 text-emerald-600' : 'bg-white border-[#e2e8f0] text-[#94a3b8] hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300'"
+            :title="isInAnyFolder(item.id) ? 'Manage folders' : 'Save to folder'"
+            @click.stop="openAddToFolder(item)"
           >
-            <svg class="w-[16px] h-[16px]" :fill="isFavorite(item.id) ? '#ef4444' : 'none'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            <svg class="w-[16px] h-[16px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
             </svg>
           </button>
 
@@ -288,12 +285,14 @@
           <div class="p-4 border-t border-[#f1f5f9] bg-[#f8fafc] flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2.5">
             <button 
               class="w-full sm:w-auto justify-center py-2 px-4 rounded-xl border text-[13px] font-semibold cursor-pointer flex items-center gap-1.5 transition-all"
-              :class="isFavorite(selectedScan.id) ? 'bg-[#fef2f2] border-[#fecaca] text-[#ef4444]' : 'bg-white border-[#e2e8f0] text-[#475569] hover:text-[#ef4444]'"
-              @click="toggleFavorite(selectedScan)"
+              :class="isInAnyFolder(selectedScan.id) ? 'bg-emerald-50 border-emerald-300 text-emerald-600' : 'bg-white border-[#e2e8f0] text-[#475569] hover:text-emerald-600'"
+              @click="openAddToFolder(selectedScan)"
             >
               <span class="inline-flex items-center gap-1.5">
-                <AppIcon :name="isFavorite(selectedScan.id) ? 'heart-solid' : 'heart'" class="w-4 h-4" />
-                {{ isFavorite(selectedScan.id) ? 'Saved to Favorites' : 'Add to Collection Favorites' }}
+                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                {{ isInAnyFolder(selectedScan.id) ? 'Manage Folders' : 'Add to Folder' }}
               </span>
             </button>
             <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -323,6 +322,52 @@
       </div>
     </Teleport>
 
+    <!-- ── Add to Folder picker modal ── -->
+    <Teleport to="body">
+      <div v-if="folderPickerOpen && folderPickerScan" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4" @click.self="folderPickerOpen = false">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+          <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 class="text-[15px] font-bold text-slate-900">Save to Folder</h3>
+              <p class="text-[12px] text-slate-400 mt-0.5 truncate max-w-[240px]">{{ folderPickerScan.name }}</p>
+            </div>
+            <button class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors" @click="folderPickerOpen = false">✕</button>
+          </div>
+          <div class="p-4 max-h-72 overflow-y-auto">
+            <div v-if="folderPickerLoading" class="py-6 text-center text-[13px] text-slate-400 animate-pulse">Loading folders…</div>
+            <div v-else-if="folders.length === 0" class="py-6 text-center">
+              <p class="text-[13px] text-slate-500 mb-3">No folders yet.</p>
+              <NuxtLink to="/users/collection" class="text-[13px] text-emerald-600 font-semibold no-underline hover:underline" @click="folderPickerOpen = false">Create a folder →</NuxtLink>
+            </div>
+            <div v-else class="flex flex-col gap-1.5">
+              <button
+                v-for="folder in folders"
+                :key="folder.id"
+                class="flex items-center justify-between gap-3 w-full px-3.5 py-2.5 rounded-xl border transition-all text-left"
+                :class="(scanFolderIds[folderPickerScan.id] || []).includes(folder.id)
+                  ? 'bg-emerald-50 border-emerald-300'
+                  : 'bg-white border-slate-200 hover:bg-slate-50'"
+                :disabled="folderPickerSaving === folder.id"
+                @click="toggleScanInFolder(folder)"
+              >
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="folderBg(folder.color)">
+                    <AppIcon name="folder" class="w-4 h-4" :class="folderIconColor(folder.color)" />
+                  </div>
+                  <div>
+                    <p class="text-[13.5px] font-semibold text-slate-900">{{ folder.name }}</p>
+                    <p class="text-[11.5px] text-slate-400">{{ folder.items_count }} scan{{ folder.items_count === 1 ? '' : 's' }}</p>
+                  </div>
+                </div>
+                <span v-if="folderPickerSaving === folder.id" class="w-4 h-4 border-2 border-emerald-500/40 border-t-emerald-500 rounded-full animate-spin shrink-0"></span>
+                <AppIcon v-else-if="(scanFolderIds[folderPickerScan.id] || []).includes(folder.id)" name="check-circle" class="w-5 h-5 text-emerald-500 shrink-0" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
   </div>
 </template>
 
@@ -336,7 +381,6 @@ const filters = [
   { label: 'All Scans', value: 'all',       icon: '',             iconClass: '' },
   { label: 'Edible',    value: 'Edible',    icon: 'check-circle', iconClass: 'text-[#16a34a]' },
   { label: 'Poisonous', value: 'Poisonous', icon: 'skull',        iconClass: 'text-[#dc2626]' },
-  { label: 'Favorites', value: 'favorites', icon: 'heart-solid',  iconClass: 'text-[#ef4444]' },
 ]
 const activeFilter = ref('all')
 const search = ref('')
@@ -357,42 +401,89 @@ interface MushroomScan {
 }
 
 const scans = ref<MushroomScan[]>([])
-const favorites = ref<number[]>([])
 const showModal = ref(false)
 const selectedScan = ref<MushroomScan | null>(null)
 
+// ── Folder state (for "Add to folder" from history) ──────────────────────────
+interface Folder { id: number; name: string; color: string; items_count: number }
+const folders = ref<Folder[]>([])
+const scanFolderIds = ref<Record<number, number[]>>({})
+const folderPickerOpen = ref(false)
+const folderPickerScan = ref<MushroomScan | null>(null)
+const folderPickerLoading = ref(false)
+const folderPickerSaving = ref<number | null>(null)
+
+const getHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` })
+
+function folderBg(color: string) {
+  const map: Record<string, string> = {
+    emerald: 'bg-emerald-100', sky: 'bg-sky-100', violet: 'bg-violet-100',
+    amber: 'bg-amber-100', rose: 'bg-rose-100', slate: 'bg-slate-100',
+  }
+  return map[color] || 'bg-emerald-100'
+}
+function folderIconColor(color: string) {
+  const map: Record<string, string> = {
+    emerald: 'text-emerald-600', sky: 'text-sky-600', violet: 'text-violet-600',
+    amber: 'text-amber-600', rose: 'text-rose-600', slate: 'text-slate-600',
+  }
+  return map[color] || 'text-emerald-600'
+}
+
 onMounted(async () => {
-  loadFavorites()
   fetchScans()
+  fetchFolders()
 })
 
-function loadFavorites() {
-  const stored = localStorage.getItem('myco_favorites')
-  if (stored) {
-    try {
-      favorites.value = JSON.parse(stored)
-    } catch (e) {
-      favorites.value = []
+async function fetchFolders() {
+  try {
+    const data = await $fetch<Folder[]>(`${config.public.apiBase}/collections`, { headers: getHeaders() })
+    folders.value = data
+  } catch {}
+}
+
+function isInAnyFolder(scanId: number): boolean {
+  return (scanFolderIds.value[scanId] || []).length > 0
+}
+
+async function openAddToFolder(item: MushroomScan) {
+  folderPickerScan.value = item
+  folderPickerOpen.value = true
+  folderPickerLoading.value = true
+  try {
+    const ids = await $fetch<number[]>(`${config.public.apiBase}/collections/scan/${item.id}/folders`, { headers: getHeaders() })
+    scanFolderIds.value[item.id] = ids
+  } catch {
+    scanFolderIds.value[item.id] = []
+  } finally {
+    folderPickerLoading.value = false
+  }
+}
+
+async function toggleScanInFolder(folder: Folder) {
+  const scan = folderPickerScan.value
+  if (!scan) return
+  const inFolder = (scanFolderIds.value[scan.id] || []).includes(folder.id)
+  folderPickerSaving.value = folder.id
+  try {
+    if (inFolder) {
+      await $fetch(`${config.public.apiBase}/collections/${folder.id}/scans/${scan.id}`, {
+        method: 'DELETE', headers: getHeaders(),
+      })
+      scanFolderIds.value[scan.id] = (scanFolderIds.value[scan.id] || []).filter(id => id !== folder.id)
+      folder.items_count = Math.max(0, folder.items_count - 1)
+    } else {
+      await $fetch(`${config.public.apiBase}/collections/${folder.id}/scans`, {
+        method: 'POST', headers: getHeaders(), body: { scan_id: scan.id },
+      })
+      scanFolderIds.value[scan.id] = [...(scanFolderIds.value[scan.id] || []), folder.id]
+      folder.items_count++
     }
+  } catch {
+    useToast().error('Failed to update folder.')
+  } finally {
+    folderPickerSaving.value = null
   }
-}
-
-function saveFavorites() {
-  localStorage.setItem('myco_favorites', JSON.stringify(favorites.value))
-}
-
-function isFavorite(id: number): boolean {
-  return favorites.value.includes(id)
-}
-
-function toggleFavorite(item: MushroomScan) {
-  const index = favorites.value.indexOf(item.id)
-  if (index > -1) {
-    favorites.value.splice(index, 1)
-  } else {
-    favorites.value.push(item.id)
-  }
-  saveFavorites()
 }
 
 function openDetails(item: MushroomScan) {
@@ -459,13 +550,7 @@ async function deleteScan(item: MushroomScan) {
 // ── Computed filtered list ────────────────────────────
 const filtered = computed(() =>
   scans.value.filter(s => {
-    let matchesFilter = true
-    if (activeFilter.value === 'favorites') {
-      matchesFilter = isFavorite(s.id)
-    } else if (activeFilter.value !== 'all') {
-      matchesFilter = s.classification === activeFilter.value
-    }
-    
+    const matchesFilter = activeFilter.value === 'all' || s.classification === activeFilter.value
     const matchesSearch = s.name.toLowerCase().includes(search.value.toLowerCase())
     return matchesFilter && matchesSearch
   })
