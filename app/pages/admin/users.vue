@@ -36,12 +36,39 @@
 
     <!-- Toolbar -->
     <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-[14px] border border-[#e2e8f0] flex-wrap">
-      <div class="relative flex-1 min-w-[200px] sm:max-w-[320px]">
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input v-model="filters.search" @input="debouncedFetch" :class="[inputCls, 'pl-9 bg-[#f8fafc] focus:bg-white w-full']" placeholder="Search by name, email, or username…" />
+      <!-- Active vs Archived Sub-tabs -->
+      <div class="inline-flex p-1 bg-[#f1f5f9] rounded-xl">
+        <button
+          type="button"
+          class="px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-2 cursor-pointer border-none"
+          :class="filters.status === 'active' ? 'bg-white text-[#0f172a] shadow-xs' : 'bg-transparent text-[#64748b] hover:text-[#0f172a]'"
+          @click="setStatusTab('active')"
+        >
+          <span>Active Accounts</span>
+          <span v-if="stats?.active_count !== undefined" class="py-0.5 px-2 rounded-full text-[11px] font-bold bg-[#d1fae5] text-[#065f46]">
+            {{ stats.active_count }}
+          </span>
+        </button>
+        <button
+          type="button"
+          class="px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-2 cursor-pointer border-none"
+          :class="filters.status === 'archived' ? 'bg-white text-[#0f172a] shadow-xs' : 'bg-transparent text-[#64748b] hover:text-[#0f172a]'"
+          @click="setStatusTab('archived')"
+        >
+          <AppIcon name="archive" class="w-3.5 h-3.5 text-[#d97706]" />
+          <span>Archived</span>
+          <span v-if="stats?.archived_count !== undefined" class="py-0.5 px-2 rounded-full text-[11px] font-bold bg-[#fef3c7] text-[#92400e]">
+            {{ stats.archived_count }}
+          </span>
+        </button>
       </div>
-      <div class="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
-        <select v-model="filters.role" @change="fetchUsers(1)" :class="[inputCls, 'bg-[#f8fafc] cursor-pointer focus:bg-white flex-1 sm:flex-initial']">
+
+      <div class="flex items-center gap-2.5 flex-1 sm:flex-initial justify-end flex-wrap">
+        <div class="relative flex-1 min-w-[200px] sm:w-[260px]">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#94a3b8]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input v-model="filters.search" @input="debouncedFetch" :class="[inputCls, 'pl-9 bg-[#f8fafc] focus:bg-white w-full']" placeholder="Search by name, email, or username…" />
+        </div>
+        <select v-model="filters.role" @change="fetchUsers(1)" :class="[inputCls, 'bg-[#f8fafc] cursor-pointer focus:bg-white']">
           <option value="">All Roles</option>
           <option v-if="isSuperAdmin" value="super_admin">Super Admin</option>
           <option value="admin">Admin</option>
@@ -72,14 +99,19 @@
               <td colspan="6" class="py-8 text-center text-[#94a3b8] text-[13.5px]">Loading accounts...</td>
             </tr>
             <tr v-else-if="users.length === 0">
-              <td colspan="6" class="py-8 text-center text-[#94a3b8] text-[14px]">No accounts found.</td>
+              <td colspan="6" class="py-8 text-center text-[#94a3b8] text-[14px]">
+                {{ filters.status === 'archived' ? 'No archived accounts found.' : 'No active accounts found.' }}
+              </td>
             </tr>
             <tr v-else v-for="user in users" :key="user.id" class="hover:bg-[#f8fafc]/50 transition-colors duration-150 group">
               <td :class="tdCls">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-[10px] text-white text-[13px] font-bold flex items-center justify-center shrink-0 shadow-sm" :class="getAvatarColor(user.role)">{{ getInitials(user.name) }}</div>
                   <div>
-                    <p class="font-bold text-[#0f172a] text-[14px]">{{ user.name }}</p>
+                    <div class="flex items-center gap-2">
+                      <p class="font-bold text-[#0f172a] text-[14px]">{{ user.name }}</p>
+                      <span v-if="user.archived_at" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Archived</span>
+                    </div>
                     <p class="text-[12px] text-[#94a3b8] font-medium">ID: #{{ user.id }}</p>
                   </div>
                 </div>
@@ -108,7 +140,10 @@
               <td :class="tdCls">
                 <span class="py-[4px] px-[10px] rounded-[6px] text-[11.5px] font-bold tracking-[0.3px]" :class="getRoleBadgeStyle(user.role)">{{ formatRole(user.role) }}</span>
               </td>
-              <td :class="[tdCls, 'text-[13px] text-[#64748b] font-medium']">{{ formatDate(user.created_at) }}</td>
+              <td :class="[tdCls, 'text-[13px] text-[#64748b] font-medium']">
+                <span>{{ formatDate(user.created_at) }}</span>
+                <span v-if="user.archived_at" class="block text-[10.5px] text-[#d97706]">Archived {{ formatDate(user.archived_at) }}</span>
+              </td>
               <td :class="tdCls">
                 <span class="inline-flex items-center justify-center min-w-[28px] h-[28px] px-2 rounded-full bg-[#f1f5f9] text-[#475569] text-[12.5px] font-bold">{{ user.scans_count ?? 0 }}</span>
               </td>
@@ -120,8 +155,22 @@
                   <button v-if="isSuperAdmin" class="w-[32px] h-[32px] rounded-[8px] border border-[#e2e8f0] bg-white cursor-pointer text-[#64748b] flex items-center justify-center transition-colors hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200" title="Edit account" @click="openEditModal(user)">
                     <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                   </button>
-                  <button v-if="canDelete(user)" class="w-[32px] h-[32px] rounded-[8px] border border-[#e2e8f0] bg-white cursor-pointer text-[#64748b] flex items-center justify-center transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200" title="Delete account" @click="confirmDelete(user)">
-                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  <button
+                    v-if="canArchive(user) && !user.archived_at"
+                    class="w-[32px] h-[32px] rounded-[8px] border border-[#e2e8f0] bg-white cursor-pointer text-[#d97706] flex items-center justify-center transition-colors hover:bg-[#fef3c7] hover:border-[#fde68a]"
+                    title="Archive account"
+                    @click="confirmArchive(user)"
+                  >
+                    <AppIcon name="archive" class="w-4 h-4 text-[#d97706]" />
+                  </button>
+                  <button
+                    v-else-if="canArchive(user) && user.archived_at"
+                    class="py-1.5 px-3 rounded-[8px] border border-[#bbf7d0] bg-[#f0fdf4] cursor-pointer text-[#059669] text-[12px] font-bold flex items-center justify-center gap-1.5 transition-colors hover:bg-[#dcfce7] hover:border-[#86efac]"
+                    title="Restore account"
+                    @click="restoreAccount(user)"
+                  >
+                    <AppIcon name="rotate-ccw" class="w-3.5 h-3.5 text-[#059669]" />
+                    <span>Restore</span>
                   </button>
                 </div>
               </td>
@@ -162,6 +211,17 @@
             <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Joined</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ formatDate(selectedUser.created_at) }}</p></div>
             <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Total Scans</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedUser.scans_count ?? 0 }}</p></div>
             <div class="bg-[#f8fafc] rounded-[10px] py-3 px-3.5"><p class="text-[11.5px] text-[#94a3b8] mb-1 font-medium uppercase tracking-[0.4px]">Username</p><p class="text-[14px] font-semibold text-[#0f172a]">{{ selectedUser.username || '-' }}</p></div>
+          </div>
+          <div v-if="canArchive(selectedUser) && selectedUser.archived_at" class="pt-2 border-t border-[#f1f5f9] flex items-center justify-between gap-3">
+            <span class="text-[12px] text-amber-700 font-medium">Archived on {{ formatDate(selectedUser.archived_at) }}</span>
+            <button
+              type="button"
+              class="py-2 px-4 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-[13px] font-bold border-none cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+              @click="restoreAccount(selectedUser)"
+            >
+              <AppIcon name="rotate-ccw" class="w-4 h-4" />
+              <span>Restore Account</span>
+            </button>
           </div>
         </div>
       </div>
@@ -344,9 +404,14 @@ const endpoint = computed(() => isSuperAdmin.value ? '/admin/accounts' : '/admin
 const users = ref<any[]>([])
 const loading = ref(true)
 const selectedUser = ref<any>(null)
-const stats = ref<{ total: number, super_admins: number, admins: number, foragers: number } | null>(null)
-const filters = reactive({ search: '', role: '' })
+const stats = ref<{ total: number, super_admins?: number, admins?: number, foragers?: number, active_count?: number, archived_count?: number } | null>(null)
+const filters = reactive({ search: '', role: '', status: 'active' as 'active' | 'archived' })
 const pagination = reactive({ current_page: 1, last_page: 1, total: 0, from: 0, to: 0 })
+
+function setStatusTab(status: 'active' | 'archived') {
+  filters.status = status
+  fetchUsers(1)
+}
 
 // Form state
 const isModalOpen = ref(false)
@@ -397,6 +462,7 @@ async function fetchUsers(page = 1) {
   try {
     const query = new URLSearchParams({
       page: String(page),
+      status: filters.status,
       ...(filters.search && { search: filters.search }),
       ...(filters.role && { role: filters.role }),
     }).toString()
@@ -423,7 +489,7 @@ function isSelf(user: any) {
   return !!currentUser.value && currentUser.value.id === user.id
 }
 
-function canDelete(user: any) {
+function canArchive(user: any) {
   if (isSelf(user) || user.role === 'super_admin') return false
   return isSuperAdmin.value || user.role === 'forager'
 }
@@ -521,16 +587,44 @@ async function resendUserVerification(user: any) {
   }
 }
 
-async function confirmDelete(user: any) {
-  if (!confirm(`Permanently delete account for ${user.name}? This cannot be undone.`)) return
+async function confirmArchive(user: any) {
+  const { confirm } = useConfirm()
+  const ok = await confirm({
+    title: 'Archive Account?',
+    message: `Archive the account for ${user.name}? They will no longer be able to sign in until restored, while all scan history and billing records are safely preserved.`,
+    tone: 'warning',
+    confirmText: 'Archive Account',
+  })
+  if (!ok) return
   try {
-    await $fetch(`${config.public.apiBase}${endpoint.value}/${user.id}`, { method: 'DELETE', headers: getHeaders() })
-    toastSuccess(`Account for ${user.name} deleted.`)
-    // Step back a page if we just deleted the last row on a non-first page
+    await $fetch(`${config.public.apiBase}${endpoint.value}/${user.id}/archive`, { method: 'PUT', headers: getHeaders() })
+    toastSuccess(`Account for ${user.name} archived.`)
     const page = users.value.length === 1 && pagination.current_page > 1 ? pagination.current_page - 1 : pagination.current_page
     fetchUsers(page)
   } catch (err: any) {
-    toastError(err?.data?.message || 'Failed to delete account.')
+    toastError(err?.data?.message || 'Failed to archive account.')
+  }
+}
+
+async function restoreAccount(user: any) {
+  const { confirm } = useConfirm()
+  const ok = await confirm({
+    title: 'Restore Account?',
+    message: `Restore the account for ${user.name} (${user.email})? They will immediately regain sign-in access to their profile, scan history, and collection.`,
+    tone: 'info',
+    confirmText: 'Restore Account',
+  })
+  if (!ok) return
+  try {
+    await $fetch(`${config.public.apiBase}${endpoint.value}/${user.id}/restore`, { method: 'PUT', headers: getHeaders() })
+    toastSuccess(`Account for ${user.name} restored to active status.`)
+    if (selectedUser.value?.id === user.id) {
+      selectedUser.value = null
+    }
+    const page = users.value.length === 1 && pagination.current_page > 1 ? pagination.current_page - 1 : pagination.current_page
+    fetchUsers(page)
+  } catch (err: any) {
+    toastError(err?.data?.message || 'Failed to restore account.')
   }
 }
 
@@ -595,27 +689,6 @@ function toggleAll(e: Event) {
 }
 
 function openUser(user: any) { selectedUser.value = user }
-
-async function deleteUser(user: any) {
-  const { confirm } = useConfirm()
-  const ok = await confirm({
-    title: 'Delete this user?',
-    message: `${user.name} and all of their scans will be permanently deleted. This cannot be undone.`,
-    tone: 'danger',
-    confirmText: 'Delete User',
-  })
-  if (!ok) return
-  try {
-    await $fetch(`${config.public.apiBase}/admin/users/${user.id}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    })
-    toastSuccess(`User ${user.name} deleted successfully.`)
-    fetchUsers(pagination.current_page)
-  } catch (err: any) {
-    toastError(err?.data?.message || 'Failed to delete user.')
-  }
-}
 </script>
 
 <style scoped>

@@ -389,7 +389,7 @@ onMounted(async () => {
 
   const validated = await restoreAndValidateSession()
   if (!validated) {
-    await navigateTo('/login')
+    await navigateTo('/admin/login')
     return
   }
   adminName.value = validated.name || validated.username || 'Admin User'
@@ -469,7 +469,7 @@ async function handleLogout() {
     console.error('Logout error:', error)
   } finally {
     clearSession()
-    await navigateTo('/?login=admin')
+    await navigateTo('/admin/login')
   }
 }
 </script>

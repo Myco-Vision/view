@@ -155,13 +155,24 @@
           </div>
         </div>
 
-                <!-- Danger Zone -->
-        <div class="bg-[#fff8f8] border border-[#fecaca] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">
-          <p class="text-[14px] font-bold text-[#dc2626] flex items-center gap-[7px]">
-            <AppIcon name="warning" class="w-4 h-4 text-[#dc2626]" /> Danger Zone
+        <!-- Archive Account -->
+        <div class="bg-[#fffbeb] border border-[#fde68a] rounded-[14px] p-5 pb-4 flex flex-col gap-3.5">
+          <p class="text-[14px] font-bold text-[#d97706] flex items-center gap-[7px]">
+            <AppIcon name="archive" class="w-4 h-4 text-[#d97706]" /> Archive Account
           </p>
-          <p class="text-[12.5px] text-[#7f1d1d] leading-[1.6]">Once you delete your account, all your scans, collection, and history will be permanently removed. This cannot be undone.</p>
-          <button class="w-full sm:w-auto sm:self-start py-2.5 px-[22px] rounded-[9px] bg-[#dc2626] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer text-center transition-colors duration-[0.18s] hover:bg-[#b91c1c]" @click="deleteAccount">Delete Account</button>
+          <p class="text-[12.5px] text-[#92400e] leading-[1.6]">
+            Archiving your account will deactivate your sign-in access while safely preserving your scans, collection, and history. An authorization verification link will be sent to your email before your account is archived.
+          </p>
+          <div v-if="archiveLinkSentTo" class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[12.5px] leading-relaxed">
+            <strong>Authorization link sent!</strong> We sent a verification link to <strong>{{ archiveLinkSentTo }}</strong>. Click the link in your email within 60 minutes to complete archiving your account.
+          </div>
+          <button
+            class="w-full sm:w-auto sm:self-start py-2.5 px-[22px] rounded-[9px] bg-[#d97706] text-white border-none text-[13.5px] font-semibold font-sans cursor-pointer text-center transition-colors duration-[0.18s] hover:bg-[#b45309] inline-flex items-center justify-center gap-2"
+            @click="requestArchiveAccount"
+          >
+            <AppIcon name="archive" class="w-4 h-4" />
+            <span>{{ archiveLinkSentTo ? 'Resend Archive Verification Link' : 'Archive Account' }}</span>
+          </button>
         </div>
 
       </div>
@@ -283,20 +294,20 @@
     </div>
   </Teleport>
 
-  <!-- Delete account: password verification -->
-  <AppModal v-model="showDeleteModal" title="Confirm your password" subtitle="Enter your current password to permanently delete your account." size="sm" :persistent="isDeleting">
-    <form class="flex flex-col gap-3 py-2" @submit.prevent="submitDeleteAccount">
+  <!-- Archive account: password verification to send authorization link -->
+  <AppModal v-model="showArchiveModal" title="Authorize Account Archiving" subtitle="Enter your current password to send an archive verification link to your registered email address." size="sm" :persistent="isArchiving">
+    <form class="flex flex-col gap-3 py-2" @submit.prevent="submitArchiveAccountRequest">
       <input
-        v-model="deletePassword"
+        v-model="archivePassword"
         type="password"
         autocomplete="current-password"
         placeholder="Current password"
-        class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm outline-none focus:border-red-500"
+        class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm outline-none focus:border-amber-500"
       />
-      <p v-if="deleteError" class="text-xs text-red-600">{{ deleteError }}</p>
+      <p v-if="archiveError" class="text-xs text-red-600">{{ archiveError }}</p>
       <div class="flex justify-end gap-2 pt-1">
-        <button type="button" :disabled="isDeleting" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm border-none cursor-pointer" @click="showDeleteModal = false">Cancel</button>
-        <button type="submit" :disabled="isDeleting" class="px-4 py-2 rounded-lg bg-[#dc2626] text-white text-sm font-semibold border-none cursor-pointer disabled:opacity-60">{{ isDeleting ? 'Deleting…' : 'Delete Account' }}</button>
+        <button type="button" :disabled="isArchiving" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm border-none cursor-pointer" @click="showArchiveModal = false">Cancel</button>
+        <button type="submit" :disabled="isArchiving" class="px-4 py-2 rounded-lg bg-[#d97706] hover:bg-[#b45309] text-white text-sm font-semibold border-none cursor-pointer disabled:opacity-60">{{ isArchiving ? 'Sending Link…' : 'Send Verification Link' }}</button>
       </div>
     </form>
   </AppModal>
@@ -901,77 +912,55 @@ async function exportData() {
   }
 }
 
-async function deleteAccount() {
+async function requestArchiveAccount() {
   const { confirm } = useConfirm()
 
-  // Check the live subscription state (cached user may be stale) so we can warn about it
-  let subscribed = false
-  let tier = ''
-  try {
-    const token = localStorage.getItem('token') || useCookie('token').value
-    const config = useRuntimeConfig()
-    const me: any = await $fetch(`${config.public.apiBase}/me`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    })
-    subscribed = !!me.is_subscribed && !['admin', 'free'].includes(me.subscription_tier)
-    tier = me.subscription_tier || ''
-  } catch {
-    const cached = JSON.parse(localStorage.getItem('user') || '{}')
-    subscribed = !!cached.is_subscribed && !['admin', 'free'].includes(cached.subscription_tier)
-    tier = cached.subscription_tier || ''
-  }
-
-  const baseMsg = 'All your scans, collection, and history will be permanently removed. This cannot be undone.'
-  const subWarning = subscribed
-    ? ' Your Premium plan will end immediately and is Not Refundable.'
-    : ''
+  const baseMsg = 'We will send an authorization verification link to your registered email address. Your account will only be archived after you click that verification link.'
   const ok = await confirm({
-    title: 'Delete your account?',
-    message: baseMsg + subWarning,
-    emphasis: subscribed ? 'Not Refundable' : undefined,
-    tone: 'danger',
-    confirmText: 'Delete My Account',
-    requireText: 'DELETE',
+    title: 'Archive your account?',
+    message: baseMsg,
+    tone: 'warning',
+    confirmText: 'Continue',
   })
   if (!ok) return
-  deletePassword.value = ''
-  deleteError.value = ''
-  showDeleteModal.value = true
+  archivePassword.value = ''
+  archiveError.value = ''
+  showArchiveModal.value = true
 }
 
-const showDeleteModal = ref(false)
-const deletePassword = ref('')
-const deleteError = ref('')
-const isDeleting = ref(false)
+const showArchiveModal = ref(false)
+const archivePassword = ref('')
+const archiveError = ref('')
+const isArchiving = ref(false)
+const archiveLinkSentTo = ref('')
 
-async function submitDeleteAccount() {
-  if (!deletePassword.value) {
-    deleteError.value = 'Please enter your current password.'
+async function submitArchiveAccountRequest() {
+  if (!archivePassword.value) {
+    archiveError.value = 'Please enter your current password.'
     return
   }
   const token = localStorage.getItem('token') || useCookie('token').value
   if (!token) {
-    deleteError.value = 'No authentication token found. Please log in again.'
+    archiveError.value = 'No authentication token found. Please log in again.'
     return
   }
   const config = useRuntimeConfig()
-  isDeleting.value = true
-  deleteError.value = ''
+  isArchiving.value = true
+  archiveError.value = ''
   try {
-    await $fetch(`${config.public.apiBase}/user`, {
-      method: 'DELETE',
+    const res = await $fetch<{ message?: string; email?: string }>(`${config.public.apiBase}/user/archive-request`, {
+      method: 'POST',
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-      body: { password: deletePassword.value },
+      body: { password: archivePassword.value },
     })
-    clearSession()
-    showDeleteModal.value = false
-    useToast().success('Your account has been deleted.')
-    await navigateTo('/login')
+    showArchiveModal.value = false
+    archiveLinkSentTo.value = res?.email || userProfile.email
+    useToast().success(res?.message || 'Archive verification link sent to your email!')
   } catch (err: any) {
-    deleteError.value =
-      err?.data?.errors?.password?.[0] || err?.data?.message || 'Failed to delete account. Please try again.'
+    archiveError.value =
+      err?.data?.errors?.password?.[0] || err?.data?.message || 'Failed to send archive verification link. Please try again.'
   } finally {
-    isDeleting.value = false
+    isArchiving.value = false
   }
 }
 

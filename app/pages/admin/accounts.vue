@@ -125,8 +125,8 @@
                     <button class="w-[32px] h-[32px] rounded-[8px] border border-[#e2e8f0] bg-white cursor-pointer text-[#64748b] flex items-center justify-center transition-colors hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200" title="Edit account" @click="openEditModal(user)">
                       <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     </button>
-                    <button v-if="!isSelf(user) && user.role !== 'super_admin'" class="w-[32px] h-[32px] rounded-[8px] border border-[#e2e8f0] bg-white cursor-pointer text-[#64748b] flex items-center justify-center transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200" title="Delete account" @click="confirmDelete(user)">
-                      <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    <button v-if="!isSelf(user) && user.role !== 'super_admin'" class="w-[32px] h-[32px] rounded-[8px] border border-[#e2e8f0] bg-white cursor-pointer text-[#d97706] flex items-center justify-center transition-colors hover:bg-[#fef3c7] hover:border-[#fde68a]" title="Archive account" @click="confirmArchive(user)">
+                      <AppIcon name="archive" class="w-4 h-4 text-[#d97706]" />
                     </button>
                   </div>
                 </td>
@@ -549,24 +549,24 @@ async function resendUserVerification(user: any) {
   }
 }
 
-// Delete
-async function confirmDelete(user: any) {
+// Archive
+async function confirmArchive(user: any) {
   const ok = await confirm({
-    title: 'Permanently delete account?',
-    message: `The account for ${user.name} will be deleted. This cannot be undone.`,
-    tone: 'danger',
-    confirmText: 'Delete Account',
+    title: 'Archive account?',
+    message: `Archive the account for ${user.name}? They will no longer be able to sign in until restored, while all scan history and billing records are safely preserved.`,
+    tone: 'warning',
+    confirmText: 'Archive Account',
   })
   if (!ok) return
   try {
-    await $fetch(`${config.public.apiBase}/admin/accounts/${user.id}`, {
-      method: 'DELETE',
+    await $fetch(`${config.public.apiBase}/admin/accounts/${user.id}/archive`, {
+      method: 'PUT',
       headers: getHeaders()
     })
-    toastSuccess(`Account for ${user.name} deleted.`)
+    toastSuccess(`Account for ${user.name} archived.`)
     fetchAccounts(pagination.current_page)
   } catch (err: any) {
-    toastError(err?.data?.message || 'Failed to delete account.')
+    toastError(err?.data?.message || 'Failed to archive account.')
   }
 }
 

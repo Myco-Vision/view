@@ -388,12 +388,33 @@
                   </span>
                 </td>
                 <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
-                  <button
-                    class="py-1.5 px-3 rounded-lg bg-[#10b981] text-white text-[12px] font-semibold border-none cursor-pointer hover:bg-[#059669] transition-colors inline-flex items-center gap-1"
-                    @click="openPromoteModal(scan)"
-                  >
-                    <AppIcon name="plus" class="w-3.5 h-3.5" /><span>Add to Species DB</span>
-                  </button>
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <button
+                      class="py-1.5 px-3 rounded-lg bg-[#10b981] text-white text-[12px] font-semibold border-none cursor-pointer hover:bg-[#059669] transition-colors inline-flex items-center gap-1"
+                      @click="openPromoteModal(scan)"
+                    >
+                      <AppIcon name="plus" class="w-3.5 h-3.5" /><span>Add to Species DB</span>
+                    </button>
+                    <button
+                      v-if="!isQueuedForRetrain(scan)"
+                      type="button"
+                      class="py-1.5 px-3 rounded-lg bg-[#0f172a] text-white text-[12px] font-semibold border-none cursor-pointer hover:bg-[#1e293b] transition-colors inline-flex items-center gap-1 disabled:opacity-50"
+                      :disabled="queuingScanId === scan.id"
+                      title="Approve and add this scan directly to the AI Model Retraining dataset"
+                      @click="queueScanForRetrain(scan)"
+                    >
+                      <AppIcon name="brain" class="w-3.5 h-3.5" />
+                      <span>{{ queuingScanId === scan.id ? 'Queuing…' : 'Add to AI Retrain' }}</span>
+                    </button>
+                    <span
+                      v-else
+                      class="py-1 px-2.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-[11.5px] font-semibold inline-flex items-center gap-1"
+                      title="This scan is already queued in the AI Model Retraining module"
+                    >
+                      <AppIcon name="check-circle" class="w-3.5 h-3.5 text-emerald-600" />
+                      <span>In Retrain Queue</span>
+                    </span>
+                  </div>
                 </td>
               </tr>
             </template>
@@ -404,6 +425,7 @@
 
     <!-- Tab 3: AI Model Retraining -->
     <AdminRetrainPanel
+      ref="retrainPanelRef"
       v-show="activeTab === 'retrain'"
       @update:count="retrainCount = $event"
       @update:state="retrainState = $event"
@@ -805,8 +827,16 @@ function parseTab(val: unknown): SpeciesTab {
   return val === 'candidates' || val === 'retrain' ? val : 'verified'
 }
 const activeTab = ref<SpeciesTab>(parseTab(route.query.tab))
+const retrainPanelRef = ref<any>(null)
+const queuingScanId = ref<number | null>(null)
+
 watch(() => route.query.tab, (t) => {
   activeTab.value = parseTab(t)
+})
+watch(activeTab, (tab) => {
+  if (tab === 'retrain') {
+    retrainPanelRef.value?.refreshAll?.()
+  }
 })
 function selectTab(tab: SpeciesTab) {
   activeTab.value = tab
@@ -866,7 +896,42 @@ interface ScanCandidate {
   image_path: string
   image_url?: string
   created_at: string
+  retrained_at?: string | null
   user?: { id: number; name: string; email: string }
+  contribution?: { id: number; annotation_status: string; verified_species?: string | null } | null
+}
+
+function isQueuedForRetrain(scan: ScanCandidate): boolean {
+  const validCls = scan.result_classification === 'edible' || scan.result_classification === 'poisonous'
+  if (!validCls || scan.retrained_at) return false
+  if (!scan.contribution) return true
+  return scan.contribution.annotation_status === 'approved'
+}
+
+async function queueScanForRetrain(scan: ScanCandidate) {
+  queuingScanId.value = scan.id
+  try {
+    const res = await $fetch<any>(`${config.public.apiBase}/admin/retrain/queue-scan`, {
+      method: 'POST',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: {
+        scan_id: scan.id,
+        classification: ['edible', 'poisonous'].includes(scan.result_classification) ? scan.result_classification : 'edible',
+        species_name: scan.result_name || 'Verified Mushroom',
+      },
+    })
+    const idx = candidateScans.value.findIndex(c => c.id === scan.id)
+    if (idx !== -1 && res?.scan) {
+      candidateScans.value[idx] = res.scan
+    }
+    await retrainPanelRef.value?.refreshAll?.()
+    retrainPanelRef.value?.showVerifiedTab?.()
+    toast.success(res?.message || 'Candidate scan queued in AI Model Retraining!')
+  } catch (err: any) {
+    toast.error(err?.data?.message || 'Failed to add scan to AI retraining queue.')
+  } finally {
+    queuingScanId.value = null
+  }
 }
 
 const species = ref<Species[]>([])
@@ -1287,9 +1352,11 @@ async function saveSpecies() {
     closeModal()
     fetchVerifiedSpecies()
     if (promotedScanId) {
-      // Remove the promoted scan so it can't be promoted twice
+      // Remove the promoted scan so it can't be promoted twice and refresh the AI Retraining module
       candidateScans.value = candidateScans.value.filter(c => c.id !== promotedScanId)
-      toast.success('Candidate scan successfully promoted & saved to Species DB!')
+      await retrainPanelRef.value?.refreshAll?.()
+      retrainPanelRef.value?.showVerifiedTab?.()
+      toast.success('Candidate scan promoted to Species DB & added to AI Model Retraining queue!')
     } else {
       toast.success(wasEditing ? 'Species updated.' : 'New specimen added to MycoDex!')
     }

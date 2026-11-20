@@ -2410,6 +2410,17 @@ async function refreshAll() {
   await Promise.all([fetchCandidates(), fetchStatus(), fetchPendingAnnotations()])
 }
 
+function showVerifiedTab() {
+  retrainSectionTab.value = 'verified'
+  queueView.value = 'ready'
+}
+
+defineExpose({
+  refreshAll,
+  fetchCandidates,
+  showVerifiedTab,
+})
+
 async function refreshMlService() {
   refreshingMl.value = true
   try {

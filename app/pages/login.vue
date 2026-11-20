@@ -7,10 +7,14 @@ const route = useRoute()
 onMounted(() => {
   const redirect = String(route.query.redirect || '')
   const roleQuery = (route.query.role || route.query.login) as string
-  const role = roleQuery === 'admin' || redirect.startsWith('/admin') ? 'admin' : 'user'
+  if (roleQuery === 'admin' || redirect.startsWith('/admin')) {
+    const adminTarget = redirect ? `/admin/login?redirect=${encodeURIComponent(redirect)}` : '/admin/login'
+    navigateTo(adminTarget, { replace: true })
+    return
+  }
   const target = redirect
-    ? `/?login=${role}&redirect=${encodeURIComponent(redirect)}`
-    : `/?login=${role}`
+    ? `/?login=user&redirect=${encodeURIComponent(redirect)}`
+    : '/?login=user'
   navigateTo(target, { replace: true })
 })
 </script>
