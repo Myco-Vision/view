@@ -1333,6 +1333,8 @@ async function analyzeImage() {
     mycodexReward.value = data.mycodex_reward || null
     if (data.reward?.points_earned > 0) {
       setStatus(`+${data.reward.points_earned} reward points earned for contributing your scan!`)
+    } else if (data.already_unlocked) {
+      setStatus('Specimen identified! Already unlocked in your MycoDex (+0 duplicate discovery points).')
     }
 
     // Show consent modal once after the first successful scan
