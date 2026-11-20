@@ -1165,7 +1165,13 @@
                     v-if="group.match_type === 'exact' || (group.match_types && group.match_types.includes('exact'))"
                     class="px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#e0f2fe] text-[#0369a1]"
                   >
-                    Exact MD5
+                    Exact Match
+                  </span>
+                  <span
+                    v-else-if="group.match_type === 'specimen'"
+                    class="px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#fef3c7] text-[#92400e]"
+                  >
+                    Same Specimen
                   </span>
                   <span
                     v-else
