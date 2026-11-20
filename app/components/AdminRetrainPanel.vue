@@ -354,11 +354,17 @@
                 ✕
               </button>
             </div>
-            <p v-if="lastResult" class="text-[12.5px] text-[#64748b]">
+            <p v-if="retrainState === 'running'" class="text-[12.5px] text-[#92400e]">
+              Fine-tuning classifier with <strong>{{ totalSelected > 0 ? totalSelected : summary.total }}</strong> candidate scans
+              ({{ edibleSelected.length > 0 ? edibleSelected.length : summary.edible_count }} edible, {{ poisonousSelected.length > 0 ? poisonousSelected.length : summary.poisonous_count }} poisonous)...
+            </p>
+            <p v-else-if="retrainState === 'done' && lastResult" class="text-[12.5px] text-[#065f46]">
               Train accuracy: <strong>{{ lastResult.train_accuracy }}%</strong> ·
               Val accuracy: <strong>{{ lastResult.val_accuracy }}%</strong> ·
-              {{ lastResult.total_images }} images used
-              ({{ lastResult.total_edible }} edible, {{ lastResult.total_poisonous }} poisonous)
+              {{ lastResult.total_images || ((lastResult.total_edible || 0) + (lastResult.total_poisonous || 0)) }} total dataset images
+              <span v-if="(lastResult.new_edible ?? 0) + (lastResult.new_poisonous ?? 0) > 0" class="font-medium text-emerald-800">
+                (+{{ (lastResult.new_edible ?? 0) + (lastResult.new_poisonous ?? 0) }} newly trained: {{ lastResult.new_edible ?? 0 }} edible, {{ lastResult.new_poisonous ?? 0 }} poisonous)
+              </span>
             </p>
             <p v-if="statusError" class="text-[12.5px] text-[#ef4444] font-mono">{{ statusError }}</p>
             <div v-if="retrainState === 'unknown'" class="mt-2">
@@ -2299,7 +2305,11 @@ async function fetchStatus() {
     const current = data.current || { state: 'idle' }
     retrainState.value = current.state
     statusError.value = current.error ?? null
-    if (current.last_result) lastResult.value = current.last_result
+    if (current.state === 'running') {
+      lastResult.value = null
+    } else if (current.last_result) {
+      lastResult.value = current.last_result
+    }
     history.value = data.history ?? []
     archivedHistory.value = data.archived_history ?? []
 
@@ -2833,6 +2843,7 @@ async function startRetrain() {
 
   retrainState.value = 'running'
   statusError.value = null
+  lastResult.value = null
 
   try {
     await $fetch(`${api}/admin/retrain`, {
