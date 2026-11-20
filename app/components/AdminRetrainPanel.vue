@@ -1630,11 +1630,13 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Upload Mushroom Images from Computer Modal -->
+  <!-- Upload Mushroom Images from Computer Modal -->
+  <Teleport to="body">
     <div
       v-if="showUploadModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs"
+      class="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs"
       @click.self="closeUploadModal"
     >
       <div class="bg-white rounded-2xl shadow-2xl border border-[#e2e8f0] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
@@ -1736,6 +1738,7 @@
                 multiple
                 accept="image/jpeg,image/png,image/jpg,image/webp"
                 class="hidden"
+                @click.stop
                 @change="handleFileSelect"
               />
               <div class="w-12 h-12 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center text-[#64748b] shadow-2xs">
@@ -1818,7 +1821,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </Teleport>
 </div>
 </template>
 
@@ -2189,7 +2192,10 @@ const statusMessage = computed(() => {
 })
 
 function authHeaders() {
-  return { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  return {
+    Authorization: `Bearer ${localStorage.getItem('token')}`,
+    Accept: 'application/json',
+  }
 }
 
 function getImageUrl(path?: string): string {
@@ -2680,8 +2686,9 @@ function triggerFileInput() {
 
 function handleFileSelect(e: Event) {
   const target = e.target as HTMLInputElement
-  if (target.files) {
+  if (target.files && target.files.length > 0) {
     addFiles(Array.from(target.files))
+    target.value = ''
   }
 }
 
