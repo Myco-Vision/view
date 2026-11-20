@@ -22,7 +22,12 @@
           <option value="week">This Week</option>
           <option value="month">This Month</option>
         </select>
-        <button class="w-full sm:w-auto justify-center py-2 px-4 rounded-lg bg-[#0f172a] text-white border-none text-[13px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed" :disabled="scans.length === 0" title="Exports the scans shown on this page" @click="exportCSV">⬇ Export Page CSV</button>
+        <button class="w-full sm:w-auto justify-center py-2 px-3.5 rounded-lg bg-[#0f172a] text-white border-none text-[13px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1.5" :disabled="scans.length === 0" title="Exports the scans shown on this page as CSV including image URLs" @click="exportCSV">
+          <span>⬇ Export CSV</span>
+        </button>
+        <button class="w-full sm:w-auto justify-center py-2 px-3.5 rounded-lg bg-[#059669] text-white border-none text-[13px] font-semibold font-sans cursor-pointer transition-opacity duration-[0.18s] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1.5" :disabled="scans.length === 0 || exportingWithImages" title="Exports an Excel (.xls) sheet with embedded scan images" @click="exportExcelWithImages">
+          <span>{{ exportingWithImages ? 'Preparing Images…' : '🖼 Export with Images (.xls)' }}</span>
+        </button>
       </div>
     </div>
 
@@ -174,10 +179,14 @@ const pagination = reactive({ current_page: 1, last_page: 1, total: 0, from: 0, 
 // Aggregate stats — populated from API meta if available, else approximate from current page
 const aggregateStats = reactive({ edible: 0, poisonous: 0, unknown: 0, avg_confidence: 0 })
 
-const edibleCount    = computed(() => aggregateStats.edible)
-const poisonousCount = computed(() => aggregateStats.poisonous)
-const unknownCount   = computed(() => aggregateStats.unknown)
-const avgConfidence  = computed(() => aggregateStats.avg_confidence)
+const edibleCount    = computed(() => Number(aggregateStats.edible) || 0)
+const poisonousCount = computed(() => Number(aggregateStats.poisonous) || 0)
+const unknownCount   = computed(() => Number(aggregateStats.unknown) || 0)
+const avgConfidence  = computed(() => {
+  const val = Number(aggregateStats.avg_confidence)
+  return Number.isFinite(val) ? Math.round(val * 10) / 10 : 0
+})
+const exportingWithImages = ref(false)
 
 const getHeaders = () => {
   const token = localStorage.getItem('token')
@@ -216,16 +225,20 @@ async function fetchScans(page = 1) {
     pagination.to = res.to
     // Populate aggregate stats from API meta if available, else fall back to page totals
     if (res.meta) {
-      aggregateStats.edible         = res.meta.edible_count    ?? 0
-      aggregateStats.poisonous      = res.meta.poisonous_count ?? 0
-      aggregateStats.unknown        = res.meta.unknown_count   ?? 0
-      aggregateStats.avg_confidence = res.meta.avg_confidence  ?? 0
+      aggregateStats.edible         = Number(res.meta.edible_count)    || 0
+      aggregateStats.poisonous      = Number(res.meta.poisonous_count) || 0
+      aggregateStats.unknown        = Number(res.meta.unknown_count)   || 0
+      const metaAvg = Number(res.meta.avg_confidence)
+      aggregateStats.avg_confidence = Number.isFinite(metaAvg) ? Math.round(metaAvg * 10) / 10 : 0
     } else {
       aggregateStats.edible         = scans.value.filter((s: any) => s.result_classification === 'edible').length
       aggregateStats.poisonous      = scans.value.filter((s: any) => s.result_classification === 'poisonous').length
       aggregateStats.unknown        = scans.value.filter((s: any) => !s.result_classification || s.result_classification === 'unknown').length
-      const total = scans.value.reduce((a: number, s: any) => a + (s.confidence_level || 0), 0)
-      aggregateStats.avg_confidence = scans.value.length ? Math.round(total / scans.value.length) : 0
+      const total = scans.value.reduce((a: number, s: any) => {
+        const conf = Number(s.confidence_level)
+        return a + (Number.isFinite(conf) ? conf : 0)
+      }, 0)
+      aggregateStats.avg_confidence = scans.value.length ? Math.round((total / scans.value.length) * 10) / 10 : 0
     }
   } catch (error: any) {
     if (myId !== requestId) return
@@ -277,18 +290,30 @@ function csvCell(v: unknown, numeric = false) {
   return `"${s.replace(/"/g, '""')}"`
 }
 
+function resolveScanImageUrl(s: any): string {
+  const raw = s?.image_url || s?.image_path || ''
+  if (!raw) return ''
+  return getImageUrl(raw)
+}
+
 function exportCSV() {
-  const headers = ['ID', 'User', 'Species', 'Classification', 'Confidence', 'Latitude', 'Longitude', 'Date']
-  const rows = scans.value.map(s => [
-    csvCell(s.id, true),
-    csvCell(s.user?.name || 'Unknown'),
-    csvCell(s.species?.name || s.result_name || 'Unknown'),
-    csvCell(s.result_classification || 'unknown'),
-    csvCell(Math.round(s.confidence_level || 0), true),
-    csvCell(hasCoords(s) ? Number(s.latitude).toFixed(4) : '', true),
-    csvCell(hasCoords(s) ? Number(s.longitude).toFixed(4) : '', true),
-    csvCell(s.created_at),
-  ].join(','))
+  const headers = ['ID', 'User', 'Species', 'Classification', 'Confidence (%)', 'Latitude', 'Longitude', 'Location Name', 'Image URL', 'Date']
+  const rows = scans.value.map(s => {
+    const imgUrl = resolveScanImageUrl(s)
+    const conf = Number(s.confidence_level)
+    return [
+      csvCell(s.id, true),
+      csvCell(s.user?.name || 'Unknown'),
+      csvCell(s.species?.name || s.result_name || 'Unknown'),
+      csvCell(s.result_classification || 'unknown'),
+      csvCell(Number.isFinite(conf) ? Math.round(conf) : 0, true),
+      csvCell(hasCoords(s) ? Number(s.latitude).toFixed(4) : '', true),
+      csvCell(hasCoords(s) ? Number(s.longitude).toFixed(4) : '', true),
+      csvCell(s.location_name || ''),
+      csvCell(imgUrl),
+      csvCell(s.created_at),
+    ].join(',')
+  })
   // BOM so Excel reads UTF-8 names correctly
   const csv = '\uFEFF' + [headers.map(h => csvCell(h)).join(','), ...rows].join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
@@ -298,5 +323,105 @@ function exportCSV() {
   a.download = `scans_export_${new Date().toISOString().slice(0, 10)}.csv`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+async function fetchImageAsDataUrl(url: string): Promise<string> {
+  if (!url) return ''
+  try {
+    const resp = await fetch(url, { mode: 'cors' })
+    if (!resp.ok) return url
+    const blob = await resp.blob()
+    return await new Promise<string>((resolve) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(typeof reader.result === 'string' ? reader.result : url)
+      reader.onerror = () => resolve(url)
+      reader.readAsDataURL(blob)
+    })
+  } catch {
+    return url
+  }
+}
+
+function escapeHtml(v: unknown): string {
+  return String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+async function exportExcelWithImages() {
+  if (scans.value.length === 0 || exportingWithImages.value) return
+  exportingWithImages.value = true
+  try {
+    const rowsHtml = await Promise.all(
+      scans.value.map(async (s) => {
+        const imgUrl = resolveScanImageUrl(s)
+        const embeddedSrc = imgUrl ? await fetchImageAsDataUrl(imgUrl) : ''
+        const conf = Number(s.confidence_level)
+        const confVal = Number.isFinite(conf) ? Math.round(conf) : 0
+        const coords = hasCoords(s) ? `${Number(s.latitude).toFixed(4)}, ${Number(s.longitude).toFixed(4)}` : '—'
+        const imgCell = embeddedSrc
+          ? `<a href="${escapeHtml(imgUrl)}" target="_blank"><img src="${escapeHtml(embeddedSrc)}" width="72" height="72" style="width:72px;height:72px;object-fit:cover;border-radius:6px;" /></a>`
+          : 'No Image'
+
+        return `<tr style="height:82px;vertical-align:middle;">
+          <td style="text-align:center;">${escapeHtml(s.id)}</td>
+          <td style="text-align:center;width:84px;">${imgCell}</td>
+          <td>${escapeHtml(s.user?.name || 'Unknown')}</td>
+          <td><i>${escapeHtml(s.species?.name || s.result_name || 'Unknown')}</i></td>
+          <td style="text-transform:capitalize;">${escapeHtml(s.result_classification || 'unknown')}</td>
+          <td style="text-align:right;">${confVal}%</td>
+          <td>${escapeHtml(coords)}</td>
+          <td>${escapeHtml(s.location_name || '—')}</td>
+          <td>${ imgUrl ? `<a href="${escapeHtml(imgUrl)}">${escapeHtml(imgUrl)}</a>` : '—' }</td>
+          <td>${escapeHtml(formatDate(s.created_at))}</td>
+        </tr>`
+      })
+    )
+
+    const html = `\uFEFF<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8" />
+        <style>
+          table { border-collapse: collapse; font-family: Segoe UI, Arial, sans-serif; font-size: 12px; }
+          th { background-color: #065f46; color: #ffffff; font-weight: bold; padding: 8px 10px; border: 1px solid #cbd5e1; text-align: left; }
+          td { padding: 6px 10px; border: 1px solid #cbd5e1; vertical-align: middle; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Scan Photo</th>
+              <th>User</th>
+              <th>Species Identified</th>
+              <th>Classification</th>
+              <th>Confidence</th>
+              <th>Coordinates</th>
+              <th>Location Name</th>
+              <th>Image URL</th>
+              <th>Date &amp; Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml.join('\n')}
+          </tbody>
+        </table>
+      </body>
+    </html>`
+
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `scans_with_images_${new Date().toISOString().slice(0, 10)}.xls`
+    a.click()
+    URL.revokeObjectURL(url)
+  } finally {
+    exportingWithImages.value = false
+  }
 }
 </script>

@@ -1,8 +1,12 @@
 export default defineNuxtRouteMiddleware((to) => {
   if (import.meta.server) return
+  if (to.path === '/admin/login') return
 
   const { getToken, getRole } = useAuthSession()
   if (!getToken()) {
+    if (to.path.startsWith('/admin')) {
+      return navigateTo('/admin/login')
+    }
     return navigateTo('/login')
   }
 

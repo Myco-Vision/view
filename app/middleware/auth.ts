@@ -7,9 +7,15 @@ export default defineNuxtRouteMiddleware((to) => {
   const role  = getRole()
   const user  = getUser()
 
-  // No token → redirect to landing page login modal
+  // Public auth routes
+  if (to.path === '/admin/login' || to.path === '/confirm-archive') return
+
+  // No token → redirect to appropriate login page
   if (!token) {
     if (to.path === '/' || to.path === '/login') return
+    if (to.path.startsWith('/admin')) {
+      return navigateTo('/admin/login')
+    }
     return navigateTo('/?login=user')
   }
 
@@ -20,6 +26,6 @@ export default defineNuxtRouteMiddleware((to) => {
 
   // Admin routes require admin or super_admin role
   if (to.path.startsWith('/admin') && role !== 'admin' && role !== 'super_admin') {
-    return navigateTo('/?login=admin')
+    return navigateTo('/admin/login')
   }
 })

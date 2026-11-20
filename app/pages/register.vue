@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-[#07120e] flex items-center justify-center px-4 py-8">
-    <div class="relative w-full max-w-lg bg-[#0d221b] border border-emerald-700/30 rounded-3xl shadow-2xl shadow-black/60 p-6 sm:p-8 overflow-hidden">
+    <div ref="registerCardRef" class="relative w-full max-w-lg bg-[#0d221b] border border-emerald-700/30 rounded-3xl shadow-2xl shadow-black/60 p-6 sm:p-8 overflow-hidden">
 
       <!-- Ambient top-right glow -->
       <div class="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -35,7 +35,7 @@
       <div v-if="step === 1" class="relative flex flex-col gap-4">
 
         <!-- Error Banner -->
-        <div v-if="error" class="flex items-start gap-2.5 p-3 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs">
+        <div v-if="error" ref="errorBannerRef" class="flex items-start gap-2.5 p-3 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs">
           <svg class="w-4 h-4 shrink-0 text-red-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
@@ -362,7 +362,7 @@
         </button>
 
         <!-- Error Banner -->
-        <div v-if="error" class="flex items-start gap-2.5 p-3 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs">
+        <div v-if="error" ref="errorBannerRef" class="flex items-start gap-2.5 p-3 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs">
           <svg class="w-4 h-4 shrink-0 text-red-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
@@ -572,6 +572,32 @@ const showConfirm = ref(false)
 const loading = ref(false)
 const googleLoading = ref(false)
 const error = ref('')
+const registerCardRef = ref<HTMLElement | null>(null)
+const errorBannerRef = ref<HTMLElement | null>(null)
+
+function scrollToTopOrError() {
+  if (typeof window === 'undefined') return
+  nextTick(() => {
+    const target = errorBannerRef.value || registerCardRef.value
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
+}
+
+watch(error, (val) => {
+  if (val) scrollToTopOrError()
+})
+
+watch(step, () => {
+  if (typeof window !== 'undefined') {
+    nextTick(() => {
+      registerCardRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+})
 
 // Terms & Agreement popup state
 const agreedToTerms = ref(false)

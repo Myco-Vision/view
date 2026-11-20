@@ -5,7 +5,10 @@ definePageMeta({ middleware: [] })
 const route = useRoute()
 
 onMounted(() => {
-  const role = (route.query.role as string) === 'admin' ? 'admin' : 'user'
-  navigateTo(`/?login=${role}`, { replace: true })
+  if ((route.query.role as string) === 'admin') {
+    navigateTo('/admin/login', { replace: true })
+    return
+  }
+  navigateTo('/?login=user', { replace: true })
 })
 </script>

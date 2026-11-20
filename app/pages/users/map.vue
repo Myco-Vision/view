@@ -4,7 +4,7 @@
     <div>
       <h1 class="text-2xl font-extrabold text-white tracking-tight">Foraging Map</h1>
       <p class="text-sm text-emerald-100/75 mt-0.5">
-        Explore your geotagged mushroom finds and record field journal notes.
+        Explore your geotagged mushroom finds across the map.
       </p>
     </div>
 
@@ -82,15 +82,6 @@
       </button>
     </div>
 
-    <!-- Relocate Pin Mode Banner -->
-    <div
-      v-if="relocateScanId"
-      class="rounded-xl bg-amber-50 border border-amber-300 px-4 py-2.5 text-xs font-semibold text-amber-900 flex items-center justify-between"
-    >
-      <span>Click anywhere on the map to move this scan's pin.</span>
-      <button @click="relocateScanId = null" class="underline font-bold cursor-pointer">Cancel</button>
-    </div>
-
     <!-- Map + Detail Drawer Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
       <!-- Leaflet Map Container -->
@@ -102,7 +93,6 @@
           <div
             ref="mapEl"
             class="w-full h-[380px] sm:h-[560px] z-0"
-            :class="{ 'cursor-crosshair': !!relocateScanId }"
           />
           <template #fallback>
             <div class="w-full h-[380px] sm:h-[560px] bg-slate-100 animate-pulse flex items-center justify-center text-sm text-slate-400">
@@ -189,45 +179,6 @@
           <p><strong class="text-slate-800">Location:</strong> {{ selectedPin.location_name || `${selectedPin.latitude.toFixed(4)}, ${selectedPin.longitude.toFixed(4)}` }}</p>
           <p><strong class="text-slate-800">Spotted:</strong> {{ formatDate(selectedPin.created_at) }}</p>
         </div>
-
-        <!-- Field Journal Notes -->
-        <div class="pt-3 border-t border-slate-100 space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Field Journal Notes</label>
-            <textarea
-              v-model="detailForm.notes"
-              rows="3"
-              placeholder="Substrate, weather, gill color, nearby trees..."
-              class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          <div class="flex flex-wrap gap-2">
-            <button
-              @click="savePinDetails"
-              :disabled="savingDetails"
-              class="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold transition cursor-pointer"
-            >
-              {{ savingDetails ? 'Saving...' : 'Save Notes' }}
-            </button>
-            <button
-              @click="relocateScanId = selectedPin.id"
-              class="py-2 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
-            >
-              Move Pin
-            </button>
-          </div>
-          <p v-if="detailSavedMsg" class="text-[11px] font-semibold text-emerald-600">{{ detailSavedMsg }}</p>
-        </div>
-
-        <a
-          :href="`https://www.google.com/maps/search/?api=1&query=${selectedPin.latitude},${selectedPin.longitude}`"
-          target="_blank"
-          rel="noopener"
-          class="block w-full text-center py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold no-underline transition"
-        >
-          Open in Google Maps ↗
-        </a>
       </div>
     </div>
   </div>
@@ -250,13 +201,6 @@ const loading = ref(true)
 const allPins = ref<Array<any>>([])
 const selectedPin = ref<any>(null)
 const selectedSpotScans = ref<Array<any>>([])
-const relocateScanId = ref<number | null>(null)
-
-const savingDetails = ref(false)
-const detailSavedMsg = ref('')
-const detailForm = ref({
-  notes: '',
-})
 
 const filters = ref({
   search: '',
@@ -295,10 +239,6 @@ function selectPin(pin: any, spotScans?: Array<any>) {
   selectedPin.value = pin
   if (spotScans) {
     selectedSpotScans.value = spotScans
-  }
-  detailSavedMsg.value = ''
-  detailForm.value = {
-    notes: pin.notes || '',
   }
 }
 
@@ -406,67 +346,6 @@ function renderMarkers() {
   }
 }
 
-async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
-    if (!res.ok) return null
-    const json = await res.json()
-    return json?.display_name ? String(json.display_name).split(',').slice(0, 3).join(', ') : null
-  } catch {
-    return null
-  }
-}
-
-async function handleMapClick(lat: number, lng: number) {
-  const scanId = relocateScanId.value
-  if (!scanId) return
-
-  try {
-    const token = localStorage.getItem('token')
-    const placeName = await reverseGeocode(lat, lng)
-    await $fetch(`${config.public.apiBase}/scans/${scanId}/location`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}` },
-      body: {
-        latitude: lat,
-        longitude: lng,
-        location_name: placeName,
-        location_source: 'manual',
-      },
-    })
-    relocateScanId.value = null
-    await loadMapData()
-    const updated = allPins.value.find(p => p.id === scanId)
-    if (updated) selectPin(updated)
-  } catch (e) {
-    console.error('Failed to update scan location', e)
-  }
-}
-
-async function savePinDetails() {
-  if (!selectedPin.value) return
-  savingDetails.value = true
-  detailSavedMsg.value = ''
-  try {
-    const token = localStorage.getItem('token')
-    const updated: any = await $fetch(`${config.public.apiBase}/scans/${selectedPin.value.id}/details`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}` },
-      body: detailForm.value,
-    })
-    selectedPin.value.notes = updated.notes
-    const inList = allPins.value.find(p => p.id === selectedPin.value.id)
-    if (inList) {
-      inList.notes = updated.notes
-    }
-    detailSavedMsg.value = 'Saved!'
-  } catch (e) {
-    console.error('Failed to save details', e)
-  } finally {
-    savingDetails.value = false
-  }
-}
-
 onMounted(async () => {
   leafletLib = (await import('leaflet')).default
   await nextTick()
@@ -479,11 +358,6 @@ onMounted(async () => {
     }).addTo(mapInstance)
 
     markersLayer = leafletLib.layerGroup().addTo(mapInstance)
-    mapInstance.on('click', (e: any) => {
-      if (relocateScanId.value) {
-        handleMapClick(e.latlng.lat, e.latlng.lng)
-      }
-    })
   }
 
   await loadMapData()
