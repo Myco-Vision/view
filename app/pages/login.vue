@@ -5,7 +5,12 @@ definePageMeta({ middleware: [] })
 const route = useRoute()
 
 onMounted(() => {
-  const role = (route.query.role as string) === 'admin' ? 'admin' : 'user'
-  navigateTo(`/?login=${role}`, { replace: true })
+  const redirect = String(route.query.redirect || '')
+  const roleQuery = (route.query.role || route.query.login) as string
+  const role = roleQuery === 'admin' || redirect.startsWith('/admin') ? 'admin' : 'user'
+  const target = redirect
+    ? `/?login=${role}&redirect=${encodeURIComponent(redirect)}`
+    : `/?login=${role}`
+  navigateTo(target, { replace: true })
 })
 </script>

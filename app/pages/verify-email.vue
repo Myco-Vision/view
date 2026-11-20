@@ -23,7 +23,7 @@
             <span class="text-[9px] tracking-wider uppercase text-emerald-400/80 font-semibold">AI Mushroom Intelligence</span>
           </div>
         </NuxtLink>
-        <NuxtLink to="/login" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-700/40 transition">
+        <NuxtLink :to="isAdminUser ? '/?login=admin' : '/login'" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-700/40 transition">
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
@@ -39,14 +39,14 @@
         <div class="text-center mb-8">
           <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-xs font-medium mb-4 backdrop-blur-md">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Email Verification</span>
+            <span>{{ isAdminUser ? 'Admin Email Verification' : 'Email Verification' }}</span>
           </div>
           <h1 class="text-3xl font-extrabold tracking-tight text-white">
-            {{ isVerifyAttempt ? (verified ? 'Email Verified!' : (verifyError ? 'Verification Failed' : 'Verifying Email…')) : 'Check Your Inbox' }}
+            {{ isVerifyAttempt ? (verified ? (isAdminUser ? 'Admin Account Verified!' : 'Email Verified!') : (verifyError ? 'Verification Failed' : 'Verifying Email…')) : 'Check Your Inbox' }}
           </h1>
           <p class="text-sm text-slate-400 mt-2">
             {{ isVerifyAttempt
-              ? 'Confirming your MycoVision email ownership.'
+              ? (isAdminUser ? 'Confirming your administrator credentials.' : 'Confirming your MycoVision email ownership.')
               : 'Verify your legitimate email address to activate your account.' }}
           </p>
         </div>
@@ -79,7 +79,7 @@
               @click="goToApp"
               class="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-stone-950 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 shadow-lg shadow-emerald-500/20 transition cursor-pointer"
             >
-              <span>Continue to Forager Portal</span>
+              <span>{{ isAdminUser ? 'Continue to Admin Portal' : 'Continue to Forager Portal' }}</span>
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
             </button>
           </div>
@@ -141,7 +141,7 @@
 
             <div class="pt-3 text-center text-xs text-slate-400">
               Already verified?
-              <NuxtLink to="/login" class="text-emerald-400 hover:underline font-semibold ml-1">Sign in here</NuxtLink>
+              <NuxtLink :to="isAdminUser ? '/?login=admin' : '/login'" class="text-emerald-400 hover:underline font-semibold ml-1">Sign in here</NuxtLink>
             </div>
           </div>
 
@@ -155,13 +155,19 @@
 <script setup lang="ts">
 const config = useRuntimeConfig()
 const route = useRoute()
-const { setSession } = useAuthSession()
+const { getToken, getRole, setSession, clearSession } = useAuthSession()
 
+const verifiedUser = ref<any>(null)
 const emailInput = ref((route.query.email as string) || '')
 const verifying = ref(false)
 const verified = ref(false)
 const verifyError = ref('')
 const successMessage = ref('Your account is now active. You can start scanning mushrooms!')
+
+const isAdminUser = computed(() => {
+  const role = verifiedUser.value?.role || (import.meta.client ? (localStorage.getItem('role') || getRole()) : '')
+  return role === 'admin' || role === 'super_admin'
+})
 
 const resending = ref(false)
 const resendSuccess = ref('')
@@ -202,10 +208,19 @@ onMounted(async () => {
         },
       }
     )
+    if (data.user) {
+      verifiedUser.value = data.user
+    }
     if (data.token && data.user) {
+      // Clear any prior or conflicting session to avoid role leakage
+      clearSession()
       setSession(data.token, data.user)
     }
-    if (data.message) successMessage.value = data.message
+    if (data.message) {
+      successMessage.value = data.message
+    } else if (data.user?.role === 'admin' || data.user?.role === 'super_admin') {
+      successMessage.value = 'Your administrator account is now active and ready for operations.'
+    }
     verified.value = true
   } catch (err: any) {
     verifyError.value = err?.data?.message || 'This verification link is invalid or has expired.'
@@ -243,8 +258,8 @@ async function handleResend() {
 }
 
 async function goToApp() {
-  const token = localStorage.getItem('token')
-  const role = localStorage.getItem('role')
+  const token = getToken()
+  const role = verifiedUser.value?.role || getRole()
   if (token) {
     if (role === 'admin' || role === 'super_admin') {
       await navigateTo('/admin/dashboard')
@@ -253,7 +268,7 @@ async function goToApp() {
     }
     return
   }
-  await navigateTo('/login')
+  await navigateTo(isAdminUser.value ? '/?login=admin' : '/login')
 }
 </script>
 

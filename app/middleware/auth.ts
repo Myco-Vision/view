@@ -7,9 +7,12 @@ export default defineNuxtRouteMiddleware((to) => {
   const role  = getRole()
   const user  = getUser()
 
-  // No token → redirect to landing page login modal
+  // No token → redirect to landing page login modal with matching portal
   if (!token) {
     if (to.path === '/' || to.path === '/login') return
+    if (to.path.startsWith('/admin')) {
+      return navigateTo('/?login=admin')
+    }
     return navigateTo('/?login=user')
   }
 

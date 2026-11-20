@@ -218,15 +218,15 @@
                 
                 <div>
                   <label class="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Email Address
+                    {{ activeRole === 'admin' ? 'Email or Username' : 'Email Address' }}
                   </label>
                   <div class="relative">
                     <input
                       id="login-email-input"
                       v-model="loginForm.email"
-                      type="email"
+                      type="text"
                       required
-                      placeholder="e.g. forager@example.com"
+                      :placeholder="activeRole === 'admin' ? 'e.g. admin@example.com or username' : 'e.g. forager@example.com'"
                       class="w-full py-2.5 pl-10 pr-4 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
                       :disabled="isSubmitting"
                     />
@@ -851,12 +851,14 @@
           <!-- Modal Form -->
           <form @submit.prevent="handleLoginSubmit" class="space-y-4">
             <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1">Email</label>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                {{ activeRole === 'admin' ? 'Email or Username' : 'Email Address' }}
+              </label>
               <input
                 v-model="loginForm.email"
-                type="email"
+                type="text"
                 required
-                placeholder="name@example.com"
+                :placeholder="activeRole === 'admin' ? 'e.g. admin@example.com or username' : 'name@example.com'"
                 class="w-full py-2.5 px-3 rounded-xl bg-stone-950/80 border border-emerald-800/40 text-white text-sm focus:outline-none focus:border-emerald-400"
                 :disabled="isSubmitting"
               />
@@ -944,10 +946,27 @@
 
 <script setup lang="ts">
 const config = useRuntimeConfig()
-const { getToken, setSession, getHomeRoute, restoreAndValidateSession } = useAuthSession()
+const route = useRoute()
+const { getToken, getRole, setSession, clearSession, getHomeRoute, restoreAndValidateSession } = useAuthSession()
 const restoringSession = ref(false)
 
 onMounted(async () => {
+  const loginParam = route.query.login as string
+  if (loginParam === 'user' || loginParam === 'admin') {
+    openLoginModal(loginParam)
+    // If a specific login portal was requested and existing session role does not match,
+    // do not auto-redirect; keep login modal open so user can sign into the intended role.
+    if (getToken()) {
+      const currentRole = getRole()
+      if (loginParam === 'admin' && currentRole !== 'admin' && currentRole !== 'super_admin') {
+        return
+      }
+      if (loginParam === 'user' && (currentRole === 'admin' || currentRole === 'super_admin')) {
+        return
+      }
+    }
+  }
+
   if (!getToken()) return
   restoringSession.value = true
   try {
@@ -993,14 +1012,6 @@ function openLoginModal(role: 'user' | 'admin') {
   modalOpen.value = true
 }
 
-// Auto-open modal when redirected from /login (or any link with ?login=user/admin)
-const route = useRoute()
-onMounted(() => {
-  const loginParam = route.query.login as string
-  if (loginParam === 'user' || loginParam === 'admin') {
-    openLoginModal(loginParam)
-  }
-})
 
 function scrollToLogin() {
   const el = document.getElementById('login-hub')
@@ -1072,7 +1083,7 @@ async function handleLoginSubmit() {
   unverifiedEmail.value = ''
 
   if (!loginForm.email || !loginForm.password) {
-    loginError.value = 'Please provide both email and password.'
+    loginError.value = 'Please provide both email/username and password.'
     return
   }
 
@@ -1087,6 +1098,14 @@ async function handleLoginSubmit() {
       },
     })
 
+    // Validate that administrator portal logins possess an admin role
+    if (activeRole.value === 'admin' && data.user?.role !== 'admin' && data.user?.role !== 'super_admin') {
+      loginError.value = 'This account does not have administrator privileges. Please switch to the Forager tab to sign in.'
+      return
+    }
+
+    // Cleanly clear prior session storage before writing new credentials
+    clearSession()
     setSession(data.token, data.user)
 
     modalOpen.value = false
@@ -1098,7 +1117,7 @@ async function handleLoginSubmit() {
       unverifiedEmail.value = err?.data?.email || loginForm.email.trim()
     }
     const msg = err?.data?.message || err?.data?.errors?.email?.[0]
-    loginError.value = msg || 'Invalid email or password. Please try again.'
+    loginError.value = msg || 'Invalid credentials. Please try again.'
   } finally {
     isSubmitting.value = false
   }
