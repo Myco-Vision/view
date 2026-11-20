@@ -419,6 +419,7 @@
                   </span>
 
                   <NuxtLink
+                    v-if="!species.is_discovered"
                     to="/users/scan"
                     @click.stop
                     class="font-bold text-emerald-600 hover:text-emerald-800 no-underline inline-flex items-center gap-0.5"
@@ -426,6 +427,13 @@
                     <span>Scan</span>
                     <span>→</span>
                   </NuxtLink>
+                  <span
+                    v-else
+                    class="font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-[10.5px] inline-flex items-center gap-1"
+                  >
+                    <AppIcon name="check" class="w-3 h-3 text-emerald-600" />
+                    <span>Unlocked</span>
+                  </span>
                 </div>
               </div>
             </div>
@@ -636,12 +644,20 @@
               Close Dossier
             </button>
 
+            <div
+              v-if="activeSpecimen.is_discovered"
+              class="px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2"
+            >
+              <AppIcon name="check" class="w-4 h-4 text-emerald-600" />
+              <span>Specimen Unlocked (+{{ activeSpecimen.unlock_points || 5 }} Pts Earned)</span>
+            </div>
             <NuxtLink
+              v-else
               to="/users/scan"
               class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-sm transition no-underline flex items-center gap-2"
             >
               <AppIcon name="camera" class="w-4 h-4" />
-              <span>{{ activeSpecimen.is_discovered ? 'Scan Specimen Again' : 'Scan to Unlock (+5 Pts)' }}</span>
+              <span>Scan to Unlock (+{{ activeSpecimen.unlock_points || 5 }} Pts)</span>
             </NuxtLink>
           </div>
         </div>
@@ -764,7 +780,19 @@ const filteredSpeciesGrid = computed(() => {
   return list
 })
 
+const route = useRoute()
+if (route.query.tab === 'unlocked' || route.query.tab === 'discovered') {
+  filterMode.value = 'discovered'
+} else if (route.query.tab === 'locked') {
+  filterMode.value = 'locked'
+}
+
 onMounted(() => {
+  if (route.query.tab === 'unlocked' || route.query.tab === 'discovered') {
+    filterMode.value = 'discovered'
+  } else if (route.query.tab === 'locked') {
+    filterMode.value = 'locked'
+  }
   fetchMycoDex()
 })
 </script>

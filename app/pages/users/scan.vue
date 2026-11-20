@@ -109,8 +109,41 @@
           </label>
         </div>
 
-        <!-- Not-a-mushroom message -->
-        <p v-if="uploadError" class="text-[12.5px] text-red-600 text-center">{{ uploadError }}</p>
+        <!-- Specimen Already Unlocked in MycoDex Notice -->
+        <div v-if="duplicateErrorType === 'specimen_unlocked'" class="p-3.5 rounded-xl border border-amber-300 bg-amber-50 flex flex-col gap-2 text-left">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-amber-200 text-amber-800 flex items-center justify-center shrink-0">
+              <AppIcon name="lock" class="w-3.5 h-3.5" />
+            </span>
+            <span class="text-[13px] font-bold text-amber-900">Specimen Already Unlocked</span>
+          </div>
+          <p class="text-[12px] text-amber-800 leading-relaxed">
+            You have already discovered and unlocked <strong>{{ duplicateSpeciesName || 'this specimen' }}</strong> in your MycoDex. Repeat scans of the same specimen are disabled to prevent duplicate reward points.
+          </p>
+          <NuxtLink
+            to="/mycodex?tab=unlocked"
+            class="self-start py-1.5 px-3 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11.5px] font-bold no-underline inline-flex items-center gap-1.5 transition-colors shadow-xs"
+          >
+            <span>View in MycoDex (Unlocked Tab)</span>
+            <span>→</span>
+          </NuxtLink>
+        </div>
+
+        <!-- Duplicate Image Upload Notice -->
+        <div v-else-if="duplicateErrorType === 'duplicate_image'" class="p-3.5 rounded-xl border border-red-300 bg-red-50 flex flex-col gap-1.5 text-left">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-red-200 text-red-800 flex items-center justify-center shrink-0">
+              <AppIcon name="camera" class="w-3.5 h-3.5" />
+            </span>
+            <span class="text-[13px] font-bold text-red-900">Duplicate Image Detected</span>
+          </div>
+          <p class="text-[12px] text-red-800 leading-relaxed">
+            {{ uploadError || 'This exact mushroom photo has already been scanned. Duplicate scans of the same image are not permitted.' }}
+          </p>
+        </div>
+
+        <!-- Standard error message -->
+        <p v-else-if="uploadError" class="text-[12.5px] text-red-600 text-center">{{ uploadError }}</p>
 
         <!-- Upload button -->
         <button class="flex items-center justify-center gap-2 p-[13px] rounded-[10px] bg-[#7a956a] text-white border-none text-[14px] font-semibold font-sans cursor-pointer transition-colors duration-[0.18s] disabled:opacity-55 disabled:cursor-not-allowed hover:not-disabled:bg-[#5c7a52]" @click="analyzeImage" :disabled="isAnalyzing || !selectedFile">
@@ -664,6 +697,8 @@ const isAnalyzing  = ref(false)
 const selectedFile = ref<File | null>(null)
 const result       = ref<any>(null)
 const uploadError  = ref<string | null>(null)
+const duplicateErrorType = ref<'duplicate_image' | 'specimen_unlocked' | null>(null)
+const duplicateSpeciesName = ref<string>('')
 const mycodexReward = ref<any>(null)
 
 // ── Camera / auto-scan capture state ──────────────────
@@ -1101,6 +1136,23 @@ async function captureAndAnalyze() {
       return
     }
 
+    // Duplicate image rejected
+    if (error?.data?.error === 'DUPLICATE_IMAGE') {
+      closeCamera()
+      duplicateErrorType.value = 'duplicate_image'
+      uploadError.value = error?.data?.message || 'This exact photo has already been scanned. Duplicate scans of the same image are not permitted.'
+      return
+    }
+
+    // Specimen already unlocked in MycoDex
+    if (error?.data?.error === 'SPECIMEN_ALREADY_UNLOCKED') {
+      closeCamera()
+      duplicateErrorType.value = 'specimen_unlocked'
+      duplicateSpeciesName.value = error?.data?.species_name || ''
+      uploadError.value = error?.data?.message || 'You have already discovered and unlocked this specimen in your MycoDex.'
+      return
+    }
+
     // Free-tier limit reached
     if (error?.data?.error === 'SCAN_LIMIT_REACHED' || status === 403) {
       closeCamera()
@@ -1174,6 +1226,8 @@ function handleFileChange(e: Event) {
   if (!checkScanEligibility()) return
   if (file) {
     uploadError.value = null
+    duplicateErrorType.value = null
+    duplicateSpeciesName.value = ''
     selectedFile.value = file
     loadPreview(file)
   }
@@ -1184,6 +1238,8 @@ function handleDrop(e: DragEvent) {
   const file = e.dataTransfer?.files?.[0]
   if (file) {
     uploadError.value = null
+    duplicateErrorType.value = null
+    duplicateSpeciesName.value = ''
     selectedFile.value = file
     loadPreview(file)
   }
@@ -1220,6 +1276,8 @@ function clearImage() {
   result.value = null
   mycodexReward.value = null
   uploadError.value = null
+  duplicateErrorType.value = null
+  duplicateSpeciesName.value = ''
   lastScanId.value = null
   locationSaved.value = false
   if (fileInput.value) fileInput.value.value = ''
@@ -1233,6 +1291,8 @@ async function analyzeImage() {
   result.value = null
   mycodexReward.value = null
   uploadError.value = null
+  duplicateErrorType.value = null
+  duplicateSpeciesName.value = ''
   lastScanId.value = null
   locationSaved.value = false
 
@@ -1285,6 +1345,13 @@ async function analyzeImage() {
     } else if (error?.data?.error === 'NOT_MUSHROOM') {
       // Backend rejected it before saving: nothing stored, no quota used
       uploadError.value = 'No mushroom detected. Please upload a clearer picture of a mushroom.'
+    } else if (error?.data?.error === 'DUPLICATE_IMAGE') {
+      duplicateErrorType.value = 'duplicate_image'
+      uploadError.value = error?.data?.message || 'This exact photo has already been scanned. Duplicate scans of the same image are not permitted.'
+    } else if (error?.data?.error === 'SPECIMEN_ALREADY_UNLOCKED') {
+      duplicateErrorType.value = 'specimen_unlocked'
+      duplicateSpeciesName.value = error?.data?.species_name || ''
+      uploadError.value = error?.data?.message || 'You have already discovered and unlocked this specimen in your MycoDex.'
     } else if (error?.data?.error === 'SCAN_LIMIT_REACHED' || status === 403) {
       canScan.value = false
       remainingScans.value = 0
