@@ -53,6 +53,7 @@
           <option value="">All Plans</option>
           <option value="monthly">Monthly</option>
           <option value="annual">Annual</option>
+          <option value="pro_pass">Pro Pass (Points)</option>
         </select>
       </div>
     </div>
@@ -81,7 +82,7 @@
                 </div>
               </td>
               <td class="py-3 px-3.5">
-                <span class="py-[3px] px-[10px] rounded-[20px] text-[11.5px] font-semibold capitalize" :class="s.plan === 'annual' ? 'bg-[#f3e8ff] text-[#6d28d9]' : 'bg-[#dbeafe] text-[#1d4ed8]'">{{ s.plan }}</span>
+                <span class="py-[3px] px-[10px] rounded-[20px] text-[11.5px] font-semibold capitalize" :class="s.plan === 'annual' ? 'bg-[#f3e8ff] text-[#6d28d9]' : (s.plan === 'pro_pass' ? 'bg-emerald-100 text-emerald-800' : 'bg-[#dbeafe] text-[#1d4ed8]')">{{ (s.plan || '').replace('_', ' ') }}</span>
               </td>
               <td class="py-3 px-3.5">
                 <span class="inline-flex items-center gap-1.5 py-[3px] px-[10px] rounded-[20px] text-[11.5px] font-semibold" :class="stateStyle(s.state).cls">

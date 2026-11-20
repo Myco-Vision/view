@@ -96,7 +96,7 @@
             <!-- Free user quota text -->
             <div v-if="!subscriptionStatus.is_subscribed" class="mt-2 text-xs text-slate-600 flex flex-col gap-1.5">
               <p>
-                You have used <strong class="text-slate-900 font-semibold">{{ subscriptionStatus.scans_used }} of 3</strong> lifetime free scans.
+                You have used <strong class="text-slate-900 font-semibold">{{ subscriptionStatus.scans_used }} of {{ subscriptionStatus.free_limit ?? 3 }}</strong> lifetime free scans.
                 <span class="text-amber-700 font-medium">Free scans do not renew daily.</span>
               </p>
               <!-- Progress Bar -->
@@ -104,7 +104,7 @@
                 <div
                   class="h-full rounded-full transition-all duration-500"
                   :class="freeScansRemaining === 0 ? 'bg-red-500' : 'bg-emerald-500'"
-                  :style="{ width: `${Math.min(100, (subscriptionStatus.scans_used / 3) * 100)}%` }"
+                  :style="{ width: `${Math.min(100, (((subscriptionStatus.scans_used ?? 0)) / (subscriptionStatus.free_limit ?? 3)) * 100)}%` }"
                 ></div>
               </div>
               <p v-if="freeScansRemaining === 0" class="text-red-600 font-semibold mt-0.5 inline-flex items-center gap-1.5">
@@ -122,20 +122,25 @@
                 <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
                 Unlimited mushroom scans active
               </p>
-              <p v-if="subscriptionStatus.active_subscription?.expires_at" class="text-slate-500">
-                Valid until: <strong class="text-slate-800">{{ formatDate(subscriptionStatus.active_subscription.expires_at) }}</strong>
-                <span v-if="subscriptionStatus.active_subscription.days_remaining !== null" class="ml-1.5 px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
+              <p v-if="subscriptionStatus.active_subscription?.expires_at" class="text-slate-500 flex flex-wrap items-center gap-1.5">
+                <span>Access valid until:</span>
+                <strong class="text-slate-800">{{ formatDate(subscriptionStatus.active_subscription.expires_at) }}</strong>
+                <span
+                  v-if="subscriptionStatus.active_subscription.days_remaining !== null"
+                  class="px-2 py-0.5 rounded text-[11px] font-semibold"
+                  :class="subscriptionStatus.active_subscription.days_remaining <= 7 ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-slate-100 text-slate-600'"
+                >
                   {{ Math.ceil(subscriptionStatus.active_subscription.days_remaining) }} days remaining
                 </span>
               </p>
-              <p v-if="subscriptionStatus.active_subscription?.is_cancelled" class="text-amber-700 font-medium">
-                Auto-renewal is cancelled. Your plan remains active until the expiration date.
+              <p class="text-slate-400 text-[11px]">
+                Prepaid via GCash. You can extend your subscription at any time without losing active days.
               </p>
             </div>
           </div>
         </div>
 
-        <!-- Right action: Cancel Auto-renewal or Scan button -->
+        <!-- Right action: Scan button & Extend CTA -->
         <div class="flex flex-wrap items-center gap-3">
           <NuxtLink
             to="/users/scan"
@@ -144,15 +149,6 @@
             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             <span>Scan Mushroom</span>
           </NuxtLink>
-
-          <button
-            v-if="subscriptionStatus.is_subscribed && !subscriptionStatus.active_subscription?.is_cancelled"
-            @click="confirmCancelSubscription"
-            :disabled="isCancelling"
-            class="w-full sm:w-auto justify-center px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-medium hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition cursor-pointer disabled:opacity-50 text-center"
-          >
-            {{ isCancelling ? 'Cancelling…' : 'Cancel Auto-Renewal' }}
-          </button>
         </div>
       </div>
     </div>
@@ -320,18 +316,15 @@
           <div class="mt-6 pt-4">
             <button
               @click="initiateCheckout('monthly')"
-              :disabled="isProcessingCheckout || subscriptionStatus.active_subscription?.plan === 'monthly'"
+              :disabled="isProcessingCheckout"
               class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
             >
               <span v-if="checkoutPlanLoading === 'monthly'" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-              <span>
-                {{
-                  subscriptionStatus.active_subscription?.plan === 'monthly'
-                    ? 'Subscribed'
-                    : planPriceLabel('monthly', 149)
-                }}
-              </span>
+              <span>{{ planPriceLabel('monthly', 149) }}</span>
             </button>
+            <p v-if="subscriptionStatus.is_subscribed" class="text-[10.5px] text-emerald-700 text-center mt-1.5 font-medium">
+              Adds 30 days onto your current expiration date
+            </p>
           </div>
         </div>
 
@@ -392,18 +385,15 @@
           <div class="mt-6 pt-4">
             <button
               @click="initiateCheckout('annual')"
-              :disabled="isProcessingCheckout || subscriptionStatus.active_subscription?.plan === 'annual'"
+              :disabled="isProcessingCheckout"
               class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-black hover:opacity-95 transition cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
             >
               <span v-if="checkoutPlanLoading === 'annual'" class="w-3.5 h-3.5 border-2 border-slate-900/40 border-t-slate-950 rounded-full animate-spin"></span>
-              <span>
-                {{
-                  subscriptionStatus.active_subscription?.plan === 'annual'
-                    ? 'Subscribed'
-                    : planPriceLabel('annual', 1299)
-                }}
-              </span>
+              <span>{{ planPriceLabel('annual', 1299) }}</span>
             </button>
+            <p v-if="subscriptionStatus.is_subscribed" class="text-[10.5px] text-emerald-400 text-center mt-1.5 font-medium">
+              Adds 365 days onto your current expiration date
+            </p>
           </div>
         </div>
 
@@ -730,28 +720,41 @@ const rewardSettings = computed(() => subscriptionStatus.value.reward_settings ?
   max_discount_percent: 100,
 })
 
+function planActionPrefix(planKey: 'monthly' | 'annual'): string {
+  if (!subscriptionStatus.value.is_subscribed) {
+    return planKey === 'monthly' ? 'Subscribe Monthly' : 'Subscribe Annually'
+  }
+  const currentPlan = subscriptionStatus.value.active_subscription?.plan
+  if (currentPlan === planKey) {
+    return planKey === 'monthly' ? 'Extend Monthly (+30d)' : 'Extend Annual (+1yr)'
+  }
+  if (currentPlan === 'monthly' && planKey === 'annual') {
+    return 'Upgrade to Annual (+1yr)'
+  }
+  return planKey === 'monthly' ? 'Switch to Monthly' : 'Extend Annual'
+}
+
 function planPriceLabel(planKey: 'monthly' | 'annual', basePrice: number): string {
   const pts = subscriptionStatus.value.reward_points ?? 0
   const s = rewardSettings.value
   const minPts = s.min_redeem_points ?? 10
   const phpPerPt = s.php_per_point ?? 1
   const maxPct = s.max_discount_percent ?? 100
+  const actionPrefix = planActionPrefix(planKey)
 
   if (s.enabled === false || !useRewardPoints.value || pts < minPts) {
-    return planKey === 'monthly'
-      ? `Subscribe Monthly (₱149 via ${paymentMethodLabel.value})`
-      : `Subscribe Annually (₱1,299 via ${paymentMethodLabel.value})`
+    return `${actionPrefix} (₱${basePrice.toLocaleString()} via ${paymentMethodLabel})`
   }
   const fullPtsNeeded = Math.ceil(basePrice / phpPerPt)
   if (s.allow_full_redemption && maxPct === 100 && pts >= fullPtsNeeded) {
-    return `Redeem Free with ${fullPtsNeeded} Points`
+    return `${actionPrefix} — Free with ${fullPtsNeeded} Pts`
   }
   const maxByPct = Math.floor(basePrice * (maxPct / 100))
   const maxByPaymongo = Math.max(0, basePrice - 20)
   const discountPhp = Math.min(maxByPct, maxByPaymongo, Math.floor(pts * phpPerPt))
   const ptsUsed = Math.ceil(discountPhp / phpPerPt)
   const finalPrice = basePrice - discountPhp
-  return `${planKey === 'monthly' ? 'Subscribe Monthly' : 'Subscribe Annually'} (₱${finalPrice.toLocaleString()} — ${ptsUsed} pts off)`
+  return `${actionPrefix} (₱${finalPrice.toLocaleString()} — ${ptsUsed} pts off)`
 }
 
 function confirmSimulatorPayment() {
@@ -806,7 +809,8 @@ const subscriptionStatus = ref<SubscriptionStatus>({
 
 const freeScansRemaining = computed(() => {
   if (subscriptionStatus.value.is_subscribed) return -1
-  return Math.max(0, 3 - (subscriptionStatus.value.scans_used || 0))
+  const limit = subscriptionStatus.value.free_limit || 3
+  return Math.max(0, limit - (subscriptionStatus.value.scans_used || 0))
 })
 
 const currentPlanDisplayName = computed(() => {
@@ -814,6 +818,7 @@ const currentPlanDisplayName = computed(() => {
   const plan = subscriptionStatus.value.active_subscription?.plan
   if (plan === 'annual') return 'Premium Annual'
   if (plan === 'monthly') return 'Premium Monthly'
+  if (plan === 'pro_pass') return 'Pro Pass (7 Days)'
   return 'Premium Pro'
 })
 
