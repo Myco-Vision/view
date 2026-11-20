@@ -315,6 +315,9 @@ const ICONS: Record<string, IconDef> = {
   download: {
     paths: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M7 10l5 5 5-5', 'M12 15V3'],
   },
+  upload: {
+    paths: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M17 8l-5-5-5 5', 'M12 3v12'],
+  },
   clock: {
     circles: [[12, 12, 10]],
     paths: ['M12 6v6l4 2'],

@@ -490,23 +490,36 @@
           </button>
         </div>
 
-        <div v-if="queueView === 'trained' && retrainedSummary.total > 0" class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            :disabled="restoring || totalSelectedInView === 0"
-            class="py-1.5 px-3.5 rounded-lg bg-[#059669] text-white text-[12.5px] font-semibold hover:bg-[#047857] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            @click="restoreScans(false)"
+            class="py-1.5 px-3 rounded-lg border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] text-[#334155] text-[12px] font-semibold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
+            :disabled="isExporting"
+            title="Export all training images and metadata.csv as a ZIP archive"
+            @click="exportRetrainImages('all')"
           >
-            {{ restoring ? 'Restoring…' : `Restore Selected (${totalSelectedInView})` }}
+            <AppIcon name="download" class="w-3.5 h-3.5 text-[#059669]" />
+            <span>Export Full Dataset (ZIP)</span>
           </button>
-          <button
-            type="button"
-            :disabled="restoring"
-            class="py-1.5 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[#475569] text-[12.5px] font-semibold hover:bg-[#f8fafc] disabled:opacity-50 cursor-pointer"
-            @click="restoreScans(true)"
-          >
-            Restore All to Queue
-          </button>
+
+          <template v-if="queueView === 'trained' && retrainedSummary.total > 0">
+            <button
+              type="button"
+              :disabled="restoring || totalSelectedInView === 0"
+              class="py-1.5 px-3.5 rounded-lg bg-[#059669] text-white text-[12.5px] font-semibold hover:bg-[#047857] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              @click="restoreScans(false)"
+            >
+              {{ restoring ? 'Restoring…' : `Restore Selected (${totalSelectedInView})` }}
+            </button>
+            <button
+              type="button"
+              :disabled="restoring"
+              class="py-1.5 px-3.5 rounded-lg border border-[#e2e8f0] bg-white text-[#475569] text-[12.5px] font-semibold hover:bg-[#f8fafc] disabled:opacity-50 cursor-pointer"
+              @click="restoreScans(true)"
+            >
+              Restore All to Queue
+            </button>
+          </template>
         </div>
       </div>
 
@@ -525,7 +538,35 @@
                 {{ selectedIds(panel.cls).length }} / {{ visibleList(panel.cls).length }} selected
               </span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <!-- Export Files button -->
+              <button
+                type="button"
+                class="py-1 px-2.5 rounded-lg border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] text-[#334155] text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                :disabled="isExporting"
+                :title="'Export ' + panel.title + ' images as ZIP'"
+                @click="exportRetrainImages(panel.cls)"
+              >
+                <AppIcon name="download" class="w-3 h-3 text-[#059669]" />
+                <span class="hidden sm:inline">Export ZIP</span>
+                <span class="sm:hidden">Export</span>
+              </button>
+
+              <!-- Upload from Computer button -->
+              <button
+                v-if="queueView === 'ready'"
+                type="button"
+                class="py-1 px-2.5 rounded-lg text-white text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                :class="panel.cls === 'edible' ? 'bg-[#059669] hover:bg-[#047857]' : 'bg-[#e11d48] hover:bg-[#be123c]'"
+                :title="'Upload ' + panel.cls + ' mushroom photos from your computer'"
+                @click="openUploadModal(panel.cls)"
+              >
+                <AppIcon name="upload" class="w-3 h-3" />
+                <span>+ Upload from PC</span>
+              </button>
+
+              <span class="text-[#cbd5e1] hidden sm:inline">|</span>
+
               <button class="text-[12px] font-semibold hover:underline cursor-pointer" :class="panel.selectBtnClass" @click="selectAll(panel.cls)">Select All</button>
               <span class="text-[#cbd5e1]">|</span>
               <button class="text-[12px] font-semibold text-[#64748b] hover:underline cursor-pointer" @click="deselectAll(panel.cls)">Clear</button>
@@ -555,8 +596,18 @@
                 ? 'Images successfully used in completed retrain runs will appear here.'
                 : (retrainedSummary[panel.cls === 'edible' ? 'edible_count' : 'poisonous_count'] > 0
                     ? 'Previously trained images can be viewed or restored in the Already Trained tab.'
-                    : 'Foragers need to consent to data sharing for their scans to appear here.') }}
+                    : 'Foragers need to consent to data sharing for scans to appear, or you can import mushroom images from your computer.') }}
             </p>
+            <button
+              v-if="queueView === 'ready'"
+              type="button"
+              class="mt-2 py-1.5 px-3 rounded-lg text-white text-[12px] font-semibold transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+              :class="panel.cls === 'edible' ? 'bg-[#059669] hover:bg-[#047857]' : 'bg-[#e11d48] hover:bg-[#be123c]'"
+              @click="openUploadModal(panel.cls)"
+            >
+              <AppIcon name="upload" class="w-3.5 h-3.5" />
+              <span>Import {{ panel.title }} from Computer</span>
+            </button>
           </div>
 
           <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 max-h-[420px] overflow-y-auto">
@@ -1579,6 +1630,194 @@
         </div>
       </div>
     </div>
+
+    <!-- Upload Mushroom Images from Computer Modal -->
+    <div
+      v-if="showUploadModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs"
+      @click.self="closeUploadModal"
+    >
+      <div class="bg-white rounded-2xl shadow-2xl border border-[#e2e8f0] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <!-- Modal Header -->
+        <div class="px-6 py-4.5 border-b border-[#e2e8f0] flex items-center justify-between gap-3" :class="uploadClassification === 'edible' ? 'bg-[#ecfdf5]' : 'bg-[#fff1f2]'">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              :class="uploadClassification === 'edible' ? 'bg-[#d1fae5] text-[#059669]' : 'bg-[#ffe4e6] text-[#e11d48]'"
+            >
+              <AppIcon name="upload" class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="text-[16px] font-bold text-[#0f172a] flex items-center gap-2">
+                <span>Import {{ uploadClassification === 'edible' ? 'Edible' : 'Poisonous' }} Images from Computer</span>
+                <span
+                  class="px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide"
+                  :class="uploadClassification === 'edible' ? 'bg-[#d1fae5] text-[#065f46]' : 'bg-[#ffe4e6] text-[#9f1239]'"
+                >
+                  {{ uploadClassification }}
+                </span>
+              </h3>
+              <p class="text-[12px] text-[#64748b] mt-0.5">
+                Directly add local mushroom photos into the {{ uploadClassification }} training table so you aren't solely dependent on forager field scans.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="w-8 h-8 rounded-lg hover:bg-black/10 text-[#64748b] flex items-center justify-center transition-colors cursor-pointer text-[18px]"
+            @click="closeUploadModal"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 overflow-y-auto flex flex-col gap-5">
+          <!-- Classification Switcher -->
+          <div>
+            <label class="block text-[13px] font-bold text-[#0f172a] mb-1.5">Target Classification Table</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                class="py-2.5 px-4 rounded-xl text-[13px] font-semibold border-2 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                :class="uploadClassification === 'edible'
+                  ? 'border-[#059669] bg-[#ecfdf5] text-[#065f46] shadow-xs'
+                  : 'border-[#e2e8f0] bg-white text-[#64748b] hover:bg-[#f8fafc]'"
+                @click="uploadClassification = 'edible'"
+              >
+                <AppIcon name="leaf" class="w-4 h-4 text-[#059669]" />
+                <span>Edible Table</span>
+              </button>
+              <button
+                type="button"
+                class="py-2.5 px-4 rounded-xl text-[13px] font-semibold border-2 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                :class="uploadClassification === 'poisonous'
+                  ? 'border-[#e11d48] bg-[#fff1f2] text-[#9f1239] shadow-xs'
+                  : 'border-[#e2e8f0] bg-white text-[#64748b] hover:bg-[#f8fafc]'"
+                @click="uploadClassification = 'poisonous'"
+              >
+                <AppIcon name="skull" class="w-4 h-4 text-[#e11d48]" />
+                <span>Poisonous Table</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Species / Mushroom Name -->
+          <div>
+            <label class="block text-[13px] font-bold text-[#0f172a] mb-1">
+              Species / Specimen Name <span class="font-normal text-[#94a3b8]">(optional)</span>
+            </label>
+            <input
+              v-model="uploadSpeciesName"
+              type="text"
+              maxlength="150"
+              :placeholder="uploadClassification === 'edible' ? 'e.g., Pleurotus pulmonarius (Phoenix Oyster)' : 'e.g., Gymnopilus or Amanita virosa'"
+              class="w-full py-2.5 px-3.5 border border-[#e2e8f0] rounded-xl text-[13.5px] outline-none focus:border-[#10b981] focus:ring-2 focus:ring-[#10b981]/20 font-sans"
+            />
+            <p class="text-[11.5px] text-[#64748b] mt-1">
+              Leave blank to automatically label as "Admin Uploaded {{ uploadClassification === 'edible' ? 'Edible' : 'Poisonous' }}".
+            </p>
+          </div>
+
+          <!-- File Upload Dropzone -->
+          <div>
+            <label class="block text-[13px] font-bold text-[#0f172a] mb-1.5">Select Photos from Computer</label>
+            <div
+              class="border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2"
+              :class="isDraggingFiles ? 'border-[#059669] bg-[#ecfdf5]' : 'border-[#cbd5e1] hover:border-[#94a3b8] bg-[#f8fafc]'"
+              @click="triggerFileInput"
+              @dragover.prevent="isDraggingFiles = true"
+              @dragleave.prevent="isDraggingFiles = false"
+              @drop.prevent="handleFileDrop"
+            >
+              <input
+                ref="fileInputRef"
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,image/jpg,image/webp"
+                class="hidden"
+                @change="handleFileSelect"
+              />
+              <div class="w-12 h-12 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center text-[#64748b] shadow-2xs">
+                <AppIcon name="upload" class="w-6 h-6 text-[#059669]" />
+              </div>
+              <div>
+                <p class="text-[13.5px] font-bold text-[#0f172a]">
+                  Click to browse from your computer or drag & drop files here
+                </p>
+                <p class="text-[12px] text-[#64748b] mt-0.5">
+                  Supports JPG, PNG, WebP up to 15MB each · Select one or multiple images
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected Previews -->
+          <div v-if="selectedUploadFiles.length > 0" class="flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[12.5px] font-bold text-[#0f172a]">
+                Selected Files ({{ selectedUploadFiles.length }})
+              </span>
+              <button
+                type="button"
+                class="text-[11.5px] font-semibold text-[#ef4444] hover:underline cursor-pointer"
+                @click="clearUploadFiles"
+              >
+                Clear all
+              </button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-h-[180px] overflow-y-auto p-2 border border-[#e2e8f0] rounded-xl bg-[#f8fafc]">
+              <div
+                v-for="(file, idx) in selectedUploadFiles"
+                :key="idx"
+                class="relative group rounded-lg overflow-hidden border border-[#e2e8f0] bg-white p-1 flex flex-col gap-1 shadow-2xs"
+              >
+                <img
+                  :src="uploadPreviews[idx]"
+                  alt="Preview"
+                  class="w-full h-16 object-cover rounded-md"
+                />
+                <div class="min-w-0">
+                  <p class="text-[10.5px] font-medium text-[#0f172a] truncate">{{ file.name }}</p>
+                  <p class="text-[9.5px] text-[#94a3b8]">{{ formatBytes(file.size) }}</p>
+                </div>
+                <button
+                  type="button"
+                  class="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/60 hover:bg-black/80 text-white text-[11px] flex items-center justify-center cursor-pointer transition-colors"
+                  title="Remove photo"
+                  @click.stop="removeUploadFile(idx)"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 border-t border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-between gap-3">
+          <button
+            type="button"
+            class="py-2 px-4 rounded-xl text-[#64748b] hover:text-[#0f172a] hover:bg-white text-[13px] font-semibold border border-transparent hover:border-[#e2e8f0] transition-colors cursor-pointer"
+            :disabled="isUploading"
+            @click="closeUploadModal"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="py-2.5 px-5 rounded-xl text-white text-[13px] font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="uploadClassification === 'edible' ? 'bg-[#059669] hover:bg-[#047857]' : 'bg-[#e11d48] hover:bg-[#be123c]'"
+            :disabled="selectedUploadFiles.length === 0 || isUploading"
+            @click="submitUpload"
+          >
+            <div v-if="isUploading" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            <AppIcon v-else name="upload" class="w-4 h-4" />
+            <span>{{ isUploading ? 'Uploading Photos…' : `Import ${selectedUploadFiles.length} Image(s) to ${uploadClassification === 'edible' ? 'Edible' : 'Poisonous'} Table` }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 </template>
@@ -1717,6 +1956,16 @@ const retrainedSummary = ref({ total: 0, edible_count: 0, poisonous_count: 0 })
 const scanningDuplicates = ref(false)
 const showDuplicatesModal = ref(false)
 const selectedGroupId = ref<string | null>(null)
+
+// Import/Upload files from computer state
+const showUploadModal = ref(false)
+const uploadClassification = ref<'edible' | 'poisonous'>('edible')
+const uploadSpeciesName = ref('')
+const selectedUploadFiles = ref<File[]>([])
+const uploadPreviews = ref<string[]>([])
+const isDraggingFiles = ref(false)
+const isUploading = ref(false)
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const duplicateFilter = ref<'all' | 'conflicts' | 'exact' | 'near'>('all')
 const duplicateGroups = ref<DuplicateGroup[]>([])
 const duplicateSummary = ref({
@@ -2401,6 +2650,128 @@ async function exportDatasetZip() {
     toastSuccess('Verified dataset ZIP downloaded successfully!')
   } catch (err: any) {
     toastError(err.message || 'Failed to export verified dataset.')
+  } finally {
+    isExporting.value = false
+  }
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes < 1024) return (bytes || 0) + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
+function openUploadModal(cls: 'edible' | 'poisonous') {
+  uploadClassification.value = cls
+  uploadSpeciesName.value = ''
+  clearUploadFiles()
+  showUploadModal.value = true
+}
+
+function closeUploadModal() {
+  if (isUploading.value) return
+  showUploadModal.value = false
+  clearUploadFiles()
+}
+
+function triggerFileInput() {
+  fileInputRef.value?.click()
+}
+
+function handleFileSelect(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files) {
+    addFiles(Array.from(target.files))
+  }
+}
+
+function handleFileDrop(e: DragEvent) {
+  isDraggingFiles.value = false
+  if (e.dataTransfer?.files) {
+    addFiles(Array.from(e.dataTransfer.files))
+  }
+}
+
+function addFiles(files: File[]) {
+  for (const f of files) {
+    if (f.type.startsWith('image/')) {
+      selectedUploadFiles.value.push(f)
+      uploadPreviews.value.push(URL.createObjectURL(f))
+    }
+  }
+}
+
+function removeUploadFile(idx: number) {
+  if (uploadPreviews.value[idx]) {
+    URL.revokeObjectURL(uploadPreviews.value[idx])
+  }
+  selectedUploadFiles.value.splice(idx, 1)
+  uploadPreviews.value.splice(idx, 1)
+}
+
+function clearUploadFiles() {
+  uploadPreviews.value.forEach(u => URL.revokeObjectURL(u))
+  uploadPreviews.value = []
+  selectedUploadFiles.value = []
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
+}
+
+async function submitUpload() {
+  if (selectedUploadFiles.value.length === 0 || isUploading.value) return
+  isUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('classification', uploadClassification.value)
+    if (uploadSpeciesName.value.trim()) {
+      formData.append('species_name', uploadSpeciesName.value.trim())
+    }
+    for (const f of selectedUploadFiles.value) {
+      formData.append('images[]', f)
+    }
+
+    const res: any = await $fetch(`${api}/admin/retrain/upload`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: formData,
+    })
+
+    toastSuccess(res?.message || `Imported ${selectedUploadFiles.value.length} photos successfully!`)
+    closeUploadModal()
+    await fetchCandidates()
+  } catch (err: any) {
+    toastError(err?.data?.message || err?.message || 'Failed to import mushroom photos.')
+  } finally {
+    isUploading.value = false
+  }
+}
+
+async function exportRetrainImages(classification: 'edible' | 'poisonous' | 'all') {
+  isExporting.value = true
+  try {
+    const sel = classification !== 'all' ? selectedIds(classification) : []
+    const idsQuery = sel.length > 0 ? `&ids=${sel.join(',')}` : ''
+    const scopeQuery = queueView.value === 'trained' ? 'trained' : 'ready'
+    const response = await fetch(`${api}/admin/retrain/export?classification=${classification}&scope=${scopeQuery}${idsQuery}`, {
+      headers: authHeaders(),
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(err.message || `Export failed with status ${response.status}`)
+    }
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `mycovision_retrain_${classification}_images_${new Date().toISOString().slice(0, 10)}.zip`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    toastSuccess(`${classification.toUpperCase()} retraining images ZIP downloaded successfully!`)
+  } catch (err: any) {
+    toastError(err.message || 'Failed to export retraining images.')
   } finally {
     isExporting.value = false
   }
