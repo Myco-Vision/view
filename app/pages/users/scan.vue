@@ -155,25 +155,25 @@
       <!-- ── RIGHT: Result Panel ───────── -->
       <div v-if="result" class="p-4 sm:p-6 flex flex-col gap-3 overflow-y-auto">
 
-        <!-- Gamified MycoDex & Crowdsourcing Reward Banner -->
-        <div v-if="mycodexReward && mycodexReward.eligible" class="p-3.5 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 flex flex-col gap-2">
+        <!-- Unified Rewards & MycoDex Banner -->
+        <div v-if="(scanReward && scanReward.points_earned > 0) || (mycodexReward && mycodexReward.eligible)" class="p-3.5 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 flex flex-col gap-2">
           <div class="flex items-center justify-between gap-2">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold text-emerald-800 bg-emerald-200/60 border border-emerald-300">
-              <AppIcon :name="mycodexReward.is_new_species ? 'sparkles' : 'mushroom'" class="w-3.5 h-3.5 text-emerald-600" />
-              <span>{{ mycodexReward.is_new_species ? 'Unlocked in MycoDex!' : 'Specimen Count +1' }}</span>
+              <AppIcon name="sparkles" class="w-3.5 h-3.5 text-emerald-600" />
+              <span>{{ (scanReward?.is_new_discovery || mycodexReward?.is_new_species) ? 'New Specimen Unlocked!' : 'Contribution Recorded!' }}</span>
             </span>
-            <span class="text-xs font-extrabold text-emerald-700 bg-white/80 px-2 py-0.5 rounded-md border border-emerald-200">
-              +{{ mycodexReward.points_awarded }} Pending Pts
+            <span v-if="scanReward && scanReward.points_earned > 0" class="text-xs font-extrabold text-emerald-700 bg-white/90 px-2 py-0.5 rounded-md border border-emerald-200 shadow-2xs">
+              +{{ scanReward.points_earned }} Wallet Pts
             </span>
           </div>
           <div class="text-[12px] text-slate-700 flex flex-col gap-0.5">
-            <p class="font-medium">
-              <span v-if="mycodexReward.is_borderline" class="text-amber-700 font-bold">Active Learning Bonus (+10 pts)! </span>
-              <span v-else>Standard Scan (+2 pts). </span>
-              <span v-if="mycodexReward.is_new_species" class="text-emerald-700 font-bold">New Species Discovery Bonus (+5 pts)!</span>
+            <p class="font-medium flex flex-wrap items-center gap-1.5">
+              <span v-if="scanReward?.discovery_bounty" class="text-emerald-800 font-bold">🎯 Discovery Bounty (+{{ scanReward.discovery_bounty }} pts)</span>
+              <span v-if="scanReward?.has_location" class="text-sky-700 font-semibold">📍 Geotag Bonus (+3 pts)</span>
+              <span class="text-slate-600">🌿 Consented Scan (+5 pts)</span>
             </p>
-            <p class="text-[11px] text-slate-500">
-              Points are pending review by expert verifiers. Once approved, they convert to Verified Points for 7-Day Pro Passes!
+            <p class="text-[11px] text-emerald-800 font-medium">
+              Added to your Spendable Reward Wallet. Current balance: <strong>{{ scanReward?.new_balance }} pts</strong> (Redeemable for 7-Day Pro Passes or discounts).
             </p>
           </div>
         </div>
@@ -700,6 +700,7 @@ const uploadError  = ref<string | null>(null)
 const duplicateErrorType = ref<'duplicate_image' | 'specimen_unlocked' | null>(null)
 const duplicateSpeciesName = ref<string>('')
 const mycodexReward = ref<any>(null)
+const scanReward = ref<any>(null)
 
 // ── Camera / auto-scan capture state ──────────────────
 const isCameraOpen = ref(false)
@@ -1207,6 +1208,7 @@ async function saveFinalScan(file: File) {
   loadPreview(file)
   result.value = buildScanResult(data)
   mycodexReward.value = data.mycodex_reward || null
+  scanReward.value = data.reward || null
   if (data.reward?.points_earned > 0) {
     setStatus(`+${data.reward.points_earned} reward points earned for contributing your scan!`)
   }
@@ -1275,6 +1277,7 @@ function clearImage() {
   selectedFile.value = null
   result.value = null
   mycodexReward.value = null
+  scanReward.value = null
   uploadError.value = null
   duplicateErrorType.value = null
   duplicateSpeciesName.value = ''
@@ -1290,6 +1293,7 @@ async function analyzeImage() {
   isAnalyzing.value = true
   result.value = null
   mycodexReward.value = null
+  scanReward.value = null
   uploadError.value = null
   duplicateErrorType.value = null
   duplicateSpeciesName.value = ''
@@ -1331,6 +1335,7 @@ async function analyzeImage() {
     // Map result from backend to UI state
     result.value = buildScanResult(data)
     mycodexReward.value = data.mycodex_reward || null
+    scanReward.value = data.reward || null
     if (data.reward?.points_earned > 0) {
       setStatus(`+${data.reward.points_earned} reward points earned for contributing your scan!`)
     } else if (data.already_unlocked) {

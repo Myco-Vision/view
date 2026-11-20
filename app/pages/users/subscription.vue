@@ -183,31 +183,47 @@
       <!-- Reward Points Redemption Bar -->
       <div
         v-if="rewardSettings.enabled !== false"
-        class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4"
       >
         <div>
           <h3 class="text-xs sm:text-sm font-bold text-emerald-950 flex items-center gap-2">
-            <span>⭐ Reward Points</span>
+            <span>⭐ Reward Points Wallet</span>
             <span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[11px] font-bold">
               {{ subscriptionStatus.reward_points ?? 0 }} pts (= ₱{{ Math.floor((subscriptionStatus.reward_points ?? 0) * (rewardSettings.php_per_point ?? 1)) }})
             </span>
           </h3>
           <p class="text-[11.5px] text-emerald-800 mt-0.5">
-            Redeem {{ rewardSettings.min_redeem_points ?? 10 }}+ pts for up to {{ rewardSettings.max_discount_percent ?? 100 }}% off (min. ₱20 GCash checkout{{ rewardSettings.allow_full_redemption ? ', or 100% free with enough points' : '' }}).
+            Redeem <strong>35 pts</strong> for a <strong>7-Day Pro Pass</strong>, or apply points for up to 100% off Monthly (149 pts) / Annual plans.
           </p>
         </div>
 
-        <label class="inline-flex items-center gap-2.5 cursor-pointer select-none shrink-0">
-          <input
-            v-model="useRewardPoints"
-            type="checkbox"
-            :disabled="(subscriptionStatus.reward_points ?? 0) < (rewardSettings.min_redeem_points ?? 10)"
-            class="w-4 h-4 rounded border-emerald-400 text-emerald-600 focus:ring-emerald-500 disabled:opacity-40"
-          />
-          <span class="text-xs font-bold text-emerald-900">
-            {{ (subscriptionStatus.reward_points ?? 0) < (rewardSettings.min_redeem_points ?? 10) ? `Need ${rewardSettings.min_redeem_points ?? 10}+ pts to redeem` : 'Apply my points at checkout' }}
-          </span>
-        </label>
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
+          <button
+            type="button"
+            :disabled="(subscriptionStatus.reward_points ?? 0) < 35 || isProcessingCheckout"
+            @click="initiateCheckout('pro_pass')"
+            class="px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+            :class="(subscriptionStatus.reward_points ?? 0) >= 35
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white ring-2 ring-emerald-500/20'
+              : 'bg-slate-200 text-slate-500'"
+          >
+            <span v-if="checkoutPlanLoading === 'pro_pass'" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            <AppIcon v-else name="sparkles" class="w-3.5 h-3.5" />
+            <span>{{ (subscriptionStatus.reward_points ?? 0) >= 35 ? 'Redeem 7-Day Pass (35 pts)' : `${35 - (subscriptionStatus.reward_points ?? 0)} more pts for 7-Day Pass` }}</span>
+          </button>
+
+          <label class="inline-flex items-center gap-2 cursor-pointer select-none border-l border-emerald-200 pl-3">
+            <input
+              v-model="useRewardPoints"
+              type="checkbox"
+              :disabled="(subscriptionStatus.reward_points ?? 0) < (rewardSettings.min_redeem_points ?? 10)"
+              class="w-4 h-4 rounded border-emerald-400 text-emerald-600 focus:ring-emerald-500 disabled:opacity-40"
+            />
+            <span class="text-xs font-bold text-emerald-900">
+              {{ (subscriptionStatus.reward_points ?? 0) < (rewardSettings.min_redeem_points ?? 10) ? `Need ${rewardSettings.min_redeem_points ?? 10}+ pts to discount` : 'Apply at checkout' }}
+            </span>
+          </label>
+        </div>
       </div>
 
       <!-- Pricing Cards Grid -->

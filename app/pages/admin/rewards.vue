@@ -26,10 +26,14 @@
     </div>
 
     <!-- Stats Row -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
       <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
         <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Circulating Points</p>
         <p class="text-2xl font-extrabold text-slate-900 mt-1">{{ stats.total_circulating.toLocaleString() }} pts</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pending Review</p>
+        <p class="text-2xl font-extrabold text-amber-600 mt-1">{{ (stats.total_pending || 0).toLocaleString() }} pts</p>
       </div>
       <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
         <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Earned</p>
@@ -37,7 +41,7 @@
       </div>
       <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
         <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Redeemed</p>
-        <p class="text-2xl font-extrabold text-amber-600 mt-1">{{ stats.total_redeemed.toLocaleString() }} pts</p>
+        <p class="text-2xl font-extrabold text-slate-700 mt-1">{{ stats.total_redeemed.toLocaleString() }} pts</p>
       </div>
       <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
         <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Users With Points</p>
@@ -78,6 +82,12 @@
             <label class="block text-xs font-bold text-slate-700 mb-1">AI Retrain Selection Bonus</label>
             <input v-model.number="form.points_retrain_bonus" type="number" min="0" max="1000" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
             <p class="text-[11px] text-slate-400 mt-1">Awarded when a scan is used in retraining.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Points for 7-Day Pro Pass</label>
+            <input v-model.number="form.points_weekly_pass" type="number" min="5" max="1000" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+            <p class="text-[11px] text-slate-400 mt-1">Reward points required for a 7-day Pro access pass (default 35 pts).</p>
           </div>
 
           <div>
@@ -234,6 +244,7 @@ const feedback = ref({ type: 'success', message: '' })
 
 const stats = ref({
   total_circulating: 0,
+  total_pending: 0,
   total_earned: 0,
   total_redeemed: 0,
   users_with_points: 0,
@@ -244,6 +255,7 @@ const form = ref({
   points_per_scan: 5,
   points_location_bonus: 3,
   points_retrain_bonus: 15,
+  points_weekly_pass: 35,
   daily_scan_cap: 5,
   min_redeem_points: 10,
   php_per_point: 1.0,

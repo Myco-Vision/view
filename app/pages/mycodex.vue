@@ -145,12 +145,12 @@
             </span>
           </div>
 
-          <!-- Progress Bar Toward 100 Pts -->
+          <!-- Progress Bar Toward 35 Pts -->
           <div>
             <div class="flex items-baseline justify-between mb-1.5">
               <div class="flex items-baseline gap-1.5">
-                <span class="text-3xl font-black text-slate-900">{{ mycodex.verified_points }}</span>
-                <span class="text-sm font-semibold text-slate-400">/ 100 Verified Points</span>
+                <span class="text-3xl font-black text-slate-900">{{ mycodex.reward_points ?? mycodex.verified_points ?? 0 }}</span>
+                <span class="text-sm font-semibold text-slate-400">/ {{ mycodex.points_required || 35 }} Reward Points</span>
               </div>
               <span class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                 {{ mycodex.progress_percent }}% toward 7-Day Pro Pass
@@ -159,15 +159,15 @@
             <div class="w-full h-3 rounded-full bg-slate-100 overflow-hidden p-0.5 border border-slate-200/60">
               <div
                 class="h-full rounded-full transition-all duration-500"
-                :class="mycodex.verified_points >= 100 ? 'bg-gradient-to-r from-emerald-500 to-teal-400 animate-pulse' : 'bg-emerald-500'"
+                :class="(mycodex.reward_points ?? mycodex.verified_points ?? 0) >= (mycodex.points_required || 35) ? 'bg-gradient-to-r from-emerald-500 to-teal-400 animate-pulse' : 'bg-emerald-500'"
                 :style="{ width: `${mycodex.progress_percent}%` }"
               />
             </div>
           </div>
 
           <p class="text-xs text-slate-500 leading-relaxed">
-            Every <strong>100 Verified Points</strong> unlocks a <strong>7-Day Pro Pass</strong> with unlimited high-accuracy AI scans.
-            Earn points by contributing high-confidence and active learning borderline mushroom scans!
+            Every <strong>{{ mycodex.points_required || 35 }} Reward Points</strong> unlocks a <strong>7-Day Pro Pass</strong> with unlimited high-accuracy AI scans.
+            Earn points by discovering new target species, attaching GPS locations, and contributing scans!
           </p>
         </div>
 
@@ -184,10 +184,10 @@
           >
             <span v-if="isRedeeming" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
             <AppIcon v-else name="sparkles" class="w-4 h-4" />
-            <span>{{ isRedeeming ? 'Redeeming…' : (mycodex.can_redeem ? 'Redeem 7-Day Pro Pass' : 'Need 100 Verified Pts') }}</span>
+            <span>{{ isRedeeming ? 'Redeeming…' : (mycodex.can_redeem ? 'Redeem 7-Day Pro Pass' : `Need ${Math.max(0, (mycodex.points_required || 35) - (mycodex.reward_points ?? mycodex.verified_points ?? 0))} more pts`) }}</span>
           </button>
           <span class="text-[11px] text-slate-400">
-            {{ mycodex.can_redeem ? '100 points ready to redeem' : `${100 - mycodex.verified_points} points remaining` }}
+            {{ mycodex.can_redeem ? `${mycodex.points_required || 35} points ready to redeem` : `${Math.max(0, (mycodex.points_required || 35) - (mycodex.reward_points ?? mycodex.verified_points ?? 0))} points remaining` }}
           </span>
         </div>
       </div>
@@ -759,7 +759,7 @@ async function redeemProPass() {
       headers: getHeaders(),
     })
     feedbackSuccess.value = true
-    feedbackMessage.value = res.message || 'Successfully redeemed 100 Verified Points for a 7-Day Pro Pass!'
+    feedbackMessage.value = res.message || 'Successfully redeemed 35 Reward Points for a 7-Day Pro Pass!'
     await fetchMycoDex()
   } catch (err: any) {
     feedbackSuccess.value = false
