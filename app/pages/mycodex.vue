@@ -294,12 +294,19 @@
 
               <!-- Locked Specimen State -->
               <template v-else>
-                <!-- Reference Photo (Full Color) or Fallback Placeholder -->
+                <!-- Display Silhouette Image (or Target Reference Photo / Fallback Placeholder) -->
                 <img
-                  v-if="species.reference_image_url || species.cover_image_url"
-                  :src="species.reference_image_url || species.cover_image_url"
+                  v-if="species.silhouette_url || species.silhouette_image_url"
+                  :src="species.silhouette_url || species.silhouette_image_url"
                   :alt="species.common_name"
                   class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <img
+                  v-else-if="species.reference_image_url || species.cover_image_url"
+                  :src="species.reference_image_url || species.cover_image_url"
+                  :alt="species.common_name"
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 brightness-[0.35] contrast-125"
                   loading="lazy"
                 />
                 <div v-else class="w-full h-full bg-gradient-to-b from-slate-800 to-slate-900 flex flex-col items-center justify-center gap-2 text-slate-400">
@@ -467,11 +474,25 @@
 
             <!-- Locked Target Specimen Photo -->
             <template v-else>
-              <div v-if="activeSpecimen.reference_image_url || activeSpecimen.cover_image_url" class="w-full h-full relative overflow-hidden bg-slate-900">
+              <div v-if="activeSpecimen.silhouette_url || activeSpecimen.silhouette_image_url" class="w-full h-full relative overflow-hidden bg-slate-900">
+                <img
+                  :src="activeSpecimen.silhouette_url || activeSpecimen.silhouette_image_url"
+                  :alt="activeSpecimen.common_name"
+                  class="w-full h-full object-cover"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30 pointer-events-none"></div>
+                <div class="absolute bottom-3.5 left-3.5 flex items-center gap-2">
+                  <span class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-slate-950/85 text-amber-300 border border-amber-400/40 backdrop-blur-md shadow-md flex items-center gap-1.5">
+                    <AppIcon name="lock" class="w-3.5 h-3.5 text-amber-400" />
+                    <span>Locked Specimen Silhouette</span>
+                  </span>
+                </div>
+              </div>
+              <div v-else-if="activeSpecimen.reference_image_url || activeSpecimen.cover_image_url" class="w-full h-full relative overflow-hidden bg-slate-900">
                 <img
                   :src="activeSpecimen.reference_image_url || activeSpecimen.cover_image_url"
                   :alt="activeSpecimen.common_name"
-                  class="w-full h-full object-cover"
+                  class="w-full h-full object-cover brightness-[0.35] contrast-125"
                 />
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30 pointer-events-none"></div>
                 <div class="absolute bottom-3.5 left-3.5 flex items-center gap-2">

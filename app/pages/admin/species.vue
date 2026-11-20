@@ -185,7 +185,32 @@
                 <td class="py-2.5 px-3 text-[12px] text-[#94a3b8] border-b border-[#f8fafc] align-middle font-mono">{{ sp.id }}</td>
                 <td class="py-2.5 px-3.5 border-b border-[#f8fafc] align-middle">
                   <div class="flex items-center gap-3">
-                    <img :src="getImageUrl(sp.image_url || sp.image_path)" class="w-10 h-10 rounded-lg object-cover border border-[#e2e8f0] shrink-0" alt="Specimen" />
+                    <div class="relative w-11 h-11 shrink-0">
+                      <img
+                        :src="getImageUrl(sp.image_url || sp.image_path)"
+                        class="w-11 h-11 rounded-lg object-cover border border-[#e2e8f0]"
+                        alt="Target Specimen"
+                        title="Target Mushroom Photo"
+                      />
+                      <div
+                        v-if="sp.silhouette_url || sp.silhouette_path"
+                        class="absolute -bottom-1 -right-1 w-5 h-5 rounded-md bg-slate-900 border border-slate-700 overflow-hidden shadow-xs flex items-center justify-center"
+                        title="Display Silhouette Configured"
+                      >
+                        <img
+                          :src="getImageUrl(sp.silhouette_url || sp.silhouette_path)"
+                          class="w-full h-full object-cover"
+                          alt="Silhouette"
+                        />
+                      </div>
+                      <div
+                        v-else
+                        class="absolute -bottom-1 -right-1 w-5 h-5 rounded-md bg-slate-100 border border-slate-300 flex items-center justify-center text-slate-400"
+                        title="Default Mystery Lock Placeholder (No custom silhouette)"
+                      >
+                        <AppIcon name="lock" class="w-3 h-3 text-slate-500" />
+                      </div>
+                    </div>
                     <div>
                       <p class="font-bold text-[#0f172a] text-[13.5px] leading-tight">{{ sp.name }}</p>
                       <p class="text-[11.5px] text-[#64748b] italic font-serif mt-0.5">{{ sp.scientific_name || '-' }}</p>
@@ -405,45 +430,95 @@
         <div class="p-6 flex flex-col gap-4 overflow-y-auto">
           <div v-if="formError" class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[13px] font-medium">{{ formError }}</div>
 
-          <!-- Specimen Photo Upload & Preview -->
-          <div class="flex flex-col gap-1.5">
-            <label class="text-[12.5px] font-semibold text-[#475569] flex items-center justify-between">
-              <span>Specimen Photo / Reference Image</span>
-              <span class="text-[11px] text-[#94a3b8] font-normal">JPG, PNG, WebP (auto-optimized)</span>
-            </label>
+          <!-- Specimen Visuals: Target Mushroom Photo vs Display Silhouette Image -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- 1. Target Mushroom Photo (Revealed on Unlock) -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#475569] flex items-center justify-between">
+                <span class="inline-flex items-center gap-1.5 text-slate-900 font-bold">
+                  <AppIcon name="mushroom" class="w-3.5 h-3.5 text-emerald-600" />
+                  Target Mushroom Photo
+                </span>
+                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">Unlocked</span>
+              </label>
 
-            <!-- When image is selected / exists -->
-            <div v-if="previewImage" class="relative rounded-xl border border-[#cbd5e1] overflow-hidden bg-[#0f172a] flex items-center justify-center h-44 group">
-              <img :src="previewImage" class="h-full w-full object-contain" alt="Specimen reference" />
-              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <label class="py-1.5 px-3 rounded-lg bg-white/90 hover:bg-white text-slate-800 text-[12px] font-semibold cursor-pointer shadow-sm">
-                  Change Photo
-                  <input type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
-                </label>
-                <button
-                  type="button"
-                  class="py-1.5 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[12px] font-semibold cursor-pointer shadow-sm"
-                  @click="removeSelectedFile"
-                >
-                  Remove
-                </button>
+              <!-- Target image preview -->
+              <div v-if="previewImage" class="relative rounded-xl border border-[#cbd5e1] overflow-hidden bg-slate-900 flex items-center justify-center h-44 group">
+                <img :src="previewImage" class="h-full w-full object-contain" alt="Target mushroom reference" />
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <label class="py-1.5 px-3 rounded-lg bg-white/90 hover:bg-white text-slate-800 text-[11.5px] font-semibold cursor-pointer shadow-xs">
+                    Change
+                    <input type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
+                  </label>
+                  <button
+                    type="button"
+                    class="py-1.5 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11.5px] font-semibold cursor-pointer shadow-xs"
+                    @click="removeSelectedFile"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
+
+              <!-- Target drop area -->
+              <label
+                v-else
+                class="border-2 border-dashed border-[#cbd5e1] hover:border-emerald-500 rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 bg-[#f8fafc] hover:bg-emerald-50/40 transition-colors cursor-pointer text-center h-44"
+              >
+                <input type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
+                <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <AppIcon name="camera" class="w-4 h-4" />
+                </div>
+                <div>
+                  <p class="text-[12.5px] font-bold text-[#0f172a]">Target Mushroom Photo</p>
+                  <p class="text-[11px] text-[#64748b] leading-tight mt-0.5">Full-color photo revealed once discovered by foragers.</p>
+                </div>
+              </label>
             </div>
 
-            <!-- Upload drop area when no image -->
-            <label
-              v-else
-              class="border-2 border-dashed border-[#cbd5e1] hover:border-emerald-500 rounded-xl p-5 flex flex-col items-center justify-center gap-2 bg-[#f8fafc] hover:bg-emerald-50/40 transition-colors cursor-pointer text-center"
-            >
-              <input type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
-              <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                <AppIcon name="camera" class="w-5 h-5" />
+            <!-- 2. Display Silhouette Image (Locked Preview) -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[12.5px] font-semibold text-[#475569] flex items-center justify-between">
+                <span class="inline-flex items-center gap-1.5 text-slate-900 font-bold">
+                  <AppIcon name="lock" class="w-3.5 h-3.5 text-amber-600" />
+                  Display Silhouette Image
+                </span>
+                <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">Locked Teaser</span>
+              </label>
+
+              <!-- Silhouette preview -->
+              <div v-if="previewSilhouetteImage" class="relative rounded-xl border border-slate-700 overflow-hidden bg-slate-950 flex items-center justify-center h-44 group">
+                <img :src="previewSilhouetteImage" class="h-full w-full object-contain" alt="Display silhouette preview" />
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <label class="py-1.5 px-3 rounded-lg bg-white/90 hover:bg-white text-slate-800 text-[11.5px] font-semibold cursor-pointer shadow-xs">
+                    Change
+                    <input type="file" accept="image/*" class="hidden" @change="handleSilhouetteFileSelect" />
+                  </label>
+                  <button
+                    type="button"
+                    class="py-1.5 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11.5px] font-semibold cursor-pointer shadow-xs"
+                    @click="removeSelectedSilhouetteFile"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
-              <div>
-                <p class="text-[13px] font-semibold text-[#0f172a]">Click to upload specimen photo</p>
-                <p class="text-[11.5px] text-[#64748b]">Foragers will see this photo once they discover and unlock this mushroom.</p>
-              </div>
-            </label>
+
+              <!-- Silhouette drop area -->
+              <label
+                v-else
+                class="border-2 border-dashed border-slate-300 hover:border-amber-500 rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 bg-slate-50 hover:bg-amber-50/40 transition-colors cursor-pointer text-center h-44"
+              >
+                <input type="file" accept="image/*" class="hidden" @change="handleSilhouetteFileSelect" />
+                <div class="w-9 h-9 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center">
+                  <AppIcon name="lock" class="w-4 h-4" />
+                </div>
+                <div>
+                  <p class="text-[12.5px] font-bold text-[#0f172a]">Display Silhouette</p>
+                  <p class="text-[11px] text-[#64748b] leading-tight mt-0.5">Mystery outline clue shown in MycoDex while locked.</p>
+                </div>
+              </label>
+            </div>
           </div>
 
           <!-- Names: Common & Scientific -->
@@ -762,6 +837,8 @@ interface Species {
   description?: string
   image_path?: string
   image_url?: string
+  silhouette_path?: string
+  silhouette_url?: string
   rarity?: string
   unlock_points?: number
   unlock_hint?: string
@@ -798,6 +875,9 @@ const candidateScans = ref<ScanCandidate[]>([])
 const selectedFile = ref<File | null>(null)
 const previewImage = ref<string | null>(null)
 
+const selectedSilhouetteFile = ref<File | null>(null)
+const previewSilhouetteImage = ref<string | null>(null)
+
 const form = reactive({
   name: '',
   scientific_name: '',
@@ -806,6 +886,8 @@ const form = reactive({
   description: '',
   image_path: '',
   image_url: '',
+  silhouette_path: '',
+  silhouette_url: '',
   rarity: 'common',
   unlock_points: 5,
   unlock_hint: '',
@@ -904,6 +986,33 @@ function removeSelectedFile() {
   previewImage.value = null
   form.image_path = ''
   form.image_url = ''
+}
+
+async function handleSilhouetteFileSelect(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  if (file.size > 20 * 1024 * 1024) {
+    toast.error('Image size must be less than 20MB')
+    return
+  }
+
+  try {
+    const optimized = await compressImage(file)
+    selectedSilhouetteFile.value = optimized
+    previewSilhouetteImage.value = URL.createObjectURL(optimized)
+  } catch (err) {
+    selectedSilhouetteFile.value = file
+    previewSilhouetteImage.value = URL.createObjectURL(file)
+  }
+}
+
+function removeSelectedSilhouetteFile() {
+  selectedSilhouetteFile.value = null
+  previewSilhouetteImage.value = null
+  form.silhouette_path = ''
+  form.silhouette_url = ''
 }
 
 const getHeaders = () => {
@@ -1028,6 +1137,8 @@ function openAdd() {
   promoteScanId.value = null
   selectedFile.value = null
   previewImage.value = null
+  selectedSilhouetteFile.value = null
+  previewSilhouetteImage.value = null
   formError.value = ''
   Object.assign(form, {
     name: '',
@@ -1037,6 +1148,8 @@ function openAdd() {
     description: '',
     image_path: '',
     image_url: '',
+    silhouette_path: '',
+    silhouette_url: '',
     rarity: 'common',
     unlock_points: 5,
     unlock_hint: '',
@@ -1050,6 +1163,8 @@ function openEdit(sp: Species) {
   promoteScanId.value = null
   selectedFile.value = null
   previewImage.value = sp.image_url || (sp.image_path ? getImageUrl(sp.image_path) : null)
+  selectedSilhouetteFile.value = null
+  previewSilhouetteImage.value = sp.silhouette_url || (sp.silhouette_path ? getImageUrl(sp.silhouette_path) : null)
   formError.value = ''
   Object.assign(form, {
     name: sp.name,
@@ -1059,6 +1174,8 @@ function openEdit(sp: Species) {
     description: sp.description || '',
     image_path: sp.image_path || '',
     image_url: sp.image_url || '',
+    silhouette_path: sp.silhouette_path || '',
+    silhouette_url: sp.silhouette_url || '',
     rarity: sp.rarity || 'common',
     unlock_points: sp.unlock_points ?? 5,
     unlock_hint: sp.unlock_hint || '',
@@ -1072,6 +1189,8 @@ function openPromoteModal(scan: ScanCandidate) {
   editingId.value = null
   selectedFile.value = null
   previewImage.value = scan.image_url || (scan.image_path ? getImageUrl(scan.image_path) : null)
+  selectedSilhouetteFile.value = null
+  previewSilhouetteImage.value = null
   formError.value = ''
   // Deliberately NOT copying GPS coordinates or the user's name into public species fields.
   Object.assign(form, {
@@ -1082,6 +1201,8 @@ function openPromoteModal(scan: ScanCandidate) {
     description: '',
     image_path: scan.image_path,
     image_url: scan.image_url || '',
+    silhouette_path: '',
+    silhouette_url: '',
     rarity: 'uncommon',
     unlock_points: 10,
     unlock_hint: '',
@@ -1120,6 +1241,16 @@ async function saveSpecies() {
       formData.append('image', selectedFile.value)
     } else if (form.image_path) {
       formData.append('image_path', form.image_path)
+    } else {
+      formData.append('image_path', '')
+    }
+
+    if (selectedSilhouetteFile.value) {
+      formData.append('silhouette', selectedSilhouetteFile.value)
+    } else if (form.silhouette_path) {
+      formData.append('silhouette_path', form.silhouette_path)
+    } else {
+      formData.append('silhouette_path', '')
     }
 
     if (promotedScanId) {
@@ -1182,6 +1313,8 @@ function closeModal() {
   editingId.value = null
   selectedFile.value = null
   previewImage.value = null
+  selectedSilhouetteFile.value = null
+  previewSilhouetteImage.value = null
   formError.value = ''
 }
 
