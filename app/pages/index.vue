@@ -810,19 +810,12 @@ const restoringSession = ref(false)
 
 onMounted(async () => {
   const loginParam = route.query.login as string
-  if (loginParam === 'user' || loginParam === 'admin') {
-    openLoginModal(loginParam)
-    // If a specific login portal was requested and existing session role does not match,
-    // do not auto-redirect; keep login modal open so user can sign into the intended role.
-    if (getToken()) {
-      const currentRole = getRole()
-      if (loginParam === 'admin' && currentRole !== 'admin' && currentRole !== 'super_admin') {
-        return
-      }
-      if (loginParam === 'user' && (currentRole === 'admin' || currentRole === 'super_admin')) {
-        return
-      }
-    }
+  if (loginParam === 'admin') {
+    await navigateTo('/admin/login', { replace: true })
+    return
+  }
+  if (loginParam === 'user') {
+    openLoginModal()
   }
 
   if (!getToken()) return
@@ -866,19 +859,6 @@ function openLoginModal() {
   unverifiedEmail.value = ''
   modalOpen.value = true
 }
-
-// Auto-open modal when redirected from /login (or redirect ?login=admin to /admin/login)
-const route = useRoute()
-onMounted(async () => {
-  const loginParam = route.query.login as string
-  if (loginParam === 'admin') {
-    await navigateTo('/admin/login', { replace: true })
-    return
-  }
-  if (loginParam === 'user') {
-    openLoginModal()
-  }
-})
 
 function scrollToLogin() {
   const el = document.getElementById('login-hub')
