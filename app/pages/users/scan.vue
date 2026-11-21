@@ -186,7 +186,14 @@
           </div>
           <div class="flex items-center gap-2 text-[13px]">
             <span class="text-[#64748b] min-w-[120px] text-right">Classification:</span>
-            <span class="font-bold flex items-center gap-1.5 py-[3px] px-2.5 rounded-[20px]" :class="result.classification === 'Edible' ? 'text-[#166534] bg-[#dcfce7]' : 'text-[#991b1b] bg-[#fee2e2]'">
+            <span
+              class="font-bold flex items-center gap-1.5 py-[3px] px-2.5 rounded-[20px]"
+              :class="{
+                'text-[#166534] bg-[#dcfce7]': result.classification === 'Edible',
+                'text-[#991b1b] bg-[#fee2e2]': result.classification === 'Poisonous',
+                'text-[#92400e] bg-[#fef3c7]': result.classification !== 'Edible' && result.classification !== 'Poisonous'
+              }"
+            >
               {{ result.classification }}
               <svg v-if="result.classification === 'Edible'" class="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg"
                    viewBox="0 0 24 24" fill="currentColor">
@@ -194,9 +201,13 @@
                 <path d="M7 12.5l3.5 3.5 6.5-7" stroke="#fff"
                       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </svg>
-              <svg v-else class="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <svg v-else-if="result.classification === 'Poisonous'" class="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="12" r="12" fill="#ef4444"/>
                 <path d="M15 9l-6 6M9 9l6 6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <svg v-else class="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="12" fill="#f59e0b"/>
+                <path d="M12 8v4m0 4h.01" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </span>
           </div>

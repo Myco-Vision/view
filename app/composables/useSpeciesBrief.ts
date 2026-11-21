@@ -57,9 +57,11 @@ export function resolveSpeciesBrief(scan: any): SpeciesBriefInfo {
   const catalogEntry = SPECIES_BRIEF_CATALOG[key]
   const dbSpecies = scan?.species
 
-  const isUnknownSpecies = key.startsWith('unknown ') || key === 'edible' || key === 'poisonous'
+  const isUnknownSpecies = key.startsWith('unknown ') || key === 'unknown' || key === 'edible' || key === 'poisonous'
   const fallbackDescRest = isUnknownSpecies
-    ? ` — This mushroom was classified as ${classification.toLowerCase()} by the safety model, but its exact species did not match a catalog entry above the confidence threshold.`
+    ? (rawClass === 'unknown'
+        ? ' — This wild mushroom could not be identified with sufficient certainty. Its exact species is unknown or uncatalogued. For your safety, do NOT consume unverified wild mushrooms.'
+        : ` — This mushroom was classified as ${classification.toLowerCase()} by the safety model, but its exact species did not match a catalog entry above the confidence threshold.`)
     : ' is the identified mushroom species based on your scan.'
 
   const wikiTarget = catalogEntry?.wikiSlug
